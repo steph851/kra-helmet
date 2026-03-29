@@ -1,0 +1,527 @@
+{
+  "_note": "Step-by-step iTax filing instructions for Kenyan SMEs. Source: KRA iTax portal procedures. Updated 2026-03-29.",
+  "filing_guides": [
+    {
+      "tax_key": "turnover_tax",
+      "title": "How to File Turnover Tax (TOT) on iTax",
+      "itax_menu_path": "Returns > File Returns > Turnover Tax",
+      "estimated_time": "10-20 minutes",
+      "steps": [
+        "Log in to iTax at https://itax.kra.go.ke using your KRA PIN and password.",
+        "On the dashboard, click 'Returns' in the top menu bar.",
+        "Select 'File Returns' from the dropdown.",
+        "In the 'Tax Obligation' dropdown, select 'Turnover Tax'.",
+        "Select the return period (month and year) you are filing for.",
+        "Enter your total gross turnover for the month — this is ALL revenue before any expenses or deductions.",
+        "The system will automatically calculate 3% of your turnover as the tax due.",
+        "Review the computed amount carefully. Confirm it matches your records.",
+        "If you have already made any advance payments, enter them in the 'Payments' section.",
+        "Click 'Submit' to file the return.",
+        "You will receive an acknowledgement receipt. Download and save it.",
+        "If tax is due, proceed to 'Payment Registration' to generate a payment slip.",
+        "Pay via M-Pesa (Paybill 572572, Account = your Payment Registration Number), bank, or KRA e-payment portal.",
+        "Keep the M-Pesa confirmation message or bank slip as proof of payment."
+      ],
+      "documents_needed": [
+        "KRA PIN certificate",
+        "iTax login credentials (PIN + password)",
+        "Monthly sales records or summary (total gross turnover for the month)",
+        "M-Pesa or bank statement showing business receipts for cross-checking",
+        "Previous month's TOT return (for reference)"
+      ],
+      "common_mistakes": [
+        "Confusing gross turnover with net profit — TOT is on total revenue, not profit.",
+        "Forgetting to include cash sales in the turnover figure.",
+        "Filing for the wrong period (e.g. filing January instead of February).",
+        "Not filing a NIL return when there was no income — you must still file even if turnover is zero.",
+        "Missing the 20th deadline and getting hit with the KES 20,000 late filing penalty.",
+        "Businesses with turnover above KES 25M or below KES 1M are not eligible for TOT."
+      ],
+      "tips": [
+        "Set a calendar reminder for the 15th of each month so you have time to prepare before the 20th deadline.",
+        "Keep a simple daily sales log — it makes monthly filing much easier.",
+        "If your business turnover grows beyond KES 25M annually, you must switch to regular income tax. Plan ahead.",
+        "TOT replaces income tax, so you do NOT file a separate income tax return for this business income.",
+        "You can file a NIL return on iTax if you had zero turnover for the month."
+      ]
+    },
+    {
+      "tax_key": "vat",
+      "title": "How to File VAT Returns on iTax",
+      "itax_menu_path": "Returns > File Returns > VAT",
+      "estimated_time": "30-60 minutes",
+      "steps": [
+        "Log in to iTax at https://itax.kra.go.ke using your KRA PIN and password.",
+        "Click 'Returns' in the top menu, then select 'File Returns'.",
+        "Select 'VAT' from the 'Tax Obligation' dropdown.",
+        "Select the return period (month and year).",
+        "You will see the VAT return form (VAT3). It has multiple sections.",
+        "Section A — Sales/Output VAT: Enter all your sales for the month. Categorise them as Standard Rated (16%), Zero Rated (0%), or Exempt.",
+        "For standard rated sales, enter the total taxable value. The system calculates output VAT at 16%.",
+        "Section B — Purchases/Input VAT: Enter all your business purchases. Categorise them similarly.",
+        "For purchases with VAT, enter the total taxable value. The system calculates input VAT you can claim.",
+        "Important: Only claim input VAT on purchases supported by valid eTIMS invoices or tax invoices.",
+        "Section C — The system computes VAT payable (Output VAT minus Input VAT). If positive, you owe KRA. If negative, you have a credit.",
+        "Review the summary carefully. Check that totals match your books.",
+        "Upload the CSV file if you have many line items (download the template from iTax first).",
+        "Click 'Submit' to file.",
+        "Download the acknowledgement receipt.",
+        "If VAT is payable, generate a Payment Registration slip and pay via M-Pesa (Paybill 572572), bank, or e-payment."
+      ],
+      "documents_needed": [
+        "KRA PIN certificate",
+        "iTax login credentials",
+        "eTIMS-generated sales invoices for the month (all of them)",
+        "Purchase invoices with VAT (tax invoices or eTIMS invoices from your suppliers)",
+        "Sales summary categorised by: Standard Rated (16%), Zero Rated, Exempt",
+        "Purchases summary categorised by: Standard Rated, Zero Rated, Exempt, Out of Scope",
+        "Previous month's VAT return for reference",
+        "Import entry documents (if any imports were made)",
+        "Credit/debit notes issued or received during the month"
+      ],
+      "common_mistakes": [
+        "Claiming input VAT on purchases without valid tax invoices — KRA will disallow these.",
+        "Not issuing eTIMS invoices for all sales — mandatory from 2024 for all VAT-registered businesses.",
+        "Mixing up zero-rated and exempt supplies — they are treated differently for input VAT claims.",
+        "Forgetting to include imported goods and the VAT paid at customs.",
+        "Claiming input VAT on non-deductible items (e.g. entertainment, personal expenses).",
+        "Filing a NIL return when there were actually transactions — this triggers audits.",
+        "Not reversing input VAT on bad debts older than 2 years."
+      ],
+      "tips": [
+        "Use the iTax CSV upload template for filing if you have many transactions — it saves time and reduces errors.",
+        "Reconcile your eTIMS records with your accounting system BEFORE filing.",
+        "Keep all purchase invoices for at least 5 years — KRA can audit that far back.",
+        "If you consistently have excess input VAT (refund position), apply for a VAT refund through iTax.",
+        "Zero-rated businesses can claim full input VAT refunds. Exempt businesses cannot claim input VAT at all.",
+        "Register for eTIMS at https://etims.kra.go.ke if you have not already — it is mandatory."
+      ]
+    },
+    {
+      "tax_key": "paye",
+      "title": "How to File PAYE Returns on iTax",
+      "itax_menu_path": "Returns > File Returns > PAYE",
+      "estimated_time": "30-60 minutes (depends on number of employees)",
+      "steps": [
+        "Log in to iTax at https://itax.kra.go.ke using your employer KRA PIN and password.",
+        "Click 'Returns' in the top menu, then select 'File Returns'.",
+        "Select 'PAYE' from the 'Tax Obligation' dropdown.",
+        "Select the return period (month and year you are filing for).",
+        "Download the PAYE CSV template from iTax (P10 return template).",
+        "Fill in the CSV with each employee's details: KRA PIN, name, gross pay, taxable pay, PAYE deducted, personal relief applied.",
+        "Calculate PAYE for each employee using the graduated tax bands: 10% (up to KES 24,000), 25% (KES 24,001-32,333), 30% (KES 32,334-500,000), 32.5% (KES 500,001-800,000), 35% (above KES 800,000).",
+        "Deduct the monthly personal relief of KES 2,400 per employee (if applicable).",
+        "Also deduct any insurance relief, disability exemption, or pension contribution relief for qualifying employees.",
+        "Upload the completed CSV file to iTax.",
+        "The system will validate the file. Fix any errors flagged (common: invalid PIN, wrong format).",
+        "Review the summary: total gross pay, total PAYE, total employees.",
+        "Click 'Submit' to file the return.",
+        "Download the acknowledgement receipt.",
+        "Generate a Payment Registration slip for the total PAYE amount.",
+        "Pay the total PAYE to KRA by the 9th of the following month via M-Pesa (Paybill 572572), bank, or e-payment."
+      ],
+      "documents_needed": [
+        "KRA employer PIN and iTax credentials",
+        "Employee KRA PINs (every employee must have one)",
+        "Monthly payroll register showing: basic salary, allowances, benefits, gross pay, deductions, net pay for each employee",
+        "NSSF contribution details per employee",
+        "SHIF contribution details per employee",
+        "Housing Levy deduction details per employee",
+        "Pension/provident fund contribution details (if applicable)",
+        "Insurance policy details (for insurance relief calculations)",
+        "P10 CSV template downloaded from iTax"
+      ],
+      "common_mistakes": [
+        "Employees without KRA PINs — every employee must be registered. Help them register at https://itax.kra.go.ke.",
+        "Not deducting PAYE from casual workers earning above KES 2,000 per day.",
+        "Forgetting to apply personal relief (KES 2,400/month) — this reduces the employee's tax burden.",
+        "Using the wrong tax bands (they change with Finance Acts — verify current rates).",
+        "Including tax-exempt allowances (like per diem up to KES 2,000) in taxable income.",
+        "Filing after the 9th — the penalty is 25% of the tax due, which is severe.",
+        "Not including benefits-in-kind (e.g. company car, housing) in taxable pay."
+      ],
+      "tips": [
+        "Invest in payroll software that auto-generates the P10 CSV. Manual calculation with many employees is error-prone.",
+        "The 9th deadline is earlier than most other taxes (which are the 20th). Mark it clearly in your calendar.",
+        "If you hire new employees mid-month, prorate their salary and PAYE for that month.",
+        "File NSSF, SHIF, and Housing Levy at the same time as PAYE — they all share the 9th deadline.",
+        "Keep copies of all payslips signed by employees. KRA may request them during audits.",
+        "If you have zero employees in a month, file a NIL PAYE return to avoid penalties."
+      ]
+    },
+    {
+      "tax_key": "income_tax_resident",
+      "title": "How to File Individual Income Tax Returns on iTax",
+      "itax_menu_path": "Returns > File Returns > Income Tax - Resident Individual",
+      "estimated_time": "30-90 minutes",
+      "steps": [
+        "Log in to iTax at https://itax.kra.go.ke using your personal KRA PIN and password.",
+        "Click 'Returns' in the top menu, then select 'File Returns'.",
+        "Select 'Income Tax - Resident Individual' from the 'Tax Obligation' dropdown.",
+        "Select the year of income you are filing for (e.g. 2025 income, filed by 30 June 2026).",
+        "The return form has several sections. Fill them in order.",
+        "Section 1 — Employment Income: Enter details from your P9A form (provided by your employer). Include gross pay, PAYE deducted, and employer details.",
+        "Section 2 — Business Income: If you run a sole proprietorship, enter gross income, allowable expenses, and net profit/loss.",
+        "Section 3 — Rental Income: Enter any rental income (unless you are filing MRI separately).",
+        "Section 4 — Other Income: Investment income (dividends, interest), capital gains, foreign income, etc.",
+        "Section 5 — Deductions and Reliefs: Enter pension contributions, insurance premiums, mortgage interest, disability exemption, and any other reliefs you qualify for.",
+        "The system calculates your total income, total tax liability, and credits for tax already paid (PAYE, withholding tax, advance tax).",
+        "Review the tax computation carefully. The balance is either tax payable or a refund due.",
+        "Attach supporting documents if required (P9A, financial statements, withholding tax certificates).",
+        "Click 'Submit' to file.",
+        "Download the acknowledgement receipt and the tax computation.",
+        "If tax is payable, generate a payment slip and pay by 30 June."
+      ],
+      "documents_needed": [
+        "KRA PIN and iTax credentials",
+        "P9A tax deduction card from your employer(s) for the year",
+        "Business financial statements (profit and loss, balance sheet) if self-employed",
+        "Rental income records and expenses (if applicable)",
+        "Bank statements showing interest earned",
+        "Dividend vouchers or certificates",
+        "Withholding tax certificates (for any WHT deducted on your income)",
+        "Insurance premium receipts (for insurance relief)",
+        "Pension/provident fund contribution statements",
+        "Mortgage interest statement from your bank (for owner-occupied home relief)",
+        "Disability exemption certificate (if applicable)"
+      ],
+      "common_mistakes": [
+        "Not filing at all because 'my employer already deducted PAYE' — you must still file an annual return.",
+        "Forgetting to include all sources of income (freelance work, side business, rental, interest).",
+        "Not claiming reliefs you are entitled to: personal relief, insurance relief, pension relief.",
+        "Using the wrong year of income (remember: 2025 income is filed in 2026).",
+        "Not requesting your P9A form from your employer early enough.",
+        "Claiming expenses that are not allowable (personal expenses, capital expenditure without proper allowances).",
+        "Missing the 30 June deadline — penalty is 5% of tax due or KES 20,000, whichever is higher."
+      ],
+      "tips": [
+        "Request your P9A from your employer by April so you have time to prepare.",
+        "If you have multiple income sources, keep them well-organised throughout the year.",
+        "Insurance relief is 15% of premiums paid, up to KES 60,000 per year.",
+        "Pension relief is 15% of contributions, up to KES 240,000 per year.",
+        "If you overpaid tax (refund due), apply for a refund through iTax after filing.",
+        "You can amend a return within 12 months of filing if you made a mistake.",
+        "Even with zero income, file a NIL return to stay compliant."
+      ]
+    },
+    {
+      "tax_key": "income_tax_corporate",
+      "title": "How to File Corporate Income Tax Returns on iTax",
+      "itax_menu_path": "Returns > File Returns > Income Tax - Company",
+      "estimated_time": "1-3 hours (complex return)",
+      "steps": [
+        "Log in to iTax at https://itax.kra.go.ke using your company's KRA PIN and password.",
+        "Click 'Returns' in the top menu, then select 'File Returns'.",
+        "Select 'Income Tax - Company' from the 'Tax Obligation' dropdown.",
+        "Select the accounting period you are filing for.",
+        "Section 1 — Company Details: Verify company name, registration number, accounting period, and principal activity.",
+        "Section 2 — Income Statement: Enter gross turnover/revenue, cost of sales, and all operating expenses as per your audited accounts.",
+        "Section 3 — Tax Computation: Adjust accounting profit for tax purposes. Add back non-deductible expenses (entertainment, fines, donations above 10% of income, etc.).",
+        "Claim capital deductions (wear and tear, industrial building allowances, investment deductions) in the appropriate fields.",
+        "Section 4 — Tax Payable: The system applies the 30% corporate tax rate (or 25% for newly listed companies on NSE).",
+        "Enter any advance tax (instalment tax) already paid during the year (installments due 20 Apr, 20 Jun, 20 Sep, 20 Dec).",
+        "Enter any withholding tax credits (from WHT certificates received during the year).",
+        "Section 5 — Directors and Shareholders: Enter details of directors and shareholders holding 5% or more.",
+        "Upload required attachments: audited financial statements, tax computation, capital deduction schedules.",
+        "Review everything carefully, then click 'Submit'.",
+        "Download the acknowledgement receipt.",
+        "Pay any balance of tax due by the filing deadline."
+      ],
+      "documents_needed": [
+        "Company KRA PIN and iTax credentials",
+        "Audited financial statements (mandatory for limited companies)",
+        "Tax computation prepared by your accountant or tax advisor",
+        "Capital deduction schedule (wear and tear allowances, etc.)",
+        "Withholding tax certificates received during the year",
+        "Instalment tax payment receipts (4 quarterly payments)",
+        "Schedule of directors and shareholders with 5%+ holding",
+        "Related party transaction details (if any)",
+        "Certificate of incorporation / CR12",
+        "Transfer pricing documentation (if the company has related-party cross-border transactions)"
+      ],
+      "common_mistakes": [
+        "Not paying instalment tax (advance tax) during the year — this triggers penalties even before the return is due.",
+        "Claiming non-deductible expenses (political donations, personal expenses of directors, fines).",
+        "Incorrect capital allowance calculations — using wrong rates or claiming on non-qualifying assets.",
+        "Not filing within 6 months of the accounting period end.",
+        "Forgetting to include all income — rental income from company property, interest, foreign income.",
+        "Not attaching audited accounts — the return may be rejected.",
+        "Failing to disclose related party transactions — this is a red flag for KRA."
+      ],
+      "tips": [
+        "Engage a qualified tax advisor for corporate returns. The complexity justifies the cost.",
+        "Plan your instalment tax: each payment is 25% of your estimated annual tax. Underestimating by more than 10% triggers penalties.",
+        "Capital deduction rates vary by asset type: computers 30%, furniture 12.5%, motor vehicles 25%, buildings 10%. Use the correct rates.",
+        "Newly listed companies on the Nairobi Securities Exchange get a 25% rate for 5 years — claim this if applicable.",
+        "Keep all supporting documents for 7 years. KRA can audit corporate returns going back that far.",
+        "File early to avoid the last-minute rush and system downtime."
+      ]
+    },
+    {
+      "tax_key": "withholding_tax",
+      "title": "How to File Withholding Tax Returns on iTax",
+      "itax_menu_path": "Returns > File Returns > Withholding Tax",
+      "estimated_time": "15-30 minutes",
+      "steps": [
+        "Log in to iTax at https://itax.kra.go.ke using your KRA PIN and password.",
+        "Click 'Returns' in the top menu, then select 'File Returns'.",
+        "Select 'Withholding Tax' from the 'Tax Obligation' dropdown.",
+        "Select the return period (month and year).",
+        "Download the WHT CSV template from iTax.",
+        "For each qualifying payment you made during the month, fill in: payee's KRA PIN, payee name, nature of payment, gross amount, WHT rate applied, WHT amount deducted.",
+        "Common WHT rates: dividends (resident 5%), interest (15%), professional/management fees (5%), commercial rent (10%), contractual fees (3%).",
+        "Upload the completed CSV file to iTax.",
+        "The system validates the data. Fix any errors (e.g. invalid payee PIN, wrong rate).",
+        "Review the summary: total payments, total WHT deducted.",
+        "Click 'Submit' to file the return.",
+        "Download the acknowledgement receipt.",
+        "Generate WHT certificates for each payee — they need these to claim tax credits. Go to 'Certificates' > 'Withholding Tax Certificate' to generate.",
+        "Generate a payment slip and pay the total WHT to KRA by the 20th of the following month.",
+        "Pay via M-Pesa (Paybill 572572), bank, or e-payment."
+      ],
+      "documents_needed": [
+        "KRA PIN and iTax credentials",
+        "List of all qualifying payments made during the month",
+        "Payee KRA PINs (you must have the PIN of everyone you deducted WHT from)",
+        "Invoices or contracts showing the nature and amount of each payment",
+        "WHT CSV template downloaded from iTax",
+        "Records of WHT rates applied to each payment type"
+      ],
+      "common_mistakes": [
+        "Not deducting WHT when required — if you pay professional fees, management fees, rent, etc., you must deduct and remit WHT.",
+        "Applying the wrong WHT rate for the payment type.",
+        "Not having the payee's KRA PIN — you cannot file without it. Get it before making payment.",
+        "Forgetting to issue WHT certificates to payees — they need these for their own tax returns.",
+        "Treating all payments to suppliers as subject to WHT — not all payments attract WHT, only specific types.",
+        "Not filing NIL when no qualifying payments were made in a month."
+      ],
+      "tips": [
+        "Always ask for a supplier's KRA PIN before making the first payment. Add it to your supplier master file.",
+        "Create a simple tracker for all WHT payments: date, payee, amount, rate, WHT deducted.",
+        "WHT on rent: if you pay rent for your business premises, you must deduct 10% WHT and remit to KRA.",
+        "WHT on professional fees: applies to payments for legal, accounting, consulting, and other professional services.",
+        "Issue WHT certificates promptly. Your suppliers need them, and it builds good business relationships.",
+        "Non-resident payments may attract different (usually higher) WHT rates. Check the Double Taxation Agreement if applicable."
+      ]
+    },
+    {
+      "tax_key": "nssf",
+      "title": "How to File NSSF Contributions",
+      "itax_menu_path": "Filed via NSSF portal at https://eservices.nssf.or.ke (not iTax)",
+      "estimated_time": "15-30 minutes",
+      "steps": [
+        "Log in to the NSSF self-service portal at https://eservices.nssf.or.ke using your employer credentials.",
+        "Click on 'Contribution' then 'Upload Contribution File'.",
+        "Download the NSSF contribution template (Excel format).",
+        "Fill in each employee's details: NSSF number, national ID, name, gross earnings, employee contribution, employer contribution.",
+        "Calculate contributions: 6% of pensionable earnings, split equally between employer and employee. Tier I is on earnings up to KES 7,000. Tier II is on earnings between KES 7,001 and KES 36,000.",
+        "Example: an employee earning KES 30,000 — Tier I contribution = KES 420 each (6% of 7,000), Tier II contribution = KES 1,380 each (6% of 23,000). Total employee contribution = KES 1,800.",
+        "Upload the completed template to the portal.",
+        "The system validates the data. Fix any errors (missing NSSF numbers, calculation mismatches).",
+        "Confirm the total contribution amount (employer + employee).",
+        "Generate the payment advice.",
+        "Pay via M-Pesa (NSSF Paybill) or bank transfer by the 9th of the following month.",
+        "Download the payment receipt and contribution schedule for your records."
+      ],
+      "documents_needed": [
+        "NSSF employer registration number",
+        "NSSF portal login credentials",
+        "Employee NSSF member numbers (ensure all employees are registered)",
+        "Monthly payroll showing gross earnings per employee",
+        "NSSF contribution template (downloaded from portal)",
+        "Employee national ID numbers"
+      ],
+      "common_mistakes": [
+        "Using the old NSSF rates (KES 200 flat per employee) — the new rates are 6% of pensionable pay in two tiers.",
+        "Not registering new employees with NSSF before filing — each employee must have an NSSF number.",
+        "Calculating contributions on basic salary only instead of total pensionable earnings.",
+        "Missing the 9th deadline — late contributions attract penalties.",
+        "Not including both Tier I and Tier II contributions.",
+        "Confusing the NSSF portal with iTax — NSSF has its own separate portal."
+      ],
+      "tips": [
+        "Register new employees with NSSF immediately when they join. You can register online at the NSSF portal.",
+        "NSSF contributions are tax-deductible for the employer — factor this into your tax planning.",
+        "Employee NSSF contributions reduce taxable income for PAYE — ensure your payroll accounts for this.",
+        "File NSSF at the same time as PAYE, SHIF, and Housing Levy — they all share the 9th deadline.",
+        "Keep a record of all NSSF payments. Employees may request contribution statements when approaching retirement.",
+        "If you have no employees in a given month, you may still need to file a NIL return depending on your registration status."
+      ]
+    },
+    {
+      "tax_key": "shif",
+      "title": "How to File SHIF (Social Health Insurance Fund) Contributions",
+      "itax_menu_path": "Filed via SHA portal at https://sha.go.ke (replaced NHIF)",
+      "estimated_time": "15-20 minutes",
+      "steps": [
+        "Log in to the Social Health Authority (SHA) portal at https://sha.go.ke using your employer credentials.",
+        "Navigate to the employer contribution filing section.",
+        "Download the SHIF contribution template.",
+        "Fill in each employee's details: national ID, SHA/SHIF number, name, gross salary, SHIF contribution amount.",
+        "Calculate SHIF: 2.75% of each employee's gross salary. This is deducted from the employee's pay.",
+        "Example: employee earning KES 50,000 gross — SHIF contribution = KES 1,375 (2.75% of 50,000).",
+        "Upload the completed template.",
+        "The system validates employee records. Fix any errors (unregistered employees, calculation mismatches).",
+        "Confirm the total contribution amount for all employees.",
+        "Generate the payment advice.",
+        "Pay via M-Pesa or bank transfer by the 9th of the following month.",
+        "Download the payment receipt for your records."
+      ],
+      "documents_needed": [
+        "SHA employer registration details",
+        "SHA portal login credentials",
+        "Employee national ID numbers and SHA/SHIF member numbers",
+        "Monthly payroll showing gross salary per employee",
+        "SHIF contribution template (downloaded from SHA portal)"
+      ],
+      "common_mistakes": [
+        "Using old NHIF fixed rates instead of the new 2.75% of gross salary under SHIF.",
+        "Not registering employees on the SHA portal — each employee needs a SHIF number.",
+        "Calculating SHIF on basic salary instead of gross salary.",
+        "Missing the 9th deadline — same deadline as PAYE, NSSF, and Housing Levy.",
+        "Confusing SHA portal with the old NHIF portal — NHIF has been replaced by SHIF under SHA.",
+        "Not deducting SHIF for employees on probation — they are still eligible."
+      ],
+      "tips": [
+        "SHIF replaced NHIF from October 2024. Make sure you are using the new rates and portal.",
+        "2.75% is on gross salary with no cap currently specified — verify current regulations as this may change.",
+        "Help employees register on the SHA portal if they have not migrated from NHIF.",
+        "File together with PAYE, NSSF, and Housing Levy to streamline your monthly payroll compliance.",
+        "Keep records of all SHIF remittances. Employees may need proof of contribution for healthcare access.",
+        "SHIF is an employee-only deduction (employer does not match), unlike NSSF and Housing Levy."
+      ]
+    },
+    {
+      "tax_key": "housing_levy",
+      "title": "How to File Affordable Housing Levy on iTax",
+      "itax_menu_path": "Returns > File Returns > Affordable Housing Levy",
+      "estimated_time": "15-20 minutes",
+      "steps": [
+        "Log in to iTax at https://itax.kra.go.ke using your employer KRA PIN and password.",
+        "Click 'Returns' in the top menu, then select 'File Returns'.",
+        "Select 'Affordable Housing Levy' from the 'Tax Obligation' dropdown.",
+        "Select the return period (month and year).",
+        "Download the Housing Levy CSV template from iTax.",
+        "Fill in each employee's details: KRA PIN, national ID, name, gross salary, employee levy (1.5%), employer levy (1.5%).",
+        "Calculate: Employee contributes 1.5% of gross salary. Employer matches with another 1.5% of the employee's gross salary.",
+        "Example: employee earning KES 50,000 — employee levy = KES 750, employer levy = KES 750, total = KES 1,500.",
+        "Upload the completed CSV to iTax.",
+        "The system validates the data. Fix any flagged errors.",
+        "Review the summary: total employee levy, total employer levy, grand total.",
+        "Click 'Submit' to file the return.",
+        "Download the acknowledgement receipt.",
+        "Generate a payment slip and pay the total amount (employee + employer portions) by the 9th of the following month.",
+        "Pay via M-Pesa (Paybill 572572), bank, or e-payment."
+      ],
+      "documents_needed": [
+        "KRA employer PIN and iTax credentials",
+        "Employee KRA PINs and national ID numbers",
+        "Monthly payroll showing gross salary per employee",
+        "Housing Levy CSV template downloaded from iTax",
+        "Previous month's Housing Levy return for reference"
+      ],
+      "common_mistakes": [
+        "Forgetting the employer's matching 1.5% — the employer must also contribute, not just deduct from employees.",
+        "Calculating on basic salary instead of gross salary.",
+        "Not including all employees — all workers on payroll are subject to the levy.",
+        "Confusing the Housing Levy with NSSF or SHIF — they are separate obligations with separate filings.",
+        "Missing the 9th deadline — same deadline as PAYE.",
+        "Not filing when you have no employees — check if a NIL return is required based on your registration."
+      ],
+      "tips": [
+        "The Housing Levy is filed on iTax (unlike NSSF and SHIF which have separate portals).",
+        "The employer's 1.5% contribution is an additional cost to the business — budget for it.",
+        "Housing Levy is not tax-deductible for the employee but the employer portion is a deductible business expense.",
+        "File at the same time as PAYE since they share the same deadline and use iTax.",
+        "Maintain a separate column in your payroll for Housing Levy to keep it clear.",
+        "This levy applies to all employees regardless of nationality or contract type."
+      ]
+    },
+    {
+      "tax_key": "residential_rental_income",
+      "title": "How to File Monthly Rental Income (MRI) Tax on iTax",
+      "itax_menu_path": "Returns > File Returns > Rental Income Tax",
+      "estimated_time": "15-20 minutes",
+      "steps": [
+        "Log in to iTax at https://itax.kra.go.ke using your KRA PIN and password.",
+        "Click 'Returns' in the top menu, then select 'File Returns'.",
+        "Select 'Rental Income Tax' from the 'Tax Obligation' dropdown.",
+        "Select the return period (month and year).",
+        "Enter the total gross rent received from all your residential properties during the month.",
+        "The system automatically calculates MRI at 7.5% of gross rent.",
+        "Note: No deductions or expenses are allowed under the MRI regime. The 7.5% applies to gross rent, not net rent.",
+        "Review the calculated tax amount.",
+        "Click 'Submit' to file the return.",
+        "Download the acknowledgement receipt.",
+        "Generate a payment slip and pay the MRI tax by the 20th of the following month.",
+        "Pay via M-Pesa (Paybill 572572), bank, or e-payment.",
+        "Repeat every month you receive rental income."
+      ],
+      "documents_needed": [
+        "KRA PIN and iTax credentials",
+        "Records of all rent received during the month (tenant payments)",
+        "Lease/tenancy agreements (for reference)",
+        "Bank statements showing rental income deposits",
+        "Property ownership documents (title deed, sale agreement)"
+      ],
+      "common_mistakes": [
+        "Trying to deduct expenses (repairs, management fees, mortgage interest) — MRI does not allow any deductions. It is 7.5% of gross rent.",
+        "Not being eligible: MRI only applies if annual rental income is between KES 288,000 and KES 15,000,000. Below or above these thresholds, different rules apply.",
+        "Including commercial property rent — MRI is for residential properties only. Commercial rent falls under regular income tax.",
+        "Not filing in months when no rent was collected — file NIL if you are registered for MRI.",
+        "Mixing up MRI with regular income tax on rental income — you must choose one regime.",
+        "Not registering for the MRI obligation on iTax before trying to file."
+      ],
+      "tips": [
+        "MRI is simpler than regular income tax on rent because there are no deductions to calculate. Just 7.5% of gross rent.",
+        "If your rental expenses are high (mortgage, major repairs), regular income tax may be better than MRI — you can deduct expenses there.",
+        "Once you opt for MRI, you must stay on it for the full year. You cannot switch mid-year.",
+        "Keep records of all tenant payments. M-Pesa and bank transfer records serve as evidence.",
+        "If your total annual rent exceeds KES 15M, you must switch to the regular income tax regime.",
+        "This is a final tax — rental income filed under MRI is not included in your annual income tax return."
+      ]
+    },
+    {
+      "tax_key": "presumptive_tax",
+      "title": "How to Pay Presumptive Tax",
+      "itax_menu_path": "Returns > File Returns > Presumptive Tax (or paid at county level with business permit)",
+      "estimated_time": "10-15 minutes",
+      "steps": [
+        "Determine if you qualify: your annual business turnover must be below KES 1,000,000.",
+        "Presumptive tax is typically paid when renewing your single business permit at the county government offices.",
+        "The county government collects the presumptive tax on behalf of KRA at the time of business permit issuance or renewal.",
+        "The amount is a lump sum of KES 15,000 per year (fixed, regardless of actual turnover).",
+        "If filing through iTax: Log in to iTax at https://itax.kra.go.ke.",
+        "Click 'Returns' > 'File Returns' > select 'Presumptive Tax' from the obligation dropdown.",
+        "Enter your business details and the period.",
+        "The fixed amount of KES 15,000 will be shown.",
+        "Click 'Submit' to file.",
+        "Generate a payment slip if paying through iTax rather than at the county office.",
+        "Pay via M-Pesa (Paybill 572572), bank, or at the county revenue office.",
+        "Keep the payment receipt and your business permit as proof of compliance."
+      ],
+      "documents_needed": [
+        "KRA PIN and iTax credentials (if filing online)",
+        "Single business permit (or application for one)",
+        "National ID or passport",
+        "Business registration certificate (if applicable)",
+        "Evidence that annual turnover is below KES 1,000,000"
+      ],
+      "common_mistakes": [
+        "Paying presumptive tax when turnover exceeds KES 1M — you should be on Turnover Tax (TOT) instead.",
+        "Not understanding that presumptive tax is a final tax — you do not file a separate income tax return for this business income.",
+        "Assuming presumptive tax covers all tax types — it only covers income tax. You may still owe other taxes (VAT if registered, PAYE if you have employees, etc.).",
+        "Paying at the county level but not reflecting it on iTax — make sure your KRA records are updated.",
+        "Not keeping the receipt — you need proof of payment if KRA queries your compliance."
+      ],
+      "tips": [
+        "Presumptive tax is the simplest tax regime in Kenya. KES 15,000 per year, no calculations needed.",
+        "If your business is growing and turnover is approaching KES 1M, plan your transition to TOT in advance.",
+        "Presumptive tax is ideal for very small businesses: mama mboga, small kiosks, bodaboda operators, etc.",
+        "Even though it is paid at the county level, it is a KRA tax. Ensure it reflects in your iTax account.",
+        "You can verify your tax status on iTax anytime to confirm the payment was recorded.",
+        "If you run multiple businesses, each one under KES 1M may qualify separately — but check with KRA."
+      ]
+    }
+  ]
+}

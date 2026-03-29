@@ -6,9 +6,9 @@ import json
 from datetime import datetime
 from .base import BaseAgent
 from .onboarding import OnboardingOrchestrator
-from .intelligence import ObligationMapper, DeadlineCalculator, RiskScorer, ComplianceChecker
+from .intelligence import ObligationMapper, DeadlineCalculator, RiskScorer, ComplianceChecker, PenaltyCalculator
 from .validation import ValidationOrchestrator
-from .communication import Explainer, UrgencyFramer
+from .communication import Explainer, UrgencyFramer, NotificationEngine
 import sys
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent.parent))
 from workflow.audit_trail import AuditTrail
@@ -70,19 +70,31 @@ class Orchestrator(BaseAgent):
         checker = ComplianceChecker()
         compliance = checker.check(profile, obligations)
 
-        # Step 5: Validate
+        # Step 5: Calculate penalties
+        penalty_calc = PenaltyCalculator()
+        penalties = penalty_calc.calculate_penalties(profile, obligations)
+
+        # Step 6: Validate
         validator = ValidationOrchestrator()
         validated = validator.validate(profile, obligations, compliance, risk)
+        validated["penalties"] = penalties
 
-        # Step 6: Frame urgency
+        # Step 7: Frame urgency
         framer = UrgencyFramer()
         urgency = framer.frame(obligations)
         validated["urgency"] = urgency
 
-        # Step 7: Generate explanation
+        # Step 8: Generate explanation
         explainer = Explainer()
         message = explainer.explain(validated)
         validated["message"] = message
+
+        # Step 9: Queue notifications
+        notifier = NotificationEngine()
+        alerts = notifier.generate_alerts(profile, obligations, urgency)
+        if alerts:
+            notifier.save_alert_queue(alerts)
+            validated["alerts_queued"] = len(alerts)
 
         # Save full report
         report_path = self.data_dir / "processed" / "obligations" / f"{pin}.json"
@@ -92,6 +104,7 @@ class Orchestrator(BaseAgent):
             "obligations": obligations,
             "compliance": compliance,
             "risk": risk,
+            "penalties": penalties,
             "urgency": urgency,
         })
 
@@ -100,7 +113,10 @@ class Orchestrator(BaseAgent):
             "obligations_count": len(obligations),
             "compliance_status": compliance["overall"],
             "risk_score": risk["risk_score"],
+            "penalty_exposure_kes": penalties.get("total_penalty_exposure_kes", 0),
+            "penalty_severity": penalties.get("severity", "none"),
             "urgency": urgency["urgency_level"],
+            "alerts_queued": validated.get("alerts_queued", 0),
         }, sme_pin=pin)
 
         self.log(f"=== CHECK COMPLETE: {pin} | {compliance['overall']} | risk={risk['risk_score']} ===")
