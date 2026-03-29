@@ -1,0 +1,2 @@
+pin,name,business_type,industry,turnover_bracket,business_name,county,annual_turnover_kes,has_employees,employee_count,is_vat_registered,has_etims,phone,email,preferred_language,preferred_channel,rental_income_annual_kes
+A123456789B,Jane Wanjiru,sole_proprietor,food_hospitality,1m_to_8m,Jane's Kitchen,Nairobi,2500000,true,3,false,false,0723456789,jane@example.com,en,whatsapp,

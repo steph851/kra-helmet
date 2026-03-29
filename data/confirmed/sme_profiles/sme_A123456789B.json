@@ -1,0 +1,37 @@
+{
+  "sub_county": null,
+  "employee_count": 3,
+  "rental_income_annual_kes": null,
+  "email": "jane@example.com",
+  "preferred_language": "en",
+  "preferred_channel": "whatsapp",
+  "onboarded_at": "2026-03-29T14:01:51.035653",
+  "last_updated": "2026-03-29T14:01:51.035653",
+  "pin": "A123456789B",
+  "name": "Jane Wanjiru",
+  "business_type": "sole_proprietor",
+  "industry": "food_hospitality",
+  "turnover_bracket": "1m_to_8m",
+  "business_name": "Jane's Kitchen",
+  "county": "Nairobi",
+  "phone": "0723456789",
+  "annual_turnover_kes": 2500000.0,
+  "has_employees": true,
+  "is_vat_registered": false,
+  "has_etims": false,
+  "classification": {
+    "industry": "food_hospitality",
+    "industry_label": "Food & Hospitality",
+    "turnover_bracket": "1m_to_8m",
+    "obligations": [
+      "turnover_tax",
+      "paye",
+      "nssf",
+      "shif",
+      "housing_levy"
+    ],
+    "wht_triggers": [],
+    "etims_required": false,
+    "notes": null
+  }
+}

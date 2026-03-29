@@ -12,6 +12,12 @@
       "name": "STEPHEN WANJUKI",
       "onboarded_at": "2026-03-29T11:17:42.704689",
       "active": true
+    },
+    {
+      "pin": "A123456789B",
+      "name": "Jane Wanjiru",
+      "onboarded_at": "2026-03-29T14:01:51.790509",
+      "active": true
     }
   ]
 }

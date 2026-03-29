@@ -2,14 +2,22 @@
 KRA HELMET — CLI Entry Point
 Usage:
     python run.py onboard              → Interactive SME onboarding
+    python run.py import <csv_file>    → Batch import SMEs from CSV
+    python run.py import --template    → Generate CSV template
     python run.py check <PIN>          → Full compliance check for one SME
     python run.py check --all          → Check all onboarded SMEs
+    python run.py file <PIN>           → Record a tax filing (interactive)
+    python run.py file <PIN> <tax> <period> [amount] [ref]
+    python run.py filings <PIN>        → View filing history
     python run.py status               → System status dashboard
     python run.py review               → Human gate — review pending items
     python run.py audit [PIN]          → View audit trail
     python run.py guide <tax_type>     → Show filing guide for a tax type
     python run.py guide --list         → List available filing guides
+    python run.py report <PIN>         → Generate per-SME HTML report
+    python run.py report --all         → Generate reports for all SMEs
     python run.py dashboard            → Generate HTML dashboard
+    python run.py api                  → Start REST API server
     python run.py demo                 → Onboard a demo SME and run full check
 """
 import sys
@@ -144,11 +152,98 @@ def main():
                     print(f"    💡 {t}")
                 print()
 
+    elif command == "import":
+        from agents.onboarding.batch_onboarder import BatchOnboarder
+        batch = BatchOnboarder()
+
+        if args and args[0] == "--template":
+            output = ROOT / "sme_template.csv"
+            batch.generate_template(output)
+            print(f"\n  CSV template generated: {output}")
+            print(f"  Fill it in and run: python run.py import sme_template.csv\n")
+        elif args:
+            results = batch.import_csv(args[0])
+            print(f"\n{'='*60}")
+            print(f"  Batch Import Results")
+            print(f"{'='*60}")
+            print(f"  Imported: {results['success']}")
+            print(f"  Skipped:  {results['skipped']} (already onboarded)")
+            print(f"  Failed:   {results['failed']}")
+            if results["errors"]:
+                print(f"\n  Errors:")
+                for e in results["errors"]:
+                    print(f"    - {e}")
+            if results["imported"]:
+                print(f"\n  New SMEs:")
+                for s in results["imported"]:
+                    print(f"    + {s['name']} ({s['pin']})")
+            print()
+        else:
+            print("  Usage: python run.py import <csv_file> or python run.py import --template")
+
+    elif command == "file":
+        from workflow.filing_tracker import FilingTracker
+        tracker = FilingTracker()
+
+        if not args:
+            print("  Usage: python run.py file <PIN> [tax_type] [period] [amount] [reference]")
+        elif len(args) == 1:
+            # Interactive mode
+            tracker.interactive_file(args[0].upper())
+        else:
+            # Direct mode: file PIN tax_type period [amount] [ref]
+            pin = args[0].upper()
+            tax_type = args[1]
+            period = args[2] if len(args) > 2 else ""
+            amount = float(args[3]) if len(args) > 3 else 0
+            ref = args[4] if len(args) > 4 else ""
+
+            if not period:
+                print("  Usage: python run.py file <PIN> <tax_type> <period> [amount] [reference]")
+            else:
+                tracker.record_filing(pin, tax_type, period, amount, ref)
+
+    elif command == "filings":
+        from workflow.filing_tracker import FilingTracker
+        tracker = FilingTracker()
+        pin = args[0].upper() if args else None
+        if not pin:
+            print("  Usage: python run.py filings <PIN>")
+        else:
+            tracker.print_history(pin)
+
+    elif command == "report":
+        from agents.report_generator import ReportGenerator
+        gen = ReportGenerator()
+
+        if args and args[0] == "--all":
+            paths = gen.generate_all()
+            print(f"\n  Generated {len(paths)} report(s):")
+            for p in paths:
+                print(f"    {p}")
+            print()
+        elif args:
+            pin = args[0].upper()
+            path = gen.generate(pin)
+            if path:
+                print(f"\n  Report generated: {path}\n")
+            else:
+                print(f"\n  SME not found: {pin}\n")
+        else:
+            print("  Usage: python run.py report <PIN> or python run.py report --all")
+
     elif command == "dashboard":
         from agents.dashboard import DashboardGenerator
         gen = DashboardGenerator()
         output = gen.generate()
         print(f"\n  Dashboard generated: {output}\n")
+
+    elif command == "api":
+        print("\n  Starting KRA HELMET API server...")
+        print("  Open http://localhost:8000 in your browser")
+        print("  API docs: http://localhost:8000/docs\n")
+        import subprocess
+        subprocess.run([sys.executable, "-m", "uvicorn", "api:app", "--reload", "--port", "8000"], cwd=str(ROOT))
 
     elif command == "demo":
         print("\n  Running demo with test SME...\n")
