@@ -195,6 +195,7 @@ def root():
         "status": "running",
         "auth_required": settings["api"].get("require_auth", True) and bool(API_KEY),
         "endpoints": {
+            "health": "/health",
             "smes": "/smes",
             "check": "/check/{pin}",
             "onboard": "POST /onboard",
@@ -204,6 +205,63 @@ def root():
             "audit": "/audit",
             "guides": "/guides",
         }
+    }
+
+
+@app.get("/health")
+def health_check():
+    """System health check — verifies all critical components."""
+    checks = {}
+
+    # Config
+    try:
+        from config.loader import get_settings
+        s = get_settings()
+        checks["config"] = {"status": "ok", "version": s["system"]["version"]}
+    except Exception as e:
+        checks["config"] = {"status": "error", "detail": str(e)}
+
+    # SME registry
+    try:
+        smes = orch.list_smes()
+        checks["sme_registry"] = {"status": "ok", "count": len(smes)}
+    except Exception as e:
+        checks["sme_registry"] = {"status": "error", "detail": str(e)}
+
+    # Intelligence data
+    intel_files = ["tax_knowledge_graph.json", "industry_profiles.json", "deadline_calendar.json", "filing_guides.json"]
+    missing = [f for f in intel_files if not (ROOT / "intelligence" / f).exists()]
+    checks["intelligence_data"] = {"status": "ok" if not missing else "error", "missing": missing}
+
+    # Data directories
+    dirs = {
+        "confirmed_profiles": ROOT / "data" / "confirmed" / "sme_profiles",
+        "processed_obligations": ROOT / "data" / "processed" / "obligations",
+        "filings": ROOT / "data" / "filings",
+        "staging": ROOT / "staging" / "review",
+    }
+    for name, path in dirs.items():
+        checks[name] = {"status": "ok" if path.exists() else "missing"}
+
+    # Audit trail
+    audit_path = ROOT / "logs" / "audit_trail.jsonl"
+    checks["audit_trail"] = {"status": "ok" if audit_path.exists() else "not_started"}
+
+    # API key
+    checks["authentication"] = {
+        "status": "enabled" if API_KEY else "disabled",
+    }
+
+    # Overall
+    all_ok = all(
+        c.get("status") in ("ok", "enabled", "disabled", "not_started")
+        for c in checks.values()
+    )
+
+    return {
+        "status": "healthy" if all_ok else "degraded",
+        "timestamp": datetime.now().isoformat(),
+        "checks": checks,
     }
 
 
