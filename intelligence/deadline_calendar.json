@@ -1,0 +1,40 @@
+{
+  "_note": "Kenya public holidays 2026 + known iTax downtime patterns. Used by deadline_calculator.",
+  "public_holidays_2026": [
+    {"date": "2026-01-01", "name": "New Year's Day"},
+    {"date": "2026-03-20", "name": "Eid al-Fitr (estimated)"},
+    {"date": "2026-04-03", "name": "Good Friday"},
+    {"date": "2026-04-06", "name": "Easter Monday"},
+    {"date": "2026-05-01", "name": "Labour Day"},
+    {"date": "2026-05-27", "name": "Eid al-Adha (estimated)"},
+    {"date": "2026-06-01", "name": "Madaraka Day"},
+    {"date": "2026-10-10", "name": "Huduma Day"},
+    {"date": "2026-10-20", "name": "Mashujaa Day"},
+    {"date": "2026-12-12", "name": "Jamhuri Day"},
+    {"date": "2026-12-25", "name": "Christmas Day"},
+    {"date": "2026-12-26", "name": "Boxing Day"}
+  ],
+  "holiday_rule": "If a public holiday falls on a Sunday, the following Monday is observed as a holiday.",
+  "itax_known_downtime": {
+    "pattern": "iTax often goes down for maintenance on weekends, especially end-of-month weekends and during filing rush periods (June, January).",
+    "recommendation_buffer_days": 3,
+    "note": "Always file 3 days before the deadline to account for iTax downtime."
+  },
+  "filing_deadlines_monthly": {
+    "paye": {"day": 9, "note": "9th of the following month"},
+    "nssf": {"day": 9, "note": "9th of the following month"},
+    "shif": {"day": 9, "note": "9th of the following month"},
+    "housing_levy": {"day": 9, "note": "9th of the following month"},
+    "vat": {"day": 20, "note": "20th of the following month"},
+    "turnover_tax": {"day": 20, "note": "20th of the following month"},
+    "withholding_tax": {"day": 20, "note": "20th of the following month"},
+    "residential_rental_income": {"day": 20, "note": "20th of the following month"},
+    "excise_duty": {"day": 20, "note": "20th of the following month"}
+  },
+  "filing_deadlines_annual": {
+    "income_tax_resident": {"deadline": "June 30", "note": "30 June of the year following the tax year"},
+    "income_tax_corporate": {"deadline": "6 months after year-end", "note": "6th month after end of accounting period"}
+  },
+  "advance_tax_dates": ["Apr 20", "Jun 20", "Sep 20", "Dec 20"],
+  "weekend_rule": "If deadline falls on Saturday or Sunday, the next working day applies. If it falls on a public holiday, the next working day applies."
+}

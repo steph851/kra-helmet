@@ -1,0 +1,12 @@
+{
+  "urgency_levels": {
+    "green": {"days_before_deadline": 30, "label": "On track", "action": "no_alert"},
+    "yellow": {"days_before_deadline": 7, "label": "Due soon", "action": "alert_once"},
+    "orange": {"days_before_deadline": 3, "label": "Urgent", "action": "alert_daily"},
+    "red": {"days_before_deadline": 1, "label": "Critical — file TODAY", "action": "alert_immediately"},
+    "black": {"days_past_deadline": 1, "label": "OVERDUE — penalties accruing", "action": "escalate"}
+  },
+  "max_alerts_per_sme_per_day": 3,
+  "quiet_hours": {"start": "21:00", "end": "07:00", "timezone": "Africa/Nairobi"},
+  "escalation_after_missed_alerts": 3
+}

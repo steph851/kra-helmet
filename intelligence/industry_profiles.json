@@ -1,0 +1,146 @@
+{
+  "_note": "Maps business industries to their tax obligations in Kenya.",
+  "industries": {
+    "retail_wholesale": {
+      "label": "Retail / Wholesale Shop",
+      "examples": ["kiosk", "duka", "wholesale shop", "supermarket", "market stall"],
+      "typical_turnover_range": "below_25m",
+      "obligations": {
+        "below_1m": ["presumptive_tax"],
+        "1m_to_8m": ["turnover_tax"],
+        "8m_to_25m": ["turnover_tax", "vat"],
+        "above_25m": ["income_tax_resident", "vat"]
+      },
+      "if_has_employees": ["paye", "nssf", "shif", "housing_levy"],
+      "etims_required_when": "vat_registered",
+      "common_wht_triggers": ["rent_commercial"]
+    },
+    "professional_services": {
+      "label": "Professional Services",
+      "examples": ["lawyer", "accountant", "consultant", "doctor", "architect", "engineer", "IT freelancer"],
+      "typical_turnover_range": "varies",
+      "obligations": {
+        "below_1m": ["presumptive_tax"],
+        "1m_to_25m": ["turnover_tax"],
+        "above_25m": ["income_tax_resident", "vat"]
+      },
+      "if_has_employees": ["paye", "nssf", "shif", "housing_levy"],
+      "etims_required_when": "vat_registered",
+      "common_wht_triggers": ["professional_fees", "management_fees"],
+      "note": "Clients paying professional fees must deduct 5% WHT"
+    },
+    "food_hospitality": {
+      "label": "Food & Hospitality",
+      "examples": ["restaurant", "hotel", "catering", "food truck", "bar", "cafe"],
+      "typical_turnover_range": "varies",
+      "obligations": {
+        "below_1m": ["presumptive_tax"],
+        "1m_to_8m": ["turnover_tax"],
+        "above_8m": ["income_tax_resident", "vat"]
+      },
+      "if_has_employees": ["paye", "nssf", "shif", "housing_levy"],
+      "etims_required_when": "vat_registered",
+      "special": ["tourism_levy_if_hotel"]
+    },
+    "transport": {
+      "label": "Transport & Logistics",
+      "examples": ["matatu", "boda boda", "logistics company", "courier", "taxi"],
+      "typical_turnover_range": "below_8m",
+      "obligations": {
+        "below_1m": ["presumptive_tax"],
+        "1m_to_25m": ["turnover_tax"],
+        "above_25m": ["income_tax_resident", "vat"]
+      },
+      "if_has_employees": ["paye", "nssf", "shif", "housing_levy"],
+      "note": "Most matatu and boda operators fall under TOT or presumptive tax"
+    },
+    "manufacturing": {
+      "label": "Manufacturing",
+      "examples": ["factory", "food processing", "textiles", "furniture maker", "brewery"],
+      "typical_turnover_range": "above_8m",
+      "obligations": {
+        "all": ["income_tax_resident", "vat"],
+        "if_excisable": ["excise_duty"]
+      },
+      "if_has_employees": ["paye", "nssf", "shif", "housing_levy"],
+      "etims_required_when": "always",
+      "common_wht_triggers": ["contractual_fees"]
+    },
+    "rental_income": {
+      "label": "Rental Income (Residential)",
+      "examples": ["landlord", "apartment owner", "rental property"],
+      "obligations": {
+        "288k_to_15m": ["residential_rental_income"],
+        "above_15m": ["income_tax_resident"]
+      },
+      "common_wht_triggers": ["rent_commercial"],
+      "note": "MRI at 7.5% is final tax — no deductions allowed"
+    },
+    "digital_online": {
+      "label": "Digital / Online Business",
+      "examples": ["e-commerce", "app developer", "content creator", "online freelancer", "digital agency"],
+      "obligations": {
+        "below_1m": ["presumptive_tax"],
+        "1m_to_25m": ["turnover_tax"],
+        "above_25m": ["income_tax_resident", "vat"]
+      },
+      "if_has_employees": ["paye", "nssf", "shif", "housing_levy"],
+      "note": "DST repealed for residents from Jan 2025. Income taxed under normal IT."
+    },
+    "construction": {
+      "label": "Construction & Building",
+      "examples": ["contractor", "plumber", "electrician", "painter", "mason", "construction company"],
+      "obligations": {
+        "below_1m": ["presumptive_tax"],
+        "1m_to_25m": ["turnover_tax"],
+        "above_25m": ["income_tax_resident", "vat"]
+      },
+      "if_has_employees": ["paye", "nssf", "shif", "housing_levy"],
+      "common_wht_triggers": ["contractual_fees"]
+    },
+    "agriculture": {
+      "label": "Agriculture & Farming",
+      "examples": ["farmer", "dairy", "poultry", "horticulture", "fish farming"],
+      "obligations": {
+        "below_1m": ["presumptive_tax"],
+        "1m_to_25m": ["turnover_tax"],
+        "above_25m": ["income_tax_resident"]
+      },
+      "if_has_employees": ["paye", "nssf", "shif", "housing_levy"],
+      "note": "Many agricultural products are VAT-exempt or zero-rated"
+    },
+    "salon_beauty": {
+      "label": "Salon & Beauty",
+      "examples": ["salon", "barbershop", "spa", "beauty parlour"],
+      "typical_turnover_range": "below_8m",
+      "obligations": {
+        "below_1m": ["presumptive_tax"],
+        "1m_to_8m": ["turnover_tax"],
+        "above_8m": ["income_tax_resident", "vat"]
+      },
+      "if_has_employees": ["paye", "nssf", "shif", "housing_levy"]
+    },
+    "education": {
+      "label": "Education & Training",
+      "examples": ["school", "college", "tutor", "training center", "driving school"],
+      "obligations": {
+        "below_1m": ["presumptive_tax"],
+        "1m_to_25m": ["turnover_tax"],
+        "above_25m": ["income_tax_resident"]
+      },
+      "if_has_employees": ["paye", "nssf", "shif", "housing_levy"],
+      "note": "Education services are VAT-exempt under First Schedule"
+    },
+    "healthcare": {
+      "label": "Healthcare / Medical",
+      "examples": ["clinic", "pharmacy", "dentist", "hospital", "lab"],
+      "obligations": {
+        "below_1m": ["presumptive_tax"],
+        "1m_to_25m": ["turnover_tax"],
+        "above_25m": ["income_tax_resident", "vat"]
+      },
+      "if_has_employees": ["paye", "nssf", "shif", "housing_levy"],
+      "note": "Medical services may be VAT-exempt depending on type"
+    }
+  }
+}

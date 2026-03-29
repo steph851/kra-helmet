@@ -1,0 +1,39 @@
+{
+  "sub_county": null,
+  "employee_count": 2,
+  "rental_income_annual_kes": null,
+  "email": null,
+  "preferred_language": "en",
+  "preferred_channel": "whatsapp",
+  "onboarded_at": "2026-03-29T10:17:26.134262",
+  "last_updated": "2026-03-29T10:17:26.134262",
+  "pin": "A000000001B",
+  "name": "Brian Ochieng",
+  "business_name": "Brian's Electronics",
+  "business_type": "sole_proprietor",
+  "industry": "retail_wholesale",
+  "county": "Nairobi",
+  "annual_turnover_kes": 3500000,
+  "turnover_bracket": "1m_to_8m",
+  "has_employees": true,
+  "is_vat_registered": false,
+  "has_etims": false,
+  "phone": "0712345678",
+  "classification": {
+    "industry": "retail_wholesale",
+    "industry_label": "Retail / Wholesale Shop",
+    "turnover_bracket": "1m_to_8m",
+    "obligations": [
+      "turnover_tax",
+      "paye",
+      "nssf",
+      "shif",
+      "housing_levy"
+    ],
+    "wht_triggers": [
+      "rent_commercial"
+    ],
+    "etims_required": false,
+    "notes": null
+  }
+}

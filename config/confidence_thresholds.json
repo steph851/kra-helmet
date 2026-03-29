@@ -1,0 +1,11 @@
+{
+  "auto_proceed": 0.7,
+  "human_review": 0.5,
+  "reject": 0.3,
+  "rules": {
+    "above_0.7": "Proceeds to communication agents automatically",
+    "0.5_to_0.7": "Goes to human_gate for review before proceeding",
+    "below_0.5": "Rejected — agent must retry with different approach or escalate",
+    "below_0.3": "Hard reject — flagged as unreliable, logged for investigation"
+  }
+}

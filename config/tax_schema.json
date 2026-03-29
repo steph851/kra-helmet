@@ -1,0 +1,55 @@
+{
+  "_note": "THE schema. Every agent output for an SME must match this structure.",
+  "sme_profile": {
+    "pin": "string — KRA PIN e.g. A123456789B",
+    "name": "string — business or individual name",
+    "business_name": "string or null",
+    "business_type": "sole_proprietor | partnership | limited_company | sacco | ngo",
+    "industry": "string — key from industry_profiles.json",
+    "county": "string — Kenya county",
+    "sub_county": "string or null",
+    "annual_turnover_kes": "number or null",
+    "turnover_bracket": "below_1m | 1m_to_8m | 8m_to_25m | above_25m",
+    "has_employees": "boolean",
+    "employee_count": "number or null",
+    "is_vat_registered": "boolean",
+    "has_etims": "boolean",
+    "rental_income_annual_kes": "number or null",
+    "phone": "string — M-Pesa number",
+    "email": "string or null",
+    "preferred_language": "en | sw",
+    "preferred_channel": "whatsapp | sms | email",
+    "onboarded_at": "ISO datetime",
+    "last_updated": "ISO datetime"
+  },
+  "tax_obligations": {
+    "_note": "Array of obligations mapped to this SME",
+    "obligation": {
+      "tax_type": "string — key from tax_knowledge_graph.json",
+      "tax_name": "string — display name",
+      "frequency": "monthly | annual | on_event",
+      "deadline_day": "number or null",
+      "deadline_date": "string or null — for annual filings",
+      "next_deadline": "ISO date",
+      "status": "upcoming | due_soon | overdue | filed | not_applicable",
+      "amount_estimate_kes": "number or null",
+      "confidence": "0.0 to 1.0",
+      "source": "string — which agent determined this"
+    }
+  },
+  "risk_assessment": {
+    "risk_score": "0 to 100",
+    "risk_level": "low | medium | high | critical",
+    "factors": ["array of strings explaining each risk factor"],
+    "audit_probability_pct": "number",
+    "last_assessed": "ISO datetime"
+  },
+  "compliance_status": {
+    "overall": "compliant | at_risk | non_compliant",
+    "obligations_met": "number",
+    "obligations_total": "number",
+    "overdue_count": "number",
+    "next_action": "string — what SME should do next",
+    "disclaimer": "string — always present"
+  }
+}

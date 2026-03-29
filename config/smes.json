@@ -1,0 +1,17 @@
+{
+  "_note": "Registry of all onboarded SMEs. Profile details in data/confirmed/sme_profiles/",
+  "smes": [
+    {
+      "pin": "A000000001B",
+      "name": "Brian Ochieng",
+      "onboarded_at": "2026-03-29T08:52:45.381451",
+      "active": true
+    },
+    {
+      "pin": "A018542504L",
+      "name": "STEPHEN WANJUKI",
+      "onboarded_at": "2026-03-29T11:17:42.704689",
+      "active": true
+    }
+  ]
+}

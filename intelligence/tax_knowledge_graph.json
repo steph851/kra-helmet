@@ -1,0 +1,169 @@
+{
+  "_note": "Kenya tax obligations. Source: KRA, Finance Act 2023-2025. Updated 2026-03-29.",
+  "taxes": {
+    "turnover_tax": {
+      "name": "Turnover Tax (TOT)",
+      "description": "Simplified tax for small businesses. 3% of gross turnover.",
+      "rate_pct": 3.0,
+      "threshold_min_kes": 1000000,
+      "threshold_max_kes": 25000000,
+      "filing_frequency": "monthly",
+      "filing_deadline_day": 20,
+      "filing_deadline_note": "20th of the following month",
+      "applies_to": ["sole_proprietor", "partnership"],
+      "excludes": ["rental_income", "capital_gains", "employment_income"],
+      "itax_obligation_code": "TOT",
+      "penalty_late_filing_kes": 20000,
+      "penalty_late_payment_pct": 5.0,
+      "interest_on_late_pct_monthly": 1.0,
+      "replaces": ["income_tax"],
+      "etims_required": false
+    },
+    "vat": {
+      "name": "Value Added Tax (VAT)",
+      "description": "Tax on supply of goods and services. Must register when turnover exceeds KES 8M.",
+      "rate_standard_pct": 16.0,
+      "rate_zero_pct": 0.0,
+      "rate_exempt": "exempt",
+      "registration_threshold_kes": 8000000,
+      "voluntary_registration": true,
+      "filing_frequency": "monthly",
+      "filing_deadline_day": 20,
+      "filing_deadline_note": "20th of the following month",
+      "applies_to": ["all_registered"],
+      "itax_obligation_code": "VAT",
+      "penalty_late_filing_kes": 10000,
+      "penalty_late_payment_pct": 5.0,
+      "interest_on_late_pct_monthly": 1.0,
+      "etims_required": true,
+      "etims_note": "All VAT-registered businesses must issue eTIMS invoices from 2024"
+    },
+    "paye": {
+      "name": "Pay As You Earn (PAYE)",
+      "description": "Tax deducted from employee salaries by employer.",
+      "filing_frequency": "monthly",
+      "filing_deadline_day": 9,
+      "filing_deadline_note": "9th of the following month",
+      "applies_when": "business_has_employees",
+      "itax_obligation_code": "PAYE",
+      "brackets_2025": [
+        {"min": 0, "max": 24000, "rate_pct": 10},
+        {"min": 24001, "max": 32333, "rate_pct": 25},
+        {"min": 32334, "max": 500000, "rate_pct": 30},
+        {"min": 500001, "max": 800000, "rate_pct": 32.5},
+        {"min": 800001, "max": null, "rate_pct": 35}
+      ],
+      "personal_relief_kes_monthly": 2400,
+      "penalty_late_filing_pct": 25.0,
+      "penalty_late_payment_pct": 5.0,
+      "interest_on_late_pct_monthly": 1.0
+    },
+    "income_tax_resident": {
+      "name": "Income Tax (Resident Individual)",
+      "description": "Annual tax on total income for individuals not on TOT.",
+      "filing_frequency": "annual",
+      "filing_deadline": "30 June",
+      "filing_deadline_note": "30 June of the following year. E.g. 2025 income filed by 30 June 2026.",
+      "itax_obligation_code": "IT",
+      "penalty_late_filing_pct": 5.0,
+      "penalty_late_payment_pct": 20.0,
+      "interest_on_late_pct_monthly": 1.0
+    },
+    "income_tax_corporate": {
+      "name": "Income Tax (Corporate)",
+      "description": "Tax on company profits. Resident companies: 30%. Newly listed companies on NSE: 25% for 5 years.",
+      "rate_resident_pct": 30.0,
+      "rate_newly_listed_pct": 25.0,
+      "filing_frequency": "annual",
+      "filing_deadline_note": "6th month after end of accounting period",
+      "itax_obligation_code": "IT_CORP",
+      "advance_tax_required": true,
+      "advance_tax_installments": ["20 Apr", "20 Jun", "20 Sep", "20 Dec"]
+    },
+    "withholding_tax": {
+      "name": "Withholding Tax (WHT)",
+      "description": "Tax deducted at source on certain payments: dividends, interest, rent, professional fees.",
+      "filing_frequency": "monthly",
+      "filing_deadline_day": 20,
+      "filing_deadline_note": "20th of the following month",
+      "applies_when": "making_qualifying_payments",
+      "rates": {
+        "dividends_resident_pct": 5.0,
+        "dividends_non_resident_pct": 15.0,
+        "interest_pct": 15.0,
+        "royalties_pct": 5.0,
+        "management_fees_pct": 5.0,
+        "professional_fees_pct": 5.0,
+        "rent_commercial_pct": 10.0,
+        "contractual_fees_pct": 3.0
+      },
+      "itax_obligation_code": "WHT"
+    },
+    "presumptive_tax": {
+      "name": "Presumptive Tax",
+      "description": "Lump-sum tax for businesses with turnover below KES 1M. Payable on business permit renewal.",
+      "rate_type": "fixed",
+      "amount_kes_annual": 15000,
+      "threshold_max_kes": 1000000,
+      "filing_frequency": "annual",
+      "filing_deadline_note": "Payable when renewing single business permit at county level",
+      "itax_obligation_code": "PRESUMP"
+    },
+    "residential_rental_income": {
+      "name": "Residential Rental Income Tax (MRI)",
+      "description": "Simplified tax on residential rental income between KES 288K and KES 15M per year.",
+      "rate_pct": 7.5,
+      "threshold_min_kes_annual": 288000,
+      "threshold_max_kes_annual": 15000000,
+      "filing_frequency": "monthly",
+      "filing_deadline_day": 20,
+      "filing_deadline_note": "20th of the following month",
+      "itax_obligation_code": "MRI"
+    },
+    "nssf": {
+      "name": "NSSF (National Social Security Fund)",
+      "description": "Social security contribution. Employer and employee each contribute.",
+      "tier_1_max_kes": 7000,
+      "tier_2_max_kes": 36000,
+      "rate_pct": 6.0,
+      "filing_frequency": "monthly",
+      "filing_deadline_day": 9,
+      "filing_deadline_note": "9th of the following month",
+      "applies_when": "business_has_employees"
+    },
+    "shif": {
+      "name": "SHIF (Social Health Insurance Fund)",
+      "description": "Replaced NHIF. 2.75% of gross salary.",
+      "rate_pct": 2.75,
+      "filing_frequency": "monthly",
+      "filing_deadline_day": 9,
+      "filing_deadline_note": "9th of the following month",
+      "applies_when": "business_has_employees"
+    },
+    "housing_levy": {
+      "name": "Affordable Housing Levy",
+      "description": "1.5% of gross salary. Employer matches 1.5%.",
+      "rate_employee_pct": 1.5,
+      "rate_employer_pct": 1.5,
+      "filing_frequency": "monthly",
+      "filing_deadline_day": 9,
+      "filing_deadline_note": "9th of the following month",
+      "applies_when": "business_has_employees"
+    },
+    "excise_duty": {
+      "name": "Excise Duty",
+      "description": "Tax on specific manufactured goods and services (alcohol, tobacco, betting, financial services).",
+      "filing_frequency": "monthly",
+      "filing_deadline_day": 20,
+      "applies_to_industries": ["manufacturing_alcohol", "manufacturing_tobacco", "betting", "financial_services", "telecommunications"],
+      "itax_obligation_code": "EXCISE"
+    },
+    "digital_service_tax": {
+      "name": "Digital Service Tax (DST)",
+      "description": "1.5% on gross transaction value of digital services provided in Kenya by non-residents. Repealed for residents — now under normal income tax.",
+      "rate_pct": 1.5,
+      "applies_to": "non_resident_digital_services",
+      "note": "Residents: DST repealed from Jan 2025. Digital income taxed under normal IT."
+    }
+  }
+}
