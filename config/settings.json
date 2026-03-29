@@ -1,0 +1,87 @@
+{
+  "_note": "Central configuration — all hardcoded values extracted here",
+
+  "system": {
+    "version": "1.0.0",
+    "name": "KRA HELMET",
+    "tagline": "Tax Compliance Autopilot for Kenyan SMEs"
+  },
+
+  "api": {
+    "host": "0.0.0.0",
+    "port": 8000,
+    "reload": true,
+    "require_auth": true,
+    "rate_limit_per_minute": 60
+  },
+
+  "claude": {
+    "model": "claude-sonnet-4-6",
+    "max_tokens": 4096,
+    "retry_attempts": 4,
+    "retry_wait_seconds": [60, 120, 180]
+  },
+
+  "confidence": {
+    "auto_proceed": 0.7,
+    "human_review": 0.5,
+    "reject": 0.3
+  },
+
+  "alerts": {
+    "max_per_sme_per_day": 3,
+    "quiet_hours_start": "21:00",
+    "quiet_hours_end": "07:00",
+    "timezone_offset_hours": 3
+  },
+
+  "deadlines": {
+    "itax_buffer_days": 3,
+    "urgency_thresholds": {
+      "green_days": 30,
+      "yellow_days": 7,
+      "orange_days": 3,
+      "red_days": 1
+    }
+  },
+
+  "risk": {
+    "weights": {
+      "overdue_filings": 30,
+      "no_etims": 15,
+      "high_turnover_tot": 10,
+      "missing_employees": 10,
+      "cash_heavy_industry": 10,
+      "inconsistent_income": 10,
+      "new_business": 5,
+      "never_filed": 10
+    },
+    "audit_probability_multiplier": 0.6
+  },
+
+  "penalties": {
+    "income_tax_late_filing_flat_kes": 20000,
+    "income_tax_late_filing_pct": 0.05,
+    "vat_late_filing_flat_kes": 10000,
+    "vat_late_filing_pct": 0.05,
+    "paye_late_filing_pct": 0.25,
+    "paye_late_filing_flat_kes": 10000,
+    "tot_late_filing_flat_kes": 20000,
+    "tot_late_filing_pct": 0.05,
+    "late_payment_penalty_pct": 0.05,
+    "late_payment_interest_monthly": 0.01,
+    "nssf_late_monthly_pct": 0.05,
+    "shif_late_monthly_pct": 0.05,
+    "housing_levy_late_monthly_pct": 0.03,
+    "etims_per_invoice_kes": 50,
+    "severity_thresholds": {
+      "manageable_max_kes": 50000,
+      "serious_max_kes": 200000
+    }
+  },
+
+  "dashboard": {
+    "auto_refresh_seconds": 300,
+    "theme": "dark"
+  }
+}

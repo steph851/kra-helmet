@@ -62,6 +62,8 @@ class DashboardGenerator(BaseAgent):
             for s in sme_data if s["report"]
         )
 
+        refresh_sec = self._settings.get("dashboard", {}).get("auto_refresh_seconds", 300)
+
         # Build SME cards JSON for JS
         cards_json = json.dumps(sme_data, default=str, ensure_ascii=False)
 
@@ -70,6 +72,7 @@ class DashboardGenerator(BaseAgent):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="refresh" content="{refresh_sec}">
 <title>KRA HELMET — Tax Compliance Dashboard</title>
 <style>
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
@@ -190,7 +193,7 @@ body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; backgroun
 
 <div class="header">
     <h1>KRA HELMET — Tax Compliance Dashboard</h1>
-    <div class="subtitle">Generated: {now} | Protecting Kenyan SMEs from tax penalties</div>
+    <div class="subtitle">Generated: {now} | Auto-refreshes every {refresh_sec // 60}min | Protecting Kenyan SMEs from tax penalties</div>
 </div>
 
 <div class="summary-bar">

@@ -1,10 +1,11 @@
 """
 BASE AGENT — shared by every agent in the system.
-Provides: logging, file I/O, memory, boundary enforcement.
+Provides: logging, file I/O, memory, boundary enforcement, error recovery.
 """
 import json
 import os
 import time
+import traceback
 from datetime import datetime
 from pathlib import Path
 
@@ -14,14 +15,26 @@ from anthropic import Anthropic
 ROOT = Path(__file__).parent.parent
 
 
+class AgentError(Exception):
+    """Recoverable agent error — logged and surfaced to caller."""
+    def __init__(self, message: str, agent: str = "", recoverable: bool = True):
+        super().__init__(message)
+        self.agent = agent
+        self.recoverable = recoverable
+
+
 class BaseAgent:
     name: str = "base"
-    model: str = "claude-sonnet-4-6"
     boundary: str = "No boundary defined."
 
     def __init__(self):
+        # Load centralized config
+        from config.loader import get_settings
+        self._settings = get_settings()
+
         api_key = os.getenv("ANTHROPIC_API_KEY")
         self.client = Anthropic(api_key=api_key) if api_key and api_key != "your-key-here" else None
+        self.model = self._settings.get("claude", {}).get("model", "claude-sonnet-4-6")
         self.data_dir   = ROOT / "data"
         self.config_dir = ROOT / "config"
         self.intel_dir  = ROOT / "intelligence"
@@ -53,15 +66,70 @@ class BaseAgent:
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
+    # ── Error recovery ──────────────────────────────────────────────
+
+    def safe_run(self, func, *args, fallback=None, context: str = "", **kwargs):
+        """Run a function with error recovery. Returns fallback on failure."""
+        try:
+            return func(*args, **kwargs)
+        except AgentError:
+            raise  # let agent errors propagate
+        except Exception as e:
+            ctx = f" during {context}" if context else ""
+            self.log(f"ERROR{ctx}: {type(e).__name__}: {e}", "ERROR")
+            self._log_error(e, context)
+            if fallback is not None:
+                return fallback
+            raise AgentError(
+                f"{self.name} failed{ctx}: {e}",
+                agent=self.name,
+                recoverable=True,
+            )
+
+    def _log_error(self, error: Exception, context: str = ""):
+        """Log error details for debugging."""
+        error_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "agent": self.name,
+            "context": context,
+            "error_type": type(error).__name__,
+            "error_message": str(error),
+            "traceback": traceback.format_exc(),
+        }
+        error_log = self.logs_dir / "errors.jsonl"
+        error_log.parent.mkdir(exist_ok=True)
+        try:
+            with open(error_log, "a", encoding="utf-8") as f:
+                f.write(json.dumps(error_entry, ensure_ascii=False) + "\n")
+        except OSError:
+            pass  # can't log the error — don't crash
+
     # ── File I/O ─────────────────────────────────────────────────────
 
     def load_json(self, path: Path) -> dict:
-        return json.loads(path.read_text(encoding="utf-8"))
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            self.log(f"File not found: {path}", "ERROR")
+            raise AgentError(f"File not found: {path}", agent=self.name)
+        except json.JSONDecodeError as e:
+            self.log(f"Invalid JSON in {path}: {e}", "ERROR")
+            raise AgentError(f"Invalid JSON in {path}: {e}", agent=self.name)
 
     def save_json(self, path: Path, data: dict):
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-        self.log(f"Wrote {path.relative_to(ROOT)}")
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            # Write to temp file first, then rename (atomic-ish write)
+            tmp = path.with_suffix(".tmp")
+            tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+            tmp.replace(path)
+            try:
+                self.log(f"Wrote {path.relative_to(ROOT)}")
+            except ValueError:
+                self.log(f"Wrote {path}")
+        except OSError as e:
+            self.log(f"Failed to write {path}: {e}", "ERROR")
+            raise AgentError(f"Failed to write {path}: {e}", agent=self.name)
 
     def load_config(self, name: str) -> dict:
         return self.load_json(self.config_dir / name)
@@ -129,11 +197,17 @@ class BaseAgent:
 
     # ── Claude call (for API pipeline — optional in v1) ──────────────
 
-    def call_claude(self, system: str, user: str, max_tokens: int = 4096) -> str:
+    def call_claude(self, system: str, user: str, max_tokens: int | None = None) -> str:
         if not self.client:
             self.log("No API key configured — skipping Claude call", "WARN")
             return ""
-        for attempt in range(4):
+
+        claude_cfg = self._settings.get("claude", {})
+        max_tokens = max_tokens or claude_cfg.get("max_tokens", 4096)
+        retries = claude_cfg.get("retry_attempts", 4)
+        waits = claude_cfg.get("retry_wait_seconds", [60, 120, 180])
+
+        for attempt in range(retries):
             try:
                 resp = self.client.messages.create(
                     model=self.model,
@@ -143,11 +217,17 @@ class BaseAgent:
                 )
                 return resp.content[0].text
             except anthropic.RateLimitError:
-                wait = 60 * (attempt + 1)
-                self.log(f"Rate limit — waiting {wait}s (attempt {attempt+1}/4)", "WARN")
-                if attempt == 3:
+                wait = waits[min(attempt, len(waits) - 1)]
+                self.log(f"Rate limit — waiting {wait}s (attempt {attempt+1}/{retries})", "WARN")
+                if attempt == retries - 1:
                     raise
                 time.sleep(wait)
+            except anthropic.APIError as e:
+                self.log(f"API error: {e}", "ERROR")
+                self._log_error(e, "call_claude")
+                if attempt == retries - 1:
+                    raise AgentError(f"Claude API failed after {retries} attempts: {e}", agent=self.name)
+                time.sleep(waits[min(attempt, len(waits) - 1)])
         return ""
 
     def call_claude_json(self, system: str, user: str, max_tokens: int = 4096) -> dict:
