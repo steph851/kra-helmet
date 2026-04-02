@@ -4,6 +4,7 @@ BOUNDARY: asks questions only. Never maps obligations.
 """
 from datetime import datetime
 from ..base import BaseAgent
+from ..validation.input_validator import InputValidator
 
 
 class ProfileBuilder(BaseAgent):
@@ -18,11 +19,15 @@ class ProfileBuilder(BaseAgent):
         print("  Answer the questions below to set up your tax profile.")
         print("=" * 60 + "\n")
 
+        validator = InputValidator()
+
         try:
             pin = self._ask("KRA PIN (e.g. A123456789B)").strip().upper()
-            if not pin or len(pin) < 10:
-                print("Invalid PIN format. Aborting.")
+            ok, msg = validator.validate_pin(pin)
+            if not ok:
+                print(f"Invalid PIN: {msg}")
                 return None
+            pin = msg  # Use cleaned PIN
 
             name = self._ask("Your full name")
             business_name = self._ask("Business name (or press Enter if same as above)") or name

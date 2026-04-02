@@ -11,7 +11,9 @@ class InputValidator(BaseAgent):
     boundary = "Validates input only. Never modifies data or makes decisions."
 
     # KRA PIN format: letter + 9 digits + letter (e.g. A123456789B)
+    # First letter must be valid KRA prefix (A, B, C, D, E, F, P, K)
     PIN_PATTERN = re.compile(r"^[A-Z]\d{9}[A-Z]$")
+    VALID_PIN_PREFIXES = {"A", "B", "C", "D", "E", "F", "P", "K"}
 
     # Kenya phone: 07XX or 01XX, 10 digits — or +254...
     PHONE_PATTERN = re.compile(r"^(?:0[17]\d{8}|\+254[17]\d{8})$")
@@ -42,12 +44,18 @@ class InputValidator(BaseAgent):
     }
 
     def validate_pin(self, pin: str) -> tuple[bool, str]:
-        """Validate a KRA PIN."""
+        """Validate a KRA PIN with strict format checking."""
         if not pin:
             return False, "PIN is required"
         pin = pin.strip().upper()
         if not self.PIN_PATTERN.match(pin):
             return False, f"Invalid KRA PIN format: '{pin}'. Expected: letter + 9 digits + letter (e.g. A123456789B)"
+        # Check first letter is a valid KRA prefix
+        if pin[0] not in self.VALID_PIN_PREFIXES:
+            return False, f"Invalid KRA PIN prefix: '{pin[0]}'. Valid prefixes: {', '.join(sorted(self.VALID_PIN_PREFIXES))}"
+        # Check last letter is alphabetic
+        if not pin[-1].isalpha():
+            return False, f"Invalid KRA PIN: last character must be a letter"
         return True, pin
 
     def validate_phone(self, phone: str) -> tuple[bool, str]:

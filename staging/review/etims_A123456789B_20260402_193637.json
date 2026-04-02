@@ -1,0 +1,12 @@
+{
+  "type": "etims_compliance_issue",
+  "pin": "A123456789B",
+  "name": "Jane Wanjiru",
+  "issues": [
+    "Estimated 414 missing eTIMS invoices — potential penalty KES 20,700"
+  ],
+  "estimated_penalty_kes": 20700,
+  "detected_at": "2026-04-02T19:36:37.792055+03:00",
+  "status": "pending_review",
+  "action_needed": "Review eTIMS compliance and advise SME on registration/device setup"
+}

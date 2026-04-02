@@ -17,6 +17,28 @@ Usage:
     python run.py report <PIN>         → Generate per-SME HTML report
     python run.py report --all         → Generate reports for all SMEs
     python run.py dashboard            → Generate HTML dashboard
+    python run.py pulse                → Start The Pulse (background scheduler)
+    python run.py pulse --once         → Run one scheduler tick
+    python run.py pulse --status       → Show scheduler status
+    python run.py pulse --trigger PIN  → Trigger immediate check for one SME
+    python run.py pulse --trigger-all  → Trigger check for all SMEs
+    python run.py eyes                 → Run full monitoring scan (The Eyes)
+    python run.py eyes --health        → Source health check only
+    python run.py eyes --kra           → Scan KRA announcements only
+    python run.py eyes --gazette       → Scan Kenya Gazette only
+    python run.py eyes --etims [PIN]   → Check eTIMS compliance
+    python run.py eyes --status        → Show monitoring status
+    python run.py actions <PIN>        → Show "do this now" action list
+    python run.py prepare <PIN> [tax]  → Prepare filing package
+    python run.py deliver              → Deliver pending alerts
+    python run.py escalate             → Run escalation check for all SMEs
+    python run.py brain                → Run full Brain analysis (patterns + feedback)
+    python run.py brain --patterns     → Mine compliance patterns only
+    python run.py brain --feedback     → Run feedback loop only
+    python run.py brain --propose      → Propose risk model weight update
+    python run.py brain --status       → Show model updater status
+    python run.py brain --ingest       → Ingest audit trail + filing history
+    python run.py brain --timeline PIN → Show SME compliance timeline
     python run.py api                  → Start REST API server
     python run.py demo                 → Onboard a demo SME and run full check
 """
@@ -237,6 +259,200 @@ def main():
         gen = DashboardGenerator()
         output = gen.generate()
         print(f"\n  Dashboard generated: {output}\n")
+
+    elif command == "pulse":
+        if args and args[0] == "--once":
+            from scheduler.heartbeat import Heartbeat
+            pulse = Heartbeat()
+            result = pulse.run_once()
+            pulse.print_status()
+        elif args and args[0] == "--status":
+            from scheduler.heartbeat import Heartbeat
+            pulse = Heartbeat()
+            pulse.print_status()
+        elif args and args[0] == "--trigger" and len(args) > 1:
+            from scheduler.heartbeat import Heartbeat
+            pulse = Heartbeat()
+            pin = args[1].upper()
+            reason = args[2] if len(args) > 2 else "manual_cli"
+            if pulse.trigger_check(pin, reason):
+                print(f"\n  Queued check for {pin}")
+                result = pulse.trigger.dispatch_next()
+                if result:
+                    print(f"  Result: {result.get('compliance', {}).get('overall', '?')}\n")
+            else:
+                print(f"\n  {pin} already in queue\n")
+        elif args and args[0] == "--trigger-all":
+            from scheduler.heartbeat import Heartbeat
+            pulse = Heartbeat()
+            count = pulse.trigger_all(reason="cli_batch")
+            print(f"\n  Queued {count} SME(s) for check")
+            results = pulse.trigger.dispatch_batch()
+            print(f"  Dispatched {len(results)} check(s)\n")
+        else:
+            from scheduler.heartbeat import run_pulse
+            run_pulse()
+
+    elif command == "eyes":
+        from agents.monitoring import MonitoringOrchestrator
+        monitor = MonitoringOrchestrator()
+
+        if args and args[0] == "--health":
+            monitor.health.print_status()
+        elif args and args[0] == "--kra":
+            changes = monitor.run_kra_only()
+            print(f"\n  KRA scan complete: {len(changes)} change(s) detected\n")
+            for c in changes:
+                print(f"    [{c['source']}] {', '.join(c.get('keywords_found', []))}")
+        elif args and args[0] == "--gazette":
+            findings = monitor.run_gazette_only()
+            print(f"\n  Gazette scan complete: {len(findings)} finding(s)\n")
+            for f in findings:
+                print(f"    [{f['source']}] {', '.join(f.get('keywords_found', []))}")
+        elif args and args[0] == "--etims":
+            if len(args) > 1:
+                pin = args[1].upper()
+                result = monitor.check_etims_sme(pin)
+                print(f"\n  eTIMS check for {pin}: {result.get('status', 'unknown')}")
+                for issue in result.get("issues", []):
+                    print(f"    - {issue}")
+                print()
+            else:
+                issues = monitor.run_etims_only()
+                print(f"\n  eTIMS scan complete: {len(issues)} issue(s)\n")
+                for i in issues:
+                    print(f"    {i['pin']} ({i['name']}): {i['issue_count']} issue(s)")
+        elif args and args[0] == "--status":
+            monitor.print_status()
+        else:
+            print("\n  Running full monitoring scan...\n")
+            results = monitor.run_full_scan()
+            s = results["summary"]
+            print(f"\n  {'='*50}")
+            print(f"  THE EYES — Scan Complete")
+            print(f"  {'='*50}")
+            print(f"  Sources: {s['sources_healthy']}")
+            print(f"  KRA changes: {results['kra_changes']}")
+            print(f"  Gazette findings: {results['gazette_findings']}")
+            print(f"  eTIMS issues: {results['etims_issues']}")
+            print(f"  Total findings: {s['total_findings']}")
+            print()
+
+    elif command == "actions":
+        from agents.action import RecommendationEngine
+        rec = RecommendationEngine()
+        if args:
+            pin = args[0].upper()
+            rec.print_recommendations(pin)
+        else:
+            print("  Usage: python run.py actions <PIN>")
+
+    elif command == "prepare":
+        from agents.action import WorkflowEngine
+        wf = WorkflowEngine()
+        if not args:
+            print("  Usage: python run.py prepare <PIN> [tax_type]")
+        elif len(args) >= 2:
+            pin = args[0].upper()
+            tax_type = args[1].lower()
+            package = wf.prepare_filing(pin, tax_type)
+            if package:
+                wf.print_package(package)
+            else:
+                print(f"\n  Failed to prepare filing for {pin} / {tax_type}\n")
+        else:
+            pin = args[0].upper()
+            packages = wf.prepare_all_due(pin)
+            if packages:
+                print(f"\n  Prepared {len(packages)} filing package(s):")
+                for pkg in packages:
+                    print(f"    {pkg['tax_type']} — period {pkg['period']}")
+                print(f"\n  Run 'python run.py prepare {pin} <tax_type>' for details.\n")
+            else:
+                print(f"\n  No due filings found for {pin}\n")
+
+    elif command == "deliver":
+        from agents.action import AlertEngine
+        engine = AlertEngine()
+        results = engine.process_queue()
+        print(f"\n  Delivered {len(results)} alert(s)")
+        for r in results:
+            print(f"    [{r.get('status', '?')}] {r.get('alert_file', '?')}")
+        print()
+
+    elif command == "escalate":
+        from agents.action import EscalationEngine
+        engine = EscalationEngine()
+        escalations = engine.evaluate_all()
+        print(f"\n  {'='*50}")
+        print(f"  ESCALATION CHECK — {len(escalations)} item(s)")
+        print(f"  {'='*50}")
+        for esc in escalations:
+            tier = esc["tier"].upper()
+            print(f"  [{tier}] {esc['pin']} — {esc['reason']}")
+        if not escalations:
+            print("  All clear — no escalations needed.")
+        print()
+
+    elif command == "brain":
+        from agents.learning import DecisionMemory, PatternMiner, FeedbackLoop, ModelUpdater
+
+        if args and args[0] == "--patterns":
+            miner = PatternMiner()
+            miner.print_report()
+        elif args and args[0] == "--feedback":
+            loop = FeedbackLoop()
+            loop.print_report()
+        elif args and args[0] == "--propose":
+            updater = ModelUpdater()
+            proposal = updater.propose_update()
+            print(f"\n  Proposal created: {len(proposal.get('adjustments', []))} adjustment(s)")
+            for reason in proposal.get("reasoning", []):
+                print(f"    {reason}")
+            print(f"\n  Review in staging/review/ before applying.\n")
+        elif args and args[0] == "--status":
+            updater = ModelUpdater()
+            updater.print_status()
+        elif args and args[0] == "--ingest":
+            memory = DecisionMemory()
+            audit_count = memory.ingest_audit_trail()
+            filing_count = memory.ingest_filing_history()
+            print(f"\n  Ingested {audit_count} audit entries + {filing_count} filing records\n")
+        elif args and args[0] == "--timeline" and len(args) > 1:
+            memory = DecisionMemory()
+            pin = args[1].upper()
+            timeline = memory.sme_timeline(pin)
+            print(f"\n{'='*60}")
+            print(f"  Timeline for {pin}")
+            print(f"{'='*60}")
+            if timeline:
+                for t in timeline:
+                    outcome = f" → {t['outcome']}" if t.get("outcome") else ""
+                    print(f"  {t['timestamp'][:16]}  {t['event']:20s} {t['detail']}{outcome}")
+            else:
+                print("  No decision history found.")
+            print()
+        else:
+            print("\n  Running full Brain analysis...\n")
+            # Ingest first
+            memory = DecisionMemory()
+            audit_count = memory.ingest_audit_trail()
+            filing_count = memory.ingest_filing_history()
+            print(f"  Ingested: {audit_count} audit + {filing_count} filing records")
+
+            # Patterns
+            miner = PatternMiner()
+            miner.print_report()
+
+            # Feedback
+            loop = FeedbackLoop()
+            loop.print_report()
+
+            # Summary
+            summary = memory.summary()
+            print(f"\n  Decision Memory: {summary['total_entries']} entries, "
+                  f"{summary['sme_count']} SMEs, "
+                  f"{summary['outcome_rate']*100:.0f}% with outcomes\n")
 
     elif command == "api":
         print("\n  Starting KRA HELMET API server...")

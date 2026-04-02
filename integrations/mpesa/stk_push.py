@@ -1,0 +1,170 @@
+"""
+STK PUSH — M-Pesa Lipa Na M-Pesa Online integration.
+BOUNDARY: Initiates STK push requests. Never stores card data.
+Uses Safaricom Daraja API for payment initiation.
+"""
+import json
+import base64
+from datetime import datetime, timedelta, timezone
+from typing import Optional
+
+from integrations.base import HardenedIntegration, IntegrationConfig, with_retry
+
+EAT = timezone(timedelta(hours=3))
+
+
+class STKPush(HardenedIntegration):
+    """M-Pesa STK Push (Lipa Na M-Pesa Online)."""
+
+    def __init__(self, config=None):
+        mpesa_config = IntegrationConfig(
+            timeout=30,
+            max_retries=3,
+            retry_delay=2.0,
+            retry_backoff=2.0,
+            rate_limit_calls=10,
+            rate_limit_period=60,
+        )
+        super().__init__(mpesa_config)
+        self.consumer_key = config.consumer_key if config else None
+        self.consumer_secret = config.consumer_secret if config else None
+        self.passkey = config.passkey if config else None
+        self.shortcode = config.shortcode if config else None
+        self.callback_url = config.callback_url if config else None
+        self._access_token: str | None = None
+        self._token_expiry: datetime | None = None
+
+    @with_retry(max_retries=3, delay=2.0)
+    def _get_access_token(self) -> str:
+        """Get OAuth access token from Daraja API."""
+        if self._access_token and self._token_expiry and datetime.now(EAT) < self._token_expiry:
+            return self._access_token
+
+        url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        response = self.get(
+            url,
+            auth=(self.consumer_key, self.consumer_secret),
+        )
+        data = response.json()
+
+        self._access_token = data["access_token"]
+        self._token_expiry = datetime.now(EAT) + timedelta(seconds=int(data.get("expires_in", 3599)))
+
+        return self._access_token
+
+    def _generate_password(self) -> str:
+        """Generate STK push password."""
+        timestamp = datetime.now(EAT).strftime("%Y%m%d%H%M%S")
+        password_str = f"{self.shortcode}{self.passkey}{timestamp}"
+        return base64.b64encode(password_str.encode()).decode()
+
+    @with_retry(max_retries=3, delay=2.0)
+    def initiate(
+        self,
+        phone: str,
+        amount: float,
+        account_reference: str,
+        transaction_desc: str = "Tax Payment",
+        callback_url: str | None = None,
+    ) -> dict:
+        """Initiate STK push request.
+
+        Args:
+            phone: Customer phone (07XXXXXXXX or +254XXXXXXXXX)
+            amount: Amount in KES
+            account_reference: Reference for the transaction
+            transaction_desc: Description shown to customer
+            callback_url: Override callback URL
+
+        Returns:
+            Dict with MerchantRequestID, CheckoutRequestID, ResponseCode, etc.
+        """
+        if not self.consumer_key:
+            return {
+                "status": "dry_run",
+                "message": "M-Pesa not configured — set MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET, MPESA_PASSKEY, MPESA_SHORTCODE",
+                "phone": phone,
+                "amount": amount,
+                "account_reference": account_reference,
+            }
+
+        # Normalize phone
+        phone = phone.strip().replace(" ", "").replace("-", "")
+        if phone.startswith("0"):
+            phone = "254" + phone[1:]
+        elif phone.startswith("+"):
+            phone = phone[1:]
+
+        token = self._get_access_token()
+        password = self._generate_password()
+        timestamp = datetime.now(EAT).strftime("%Y%m%d%H%M%S")
+
+        payload = {
+            "BusinessShortCode": self.shortcode,
+            "Password": password,
+            "Timestamp": timestamp,
+            "TransactionType": "CustomerPayBillOnline",
+            "Amount": int(amount),
+            "PartyA": phone,
+            "PartyB": self.shortcode,
+            "PhoneNumber": phone,
+            "CallBackURL": callback_url or self.callback_url,
+            "AccountReference": account_reference[:12],
+            "TransactionDesc": transaction_desc[:13],
+        }
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+
+        url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+        response = self.post(url, json=payload, headers=headers)
+
+        result = response.json()
+        result["status"] = "initiated" if result.get("ResponseCode") == "0" else "failed"
+        result["phone"] = phone
+        result["amount"] = amount
+        result["account_reference"] = account_reference
+        result["initiated_at"] = datetime.now(EAT).isoformat()
+
+        return result
+
+    @with_retry(max_retries=3, delay=2.0)
+    def query_status(self, checkout_request_id: str) -> dict:
+        """Query STK push transaction status."""
+        if not self.consumer_key:
+            return {"status": "dry_run", "checkout_request_id": checkout_request_id}
+
+        token = self._get_access_token()
+        password = self._generate_password()
+        timestamp = datetime.now(EAT).strftime("%Y%m%d%H%M%S")
+
+        payload = {
+            "BusinessShortCode": self.shortcode,
+            "Password": password,
+            "Timestamp": timestamp,
+            "CheckoutRequestID": checkout_request_id,
+        }
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+
+        url = "https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query"
+        response = self.post(url, json=payload, headers=headers)
+
+        return response.json()
+
+    def generate_payment_url(self, phone: str, amount: float, reference: str) -> str:
+        """Generate a payment URL for the SME to click."""
+        # This creates a deep link that opens M-Pesa directly
+        # Format: https://mpesa.safaricom.co.ke/?phone=254XXXXXXXXX&amount=XXX&ref=XXX
+        phone = phone.strip().replace(" ", "").replace("-", "")
+        if phone.startswith("0"):
+            phone = "254" + phone[1:]
+        elif phone.startswith("+"):
+            phone = phone[1:]
+
+        return f"https://mpesa.safaricom.co.ke/pay?phone={phone}&amount={int(amount)}&ref={reference}"

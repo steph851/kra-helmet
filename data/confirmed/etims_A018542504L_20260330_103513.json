@@ -1,0 +1,15 @@
+{
+  "type": "etims_compliance_issue",
+  "pin": "A018542504L",
+  "name": "STEPHEN WANJUKI",
+  "issues": [
+    "Estimated 24 missing eTIMS invoices — potential penalty KES 1,200"
+  ],
+  "estimated_penalty_kes": 1200,
+  "detected_at": "2026-03-30T10:35:13.462975+03:00",
+  "status": "pending_review",
+  "action_needed": "Review eTIMS compliance and advise SME on registration/device setup",
+  "_approved": true,
+  "_approved_by": "Steph",
+  "_approved_at": "2026-03-30T03:41:21.582717"
+}

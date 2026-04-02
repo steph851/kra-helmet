@@ -1,0 +1,10 @@
+{
+  "sme_pin": "A000000001B",
+  "channel": "whatsapp",
+  "message": "🟡 *DUE SOON* — Hi Brian!\n\n  ⏳ Pay As You Earn (PAYE) — 7 day(s) left (by 2026-04-09)\n\n👉 File on iTax now to avoid penalties.",
+  "urgency_level": "yellow",
+  "scheduled_at": "2026-04-02T17:46:49.838902+03:00",
+  "obligation": "Pay As You Earn (PAYE)",
+  "days_until_deadline": 7,
+  "created_at": "2026-04-02T17:46:49.838935+03:00"
+}

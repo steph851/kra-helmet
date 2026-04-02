@@ -5,6 +5,7 @@ Wraps each pipeline step in error recovery.
 """
 import json
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from .base import BaseAgent, AgentError
 from .onboarding import OnboardingOrchestrator
 from .intelligence import ObligationMapper, DeadlineCalculator, RiskScorer, ComplianceChecker, PenaltyCalculator
@@ -205,21 +206,28 @@ class Orchestrator(BaseAgent):
 
     # ── Check All SMEs ──────────────────────────────────────────────
 
-    def check_all(self) -> list[dict]:
-        """Run compliance check for all onboarded SMEs. Continues on individual failures."""
+    def check_all(self, max_workers: int = 5) -> list[dict]:
+        """Run compliance check for all onboarded SMEs in parallel. Continues on individual failures."""
         smes = self.list_smes()
+        active_smes = [s for s in smes if s.get("active", True)]
         results = []
 
-        self.log(f"=== CHECKING ALL ({len(smes)} SMEs) ===")
-        for sme in smes:
-            if sme.get("active", True):
-                try:
-                    result = self.check_sme(sme["pin"])
-                    if result:
-                        results.append(result)
-                except Exception as e:
-                    self.log(f"Failed to check {sme['pin']}: {e} — continuing", "ERROR")
-                    self._log_error(e, f"check_all({sme['pin']})")
+        self.log(f"=== CHECKING ALL ({len(active_smes)} SMEs, {max_workers} workers) ===")
+
+        def check_one(sme):
+            try:
+                return self.check_sme(sme["pin"])
+            except Exception as e:
+                self.log(f"Failed to check {sme['pin']}: {e} — continuing", "ERROR")
+                self._log_error(e, f"check_all({sme['pin']})")
+                return None
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(check_one, sme): sme for sme in active_smes}
+            for future in as_completed(futures):
+                result = future.result()
+                if result:
+                    results.append(result)
 
         return results
 

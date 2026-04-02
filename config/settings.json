@@ -2,7 +2,7 @@
   "_note": "Central configuration — all hardcoded values extracted here",
 
   "system": {
-    "version": "1.0.0",
+    "version": "v1.0",
     "name": "KRA HELMET",
     "tagline": "Tax Compliance Autopilot for Kenyan SMEs"
   },
@@ -74,6 +74,7 @@
     "shif_late_monthly_pct": 0.05,
     "housing_levy_late_monthly_pct": 0.03,
     "etims_per_invoice_kes": 50,
+    "etims_missing_invoice_penalty_kes": 50,
     "severity_thresholds": {
       "manageable_max_kes": 50000,
       "serious_max_kes": 200000
@@ -83,5 +84,26 @@
   "dashboard": {
     "auto_refresh_seconds": 300,
     "theme": "dark"
+  },
+
+  "scheduler": {
+    "enabled": true,
+    "heartbeat_interval_seconds": 60,
+    "start_with_api": true
+  },
+
+  "monitoring": {
+    "enabled": true,
+    "scan_interval_hours": 6,
+    "source_health_interval_hours": 1,
+    "etims_scan_interval_hours": 12
+  },
+
+  "learning": {
+    "enabled": true,
+    "auto_ingest": true,
+    "feedback_interval_hours": 24,
+    "max_weight_delta": 5,
+    "require_human_approval": true
   }
 }

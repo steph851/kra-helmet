@@ -24,6 +24,8 @@ Built for small business owners in Kenya who don't want to get surprised by KRA 
 
 ## Quick Start
 
+### Option 1: Web Dashboard (Recommended)
+
 ```bash
 # Clone
 git clone https://github.com/steph851/kra-helmet.git
@@ -32,6 +34,18 @@ cd kra-helmet
 # Install
 pip install -r requirements.txt
 
+# Start the web dashboard
+python start_website.py
+```
+
+**Access from any device:**
+- **This device:** http://localhost:8000
+- **Other devices (phone/tablet):** http://YOUR_IP_ADDRESS:8000
+- The script shows your IP address automatically
+
+### Option 2: Command Line
+
+```bash
 # Configure
 cp .env.example .env
 # Edit .env with your ANTHROPIC_API_KEY (optional — system works without it)
@@ -42,6 +56,25 @@ python run.py onboard       # Onboard your business
 python run.py check --all   # Check all SMEs
 python run.py dashboard     # Generate HTML dashboard
 ```
+
+## Web Dashboard
+
+KRA HELMET includes a responsive web dashboard accessible from any device:
+
+- **Desktop:** Full-featured dashboard with all controls
+- **Tablet:** Optimized layout for medium screens
+- **Mobile:** Touch-friendly interface for phones
+
+**Features:**
+- Real-time compliance statistics
+- SME management with search
+- Quick action buttons
+- Recent activity feed
+- Proactive AI recommendations
+- System status monitoring
+- Add new SME modal
+
+**Access:** After starting the server, open http://localhost:8000 in any browser.
 
 ## CLI Commands
 
@@ -90,6 +123,8 @@ python run.py api
 | GET | `/audit` | Audit trail |
 | GET | `/guides` | List filing guides |
 | GET | `/guides/{tax_key}` | Specific filing guide |
+| GET | `/proactive/{pin}` | Proactive recommendations for SME |
+| POST | `/proactive/execute` | Execute autonomous action |
 
 **Authentication:** Set `HELMET_API_KEY` in `.env` and pass `X-API-Key` header.
 
@@ -112,8 +147,83 @@ agents/
   intelligence/             # Obligation mapper, deadlines, risk, compliance, penalties
   validation/               # Input validator, confidence engine, disclaimers
   communication/            # Explainer (EN/SW), urgency framer, notification engine
+  monitoring/               # KRA monitor, gazette monitor, eTIMS monitor, source health
+  action/                   # Alert engine, escalation engine, recommendation engine, workflow engine
+  learning/                 # Decision memory, pattern miner, feedback loop, model updater
   dashboard.py              # HTML dashboard generator
   report_generator.py       # Per-SME HTML reports
+```
+
+### The Pulse (Scheduler)
+
+Background scheduler that drives automated compliance monitoring:
+
+```
+scheduler/
+  heartbeat.py              # Main loop: tick → scan → queue → dispatch → sleep
+  trigger_engine.py         # Reads state, decides what needs checking
+  priority_queue.py         # Urgency-ranked task queue (red/orange/yellow/green)
+  event_listener.py         # Webhook handler for external events
+  cron_config.json          # Check intervals and batch schedules
+```
+
+### The Eyes (Monitoring)
+
+Watches external sources for tax changes:
+
+```
+agents/monitoring/
+  monitoring_orchestrator.py  # Coordinates all monitors
+  kra_monitor.py              # KRA announcements, rate changes, deadline updates
+  gazette_monitor.py          # Kenya Gazette tax-related legal notices
+  etims_monitor.py            # eTIMS invoice compliance tracking
+  source_health.py            # External source reachability checks
+```
+
+### The Brain (Learning)
+
+Learns from outcomes to improve risk predictions:
+
+```
+agents/learning/
+  memory.py                 # Decision history storage and querying
+  pattern_miner.py          # Discovers compliance patterns across SMEs
+  feedback_loop.py          # Compares predictions to actual outcomes
+  model_updater.py          # Proposes risk model weight adjustments
+```
+
+### The Hands (Actions)
+
+Takes action based on intelligence:
+
+```
+agents/action/
+  alert_engine.py           # Sends messages through configured channels
+  escalation_engine.py      # Routes missed deadlines to human gate
+  recommendation_engine.py  # Generates "do this now" action lists
+  workflow_engine.py        # Prepares filing packages with checklists
+```
+
+### The Shield (Security)
+
+Protects sensitive data:
+
+```
+security/
+  encryption.py             # AES-256 at rest encryption
+  pii_handler.py            # Anonymizes PII in logs
+  access_control.py         # Role-based access control
+```
+
+### Integrations
+
+External service connectors:
+
+```
+integrations/
+  mpesa/                    # STK push, C2B, B2C, webhooks
+  kra/                      # iTax guides, eTIMS compliance, gazette monitoring
+  communication/            # WhatsApp Business, SMS (Africa's Talking/Twilio), email
 ```
 
 ## Kenya Tax Coverage
@@ -150,6 +260,8 @@ All settings in `config/settings.json`. Override with environment variables:
 | `HELMET_CONFIDENCE_AUTO` | Auto-proceed threshold (default: 0.7) |
 | `HELMET_ITAX_BUFFER` | Days before deadline to file (default: 3) |
 | `HELMET_ALERT_MAX` | Max alerts per SME per day (default: 3) |
+| `HELMET_ENCRYPTION_KEY` | AES-256 encryption key |
+| `HELMET_ENCRYPTION_SALT` | Encryption salt for key derivation |
 
 ## Testing
 
@@ -157,13 +269,18 @@ All settings in `config/settings.json`. Override with environment variables:
 python -m pytest tests/ -v
 ```
 
-116 tests across 6 test files:
+357 tests across 11 test files:
 - **test_input_validator.py** — PIN, phone, email, period, amount, profile, filing validation
 - **test_intelligence.py** — Obligation mapping, deadlines, risk scoring, compliance, penalties
 - **test_communication.py** — Urgency framing, message generation, SMS/WhatsApp/email formatting
 - **test_workflow.py** — Filing tracker, audit trail immutability
 - **test_config.py** — Settings loading, env overrides, intelligence data integrity
 - **test_error_recovery.py** — safe_run(), file I/O recovery, error logging
+- **test_scheduler.py** — Priority queue, trigger engine, heartbeat, event listener
+- **test_monitoring.py** — Source health, KRA monitor, gazette monitor, eTIMS monitor
+- **test_hands.py** — Alert engine, escalation engine, recommendation engine, workflow engine
+- **test_learning.py** — Decision memory, pattern miner, feedback loop, model updater
+- **test_learning.py** — Model updater guardrails and proposals
 
 ## Project Structure
 
@@ -172,6 +289,7 @@ kra-helmet/
 ├── run.py                          # CLI (16 commands)
 ├── api.py                          # REST API (FastAPI)
 ├── requirements.txt                # Pinned dependencies
+├── Dockerfile                      # Production container
 ├── config/
 │   ├── settings.json               # All tunable values
 │   ├── loader.py                   # Config loader + env overrides
@@ -183,11 +301,40 @@ kra-helmet/
 │   ├── deadline_calendar.json      # 2026 holidays
 │   └── filing_guides.json          # 11 iTax guides
 ├── agents/                         # Multi-agent system
+│   ├── orchestrator.py             # 9-step pipeline
+│   ├── onboarding/                 # Profile builder, classifier, batch import
+│   ├── intelligence/               # Obligations, deadlines, risk, compliance, penalties
+│   ├── validation/                 # Input validator, confidence, disclaimers
+│   ├── communication/              # Explainer, urgency, notifications
+│   ├── monitoring/                 # KRA, gazette, eTIMS, source health
+│   ├── action/                     # Alerts, escalation, recommendations, workflow
+│   └── learning/                   # Memory, patterns, feedback, model updater
+├── scheduler/                      # The Pulse — heartbeat, trigger, queue, webhooks
+├── security/                       # The Shield — encryption, PII, access control
+├── integrations/                   # External services
+│   ├── mpesa/                      # STK push, webhooks
+│   ├── kra/                        # iTax, eTIMS, gazette
+│   └── communication/              # WhatsApp, SMS, email
 ├── workflow/                       # Human gate, audit trail, filing tracker
-├── tests/                          # 116 tests
+├── tools/                          # Web reader, phone utils, agent caller
+├── tests/                          # 357 tests
 ├── data/                           # SME profiles, reports, filings
 ├── output/                         # Dashboard + per-SME reports
 └── logs/                           # Agent runs, audit trail, errors
+```
+
+## Docker
+
+```bash
+# Build
+docker build -t kra-helmet .
+
+# Run
+docker run -p 8000:8000 \
+  -e ANTHROPIC_API_KEY=your-key \
+  -e HELMET_API_KEY=your-api-key \
+  -v kra-helmet-data:/app/data \
+  kra-helmet
 ```
 
 ## Disclaimer

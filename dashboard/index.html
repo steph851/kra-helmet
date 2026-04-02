@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a5f2a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="KRA HELMET - Tax Compliance Autopilot for Kenyan SMEs">
+    <title>KRA HELMET - Tax Compliance Dashboard</title>
+    <link rel="stylesheet" href="/ui/styles.css">
+    <link rel="manifest" href="/ui/manifest.json">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🛡️ KRA HELMET</h1>
+                <p class="subtitle">Tax Compliance Autopilot for Kenyan SMEs</p>
+            </div>
+            <div class="header-actions">
+                <button id="refreshBtn" class="btn btn-primary">🔄 Refresh</button>
+                <button id="settingsBtn" class="btn btn-secondary">⚙️ Settings</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Stats Overview -->
+            <section class="stats-section">
+                <h2>📊 Overview</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalSMEs">0</div>
+                        <div class="stat-label">Total SMEs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="compliantSMEs">0</div>
+                        <div class="stat-label">Compliant</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="atRiskSMEs">0</div>
+                        <div class="stat-label">At Risk</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="nonCompliantSMEs">0</div>
+                        <div class="stat-label">Non-Compliant</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Actions -->
+            <section class="actions-section">
+                <h2>⚡ Quick Actions</h2>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="runComplianceCheck()">
+                        🔍 Run Compliance Check
+                    </button>
+                    <button class="action-btn" onclick="viewReports()">
+                        📊 View Reports
+                    </button>
+                    <button class="action-btn" onclick="checkMonitoring()">
+                        👁️ Check Monitoring
+                    </button>
+                    <button class="action-btn" onclick="viewAuditTrail()">
+                        📋 Audit Trail
+                    </button>
+                </div>
+            </section>
+
+            <!-- SME List -->
+            <section class="sme-section">
+                <h2>👥 SME Management</h2>
+                <div class="sme-controls">
+                    <input type="text" id="searchSME" placeholder="Search by PIN or name..." class="search-input">
+                    <button id="addSMEBtn" class="btn btn-primary">+ Add SME</button>
+                </div>
+                <div class="sme-list" id="smeList">
+                    <!-- SMEs will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Recent Activity -->
+            <section class="activity-section">
+                <h2>📝 Recent Activity</h2>
+                <div class="activity-list" id="activityList">
+                    <!-- Activity will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Proactive Recommendations -->
+            <section class="proactive-section">
+                <h2>🤖 Proactive Recommendations</h2>
+                <div class="proactive-list" id="proactiveList">
+                    <!-- Proactive recommendations will be loaded here -->
+                </div>
+            </section>
+
+            <!-- System Status -->
+            <section class="status-section">
+                <h2>🔧 System Status</h2>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-indicator" id="apiStatus">●</div>
+                        <div class="status-label">API Server</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-indicator" id="dbStatus">●</div>
+                        <div class="status-label">Database</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-indicator" id="schedulerStatus">●</div>
+                        <div class="status-label">Scheduler</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-indicator" id="monitoringStatus">●</div>
+                        <div class="status-label">Monitoring</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>KRA HELMET v1.0 - Protecting Kenyan SMEs from tax penalties</p>
+        </footer>
+    </div>
+
+    <!-- Add SME Modal -->
+    <div id="addSMEModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Add New SME</h2>
+            <form id="addSMEForm">
+                <div class="form-group">
+                    <label for="pin">KRA PIN:</label>
+                    <input type="text" id="pin" name="pin" required placeholder="e.g., A000000001B">
+                </div>
+                <div class="form-group">
+                    <label for="name">Full Name:</label>
+                    <input type="text" id="name" name="name" required placeholder="e.g., John Doe">
+                </div>
+                <div class="form-group">
+                    <label for="businessName">Business Name:</label>
+                    <input type="text" id="businessName" name="businessName" placeholder="e.g., Doe Enterprises">
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone Number:</label>
+                    <input type="text" id="phone" name="phone" placeholder="e.g., 0712345678">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" placeholder="e.g., john@example.com">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add SME</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/ui/dashboard.js"></script>
+</body>
+</html>

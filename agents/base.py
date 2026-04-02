@@ -12,6 +12,8 @@ from pathlib import Path
 import anthropic
 from anthropic import Anthropic
 
+from .logging import StructuredLogger, generate_request_id, set_request_id, get_request_id
+
 ROOT = Path(__file__).parent.parent
 
 
@@ -33,7 +35,10 @@ class BaseAgent:
         self._settings = get_settings()
 
         api_key = os.getenv("ANTHROPIC_API_KEY")
-        self.client = Anthropic(api_key=api_key) if api_key and api_key != "your-key-here" else None
+        self.client = Anthropic(
+            api_key=api_key,
+            timeout=120.0,  # 2-minute timeout per request
+        ) if api_key and api_key != "your-key-here" else None
         self.model = self._settings.get("claude", {}).get("model", "claude-sonnet-4-6")
         self.data_dir   = ROOT / "data"
         self.config_dir = ROOT / "config"
@@ -41,43 +46,52 @@ class BaseAgent:
         self.memory_dir = ROOT / "memory"
         self.staging    = ROOT / "staging"
         self.logs_dir   = ROOT / "logs"
+        
+        # Initialize structured logger
+        self.logger = StructuredLogger(self.name, self.logs_dir)
 
     # ── Logging ──────────────────────────────────────────────────────
 
-    def log(self, msg: str, level: str = "INFO"):
-        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        line = f"[{ts}] [{level}] [{self.name.upper()}] {msg}"
-        print(line)
-        log_file = self.logs_dir / "agent_runs.log"
-        log_file.parent.mkdir(exist_ok=True)
-        with open(log_file, "a", encoding="utf-8") as f:
-            f.write(line + "\n")
+    def log(self, msg: str, level: str = "INFO", request_id: str = None, **kwargs):
+        """Structured logging with request_id support."""
+        rid = request_id or get_request_id()
+        
+        if level == "INFO":
+            self.logger.info(msg, request_id=rid, **kwargs)
+        elif level == "WARNING" or level == "WARN":
+            self.logger.warning(msg, request_id=rid, **kwargs)
+        elif level == "ERROR":
+            self.logger.error(msg, request_id=rid, **kwargs)
+        elif level == "DEBUG":
+            self.logger.debug(msg, request_id=rid, **kwargs)
+        elif level == "CRITICAL":
+            self.logger.critical(msg, request_id=rid, **kwargs)
+        else:
+            self.logger.info(msg, request_id=rid, **kwargs)
 
-    def log_decision(self, decision: str, reason: str):
-        entry = {
-            "timestamp": datetime.now().isoformat(),
-            "agent": self.name,
-            "decision": decision,
-            "reason": reason,
-        }
-        path = self.memory_dir / "decisions"
-        path.mkdir(parents=True, exist_ok=True)
-        log_file = path / f"{datetime.now().strftime('%Y-%m-%d')}.jsonl"
-        with open(log_file, "a", encoding="utf-8") as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    def log_decision(self, decision: str, reason: str, request_id: str = None, **kwargs):
+        """Log a decision with structured data."""
+        rid = request_id or get_request_id()
+        self.logger.log_decision(
+            decision_type=decision,
+            pin=kwargs.get("pin", "unknown"),
+            context={"reason": reason, **kwargs},
+            request_id=rid
+        )
 
     # ── Error recovery ──────────────────────────────────────────────
 
-    def safe_run(self, func, *args, fallback=None, context: str = "", **kwargs):
+    def safe_run(self, func, *args, fallback=None, context: str = "", request_id: str = None, **kwargs):
         """Run a function with error recovery. Returns fallback on failure."""
+        rid = request_id or get_request_id()
         try:
             return func(*args, **kwargs)
         except AgentError:
             raise  # let agent errors propagate
         except Exception as e:
             ctx = f" during {context}" if context else ""
-            self.log(f"ERROR{ctx}: {type(e).__name__}: {e}", "ERROR")
-            self._log_error(e, context)
+            self.log(f"ERROR{ctx}: {type(e).__name__}: {e}", "ERROR", request_id=rid)
+            self._log_error(e, context, request_id=rid)
             if fallback is not None:
                 return fallback
             raise AgentError(
@@ -86,8 +100,12 @@ class BaseAgent:
                 recoverable=True,
             )
 
-    def _log_error(self, error: Exception, context: str = ""):
+    def _log_error(self, error: Exception, context: str = "", request_id: str = None):
         """Log error details for debugging."""
+        rid = request_id or get_request_id()
+        self.logger.log_error_with_context(error, context, request_id=rid)
+        
+        # Also write to legacy errors.jsonl for backward compatibility
         error_entry = {
             "timestamp": datetime.now().isoformat(),
             "agent": self.name,
@@ -95,6 +113,7 @@ class BaseAgent:
             "error_type": type(error).__name__,
             "error_message": str(error),
             "traceback": traceback.format_exc(),
+            "request_id": rid,
         }
         error_log = self.logs_dir / "errors.jsonl"
         error_log.parent.mkdir(exist_ok=True)
@@ -197,9 +216,10 @@ class BaseAgent:
 
     # ── Claude call (for API pipeline — optional in v1) ──────────────
 
-    def call_claude(self, system: str, user: str, max_tokens: int | None = None) -> str:
+    def call_claude(self, system: str, user: str, max_tokens: int | None = None, request_id: str = None) -> str:
+        rid = request_id or get_request_id()
         if not self.client:
-            self.log("No API key configured — skipping Claude call", "WARN")
+            self.log("No API key configured — skipping Claude call", "WARN", request_id=rid)
             return ""
 
         claude_cfg = self._settings.get("claude", {})
@@ -218,20 +238,20 @@ class BaseAgent:
                 return resp.content[0].text
             except anthropic.RateLimitError:
                 wait = waits[min(attempt, len(waits) - 1)]
-                self.log(f"Rate limit — waiting {wait}s (attempt {attempt+1}/{retries})", "WARN")
+                self.log(f"Rate limit — waiting {wait}s (attempt {attempt+1}/{retries})", "WARN", request_id=rid)
                 if attempt == retries - 1:
                     raise
                 time.sleep(wait)
             except anthropic.APIError as e:
-                self.log(f"API error: {e}", "ERROR")
-                self._log_error(e, "call_claude")
+                self.log(f"API error: {e}", "ERROR", request_id=rid)
+                self._log_error(e, "call_claude", request_id=rid)
                 if attempt == retries - 1:
                     raise AgentError(f"Claude API failed after {retries} attempts: {e}", agent=self.name)
                 time.sleep(waits[min(attempt, len(waits) - 1)])
         return ""
 
-    def call_claude_json(self, system: str, user: str, max_tokens: int = 4096) -> dict:
-        raw = self.call_claude(system, user + "\n\nReturn ONLY valid JSON.", max_tokens)
+    def call_claude_json(self, system: str, user: str, max_tokens: int = 4096, request_id: str = None) -> dict:
+        raw = self.call_claude(system, user + "\n\nReturn ONLY valid JSON.", max_tokens, request_id=request_id)
         if not raw:
             return {}
         text = raw.strip()
@@ -255,5 +275,5 @@ class BaseAgent:
             try:
                 return json.loads(text[start:end])
             except json.JSONDecodeError:
-                self.log(f"JSON parse failed: {text[:200]}", "ERROR")
+                self.log(f"JSON parse failed: {text[:200]}", "ERROR", request_id=request_id)
                 return {}

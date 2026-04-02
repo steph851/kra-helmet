@@ -2,6 +2,7 @@
 AUDIT TRAIL — immutable log of every decision. Legally defensible.
 """
 import json
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -9,12 +10,14 @@ ROOT = Path(__file__).parent.parent
 
 
 class AuditTrail:
+    _lock = threading.Lock()
+
     def __init__(self):
         self.log_path = ROOT / "logs" / "audit_trail.jsonl"
         self.log_path.parent.mkdir(exist_ok=True)
 
     def record(self, event_type: str, agent: str, details: dict, sme_pin: str | None = None):
-        """Record an immutable audit entry."""
+        """Record an immutable audit entry (thread-safe)."""
         entry = {
             "timestamp": datetime.now().isoformat(),
             "event_type": event_type,
@@ -22,8 +25,9 @@ class AuditTrail:
             "sme_pin": sme_pin,
             "details": details,
         }
-        with open(self.log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        with self._lock:
+            with open(self.log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
     def get_history(self, sme_pin: str | None = None, limit: int = 50) -> list[dict]:
         """Retrieve audit history, optionally filtered by SME PIN."""

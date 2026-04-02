@@ -1,0 +1,42 @@
+{
+  "_note": "The Pulse — check frequencies and schedule rules",
+
+  "heartbeat_interval_seconds": 60,
+
+  "check_intervals": {
+    "_note": "How often to re-check SMEs based on their urgency level",
+    "red":    { "minutes": 30,   "label": "Overdue — check every 30 min" },
+    "orange": { "minutes": 60,   "label": "Critical — check every hour" },
+    "yellow": { "minutes": 360,  "label": "Upcoming — check every 6 hours" },
+    "green":  { "minutes": 1440, "label": "Clear — check once per day" },
+    "unknown":{ "minutes": 720,  "label": "Never checked — check every 12 hours" }
+  },
+
+  "batch_schedule": {
+    "_note": "When to run full batch checks (24h clock, EAT)",
+    "daily_check_time": "06:00",
+    "report_generation_time": "06:30",
+    "dashboard_refresh_time": "07:00"
+  },
+
+  "dispatch_rules": {
+    "max_concurrent_checks": 5,
+    "cooldown_after_check_seconds": 10,
+    "retry_failed_after_minutes": 15,
+    "max_retries": 3
+  },
+
+  "webhook_auth": {
+    "require_signature": false,
+    "header_name": "X-Webhook-Secret"
+  },
+
+  "monitoring": {
+    "_note": "The Eyes — monitoring schedule",
+    "source_health_time": "05:00",
+    "kra_scan_time": "06:00",
+    "gazette_scan_time": "06:00",
+    "etims_scan_time": "18:00",
+    "full_scan_interval_hours": 6
+  }
+}

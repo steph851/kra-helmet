@@ -3,7 +3,7 @@
   "name": "STEPHEN WANJUKI",
   "business_name": "STEPHEN WANJUKI",
   "business_type": "sole_proprietor",
-  "industry": "digital_online",
+  "industry": "professional_services",
   "county": "NAKURU",
   "sub_county": null,
   "annual_turnover_kes": 500000,
@@ -14,20 +14,23 @@
   "has_etims": false,
   "rental_income_annual_kes": null,
   "phone": "0114179880",
-  "email": "stephen.wanjuki333@gmail.com",
+  "email": null,
   "preferred_language": "en",
   "preferred_channel": "whatsapp",
-  "onboarded_at": "2026-03-29T11:17:42.685603",
-  "last_updated": "2026-03-29T11:17:42.685639",
+  "onboarded_at": "2026-04-02T09:37:34.404414",
+  "last_updated": "2026-04-02T09:37:34.414478",
   "classification": {
-    "industry": "digital_online",
-    "industry_label": "Digital / Online Business",
+    "industry": "professional_services",
+    "industry_label": "Professional Services",
     "turnover_bracket": "below_1m",
     "obligations": [
       "presumptive_tax"
     ],
-    "wht_triggers": [],
+    "wht_triggers": [
+      "professional_fees",
+      "management_fees"
+    ],
     "etims_required": false,
-    "notes": "DST repealed for residents from Jan 2025. Income taxed under normal IT."
+    "notes": "Clients paying professional fees must deduct 5% WHT"
   }
 }

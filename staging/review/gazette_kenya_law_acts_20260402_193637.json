@@ -1,0 +1,14 @@
+{
+  "type": "gazette_change_detected",
+  "source": "kenya_law_acts",
+  "label": "Kenya Law — Tax Acts",
+  "url": "http://kenyalaw.org/kl/index.php?id=702",
+  "keywords": [],
+  "legal_notices": [
+    "change of labour module six: bankruptcy module seven: capital markets and securities module eight: tax"
+  ],
+  "detected_at": "2026-04-02T19:36:31.876663+03:00",
+  "status": "pending_review",
+  "action_needed": "Review gazette for new tax legislation, rate changes, or deadline amendments",
+  "impact": "May require updates to tax_knowledge_graph.json or deadline_calendar.json"
+}

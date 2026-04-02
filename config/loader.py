@@ -32,6 +32,13 @@ def _apply_env_overrides(settings: dict):
         "HELMET_ITAX_BUFFER":    ("deadlines", "itax_buffer_days", int),
         "HELMET_ALERT_MAX":      ("alerts", "max_per_sme_per_day", int),
         "HELMET_REFRESH_SEC":    ("dashboard", "auto_refresh_seconds", int),
+        "HELMET_SCHEDULER":      ("scheduler", "enabled", _bool),
+        "HELMET_HEARTBEAT_SEC":  ("scheduler", "heartbeat_interval_seconds", int),
+        "HELMET_SCHEDULER_AUTO": ("scheduler", "start_with_api", _bool),
+        "HELMET_MONITORING":     ("monitoring", "enabled", _bool),
+        "HELMET_MONITOR_HOURS":  ("monitoring", "scan_interval_hours", int),
+        "HELMET_LEARNING":       ("learning", "enabled", _bool),
+        "HELMET_LEARNING_AUTO":  ("learning", "auto_ingest", _bool),
     }
 
     for env_var, (section, key, cast) in env_map.items():
@@ -39,8 +46,11 @@ def _apply_env_overrides(settings: dict):
         if val is not None:
             try:
                 settings[section][key] = cast(val)
-            except (ValueError, KeyError):
-                pass
+            except (ValueError, KeyError) as e:
+                import logging
+                logging.getLogger("kra_helmet.config").warning(
+                    f"Failed to apply env override {env_var}={val!r}: {e}"
+                )
 
 
 def _bool(val: str) -> bool:
