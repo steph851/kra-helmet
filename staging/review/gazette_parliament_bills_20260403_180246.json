@@ -1,0 +1,16 @@
+{
+  "type": "gazette_change_detected",
+  "source": "parliament_bills",
+  "label": "Parliament — Bills",
+  "url": "http://www.parliament.go.ke/the-national-assembly/house-business/bills",
+  "keywords": [
+    "tax",
+    "revenue",
+    "amendment"
+  ],
+  "legal_notices": [],
+  "detected_at": "2026-04-03T18:02:46.072361+03:00",
+  "status": "pending_review",
+  "action_needed": "Review gazette for new tax legislation, rate changes, or deadline amendments",
+  "impact": "May require updates to tax_knowledge_graph.json or deadline_calendar.json"
+}

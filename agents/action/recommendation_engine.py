@@ -15,6 +15,7 @@ ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
 from tools.mpesa_caller import MpesaCaller
+from tools.kra_shuru import KRAShuru
 
 EAT = timezone(timedelta(hours=3))
 
@@ -26,6 +27,7 @@ class RecommendationEngine(BaseAgent):
     def __init__(self):
         super().__init__()
         self.mpesa = MpesaCaller()
+        self.shuru = KRAShuru()
 
     def generate(self, pin: str) -> dict:
         """Generate a prioritized action list for an SME. Returns recommendations dict."""
@@ -69,10 +71,13 @@ class RecommendationEngine(BaseAgent):
         # 4. eTIMS compliance
         recommendations.extend(self._etims_recommendations(pin, profile))
 
-        # 5. Payment instructions for overdue items
+        # 5. KRA Shuru WhatsApp filing option
+        recommendations.extend(self._shuru_recommendations(pin, profile, obligations))
+
+        # 6. Payment instructions for overdue items
         recommendations.extend(self._payment_recommendations(pin, profile, obligations, penalties))
 
-        # 6. Risk reduction
+        # 7. Risk reduction
         recommendations.extend(self._risk_recommendations(pin, profile, risk))
 
         # Sort by priority (1 = most urgent)
@@ -102,16 +107,18 @@ class RecommendationEngine(BaseAgent):
                 deadline = ob.get("next_deadline", "?")
                 overdue_days = abs(days)
 
+                shuru_link = self.shuru.generate_filing_link(pin, tax_name)
                 recs.append({
                     "priority": 1,
                     "action": "file_overdue",
                     "title": f"FILE NOW: {tax_name} is {overdue_days} day(s) overdue",
                     "detail": f"Deadline was {deadline}. Penalties are accruing daily. "
-                              f"File on iTax immediately to stop penalty accumulation.",
+                              f"File on iTax or via KRA WhatsApp (Shuru) to stop penalty accumulation.",
                     "urgency": "red",
                     "tax_type": tax_key,
                     "overdue_days": overdue_days,
                     "itax_url": "https://itax.kra.go.ke",
+                    "shuru_deeplink": shuru_link["deeplink"],
                 })
         return recs
 
@@ -121,14 +128,17 @@ class RecommendationEngine(BaseAgent):
             days = ob.get("days_until_deadline")
             if days is not None and days == 0:
                 tax_name = ob.get("tax_name", "Tax")
+                shuru_link = self.shuru.generate_filing_link(pin, tax_name)
                 recs.append({
                     "priority": 2,
                     "action": "file_today",
                     "title": f"FILE TODAY: {tax_name} deadline is TODAY",
-                    "detail": f"This is your last chance to file without penalties.",
+                    "detail": f"Last chance to file without penalties. "
+                              f"Use iTax or KRA WhatsApp (Shuru) — just 3 steps.",
                     "urgency": "red",
                     "tax_type": ob.get("tax_key", ""),
                     "itax_url": "https://itax.kra.go.ke",
+                    "shuru_deeplink": shuru_link["deeplink"],
                 })
         return recs
 
@@ -177,6 +187,28 @@ class RecommendationEngine(BaseAgent):
 
         return recs
 
+    def _shuru_recommendations(self, pin: str, profile: dict, obligations: list) -> list:
+        """Recommend KRA Shuru WhatsApp for upcoming filings."""
+        recs = []
+        due_soon = [o for o in obligations
+                    if o.get("days_until_deadline") is not None and 0 < o["days_until_deadline"] <= 14]
+
+        if due_soon:
+            info = self.shuru.generate_instructions(pin, lang=profile.get("preferred_language", "en"))
+            tax_names = ", ".join(o.get("tax_name", "Tax") for o in due_soon[:3])
+            recs.append({
+                "priority": 4,
+                "action": "file_via_shuru",
+                "title": f"FILE VIA WHATSAPP: Use KRA Shuru for {tax_names}",
+                "detail": f"KRA's new WhatsApp bot lets you file returns and pay taxes in 3 steps. "
+                          f"Send 'Hi' to +254 711 099 999 on WhatsApp.",
+                "urgency": "green",
+                "shuru_deeplink": info["filing_deeplink"],
+                "shuru_number": info["number"],
+                "shuru_steps": info["steps"],
+            })
+        return recs
+
     def _payment_recommendations(self, pin: str, profile: dict,
                                   obligations: list, penalties: dict) -> list:
         recs = []
@@ -198,15 +230,18 @@ class RecommendationEngine(BaseAgent):
                     pin=pin,
                 )
 
+                shuru_pay = self.shuru.generate_payment_link(pin, tax_name)
                 recs.append({
                     "priority": 2,
                     "action": "pay_tax",
-                    "title": f"PAY: {tax_name} via M-Pesa",
-                    "detail": f"Paybill: {payment_info['paybill']}, "
-                              f"Account: {payment_info['account_number']}",
+                    "title": f"PAY: {tax_name} via M-Pesa or KRA WhatsApp",
+                    "detail": f"M-Pesa Paybill: {payment_info['paybill']}, "
+                              f"Account: {payment_info['account_number']}. "
+                              f"Or pay via KRA WhatsApp (Shuru): +254 711 099 999",
                     "urgency": "red",
                     "tax_type": tax_key,
                     "payment_steps": payment_info["steps"],
+                    "shuru_deeplink": shuru_pay["deeplink"],
                 })
                 break  # One payment instruction is enough in the list
 
@@ -252,6 +287,11 @@ class RecommendationEngine(BaseAgent):
             print(f"     {rec['detail']}")
             if rec.get("payment_steps"):
                 for step in rec["payment_steps"][:5]:
+                    print(f"       > {step}")
+            if rec.get("shuru_deeplink"):
+                print(f"       > WhatsApp: {rec['shuru_deeplink']}")
+            if rec.get("shuru_steps"):
+                for step in rec["shuru_steps"]:
                     print(f"       > {step}")
 
         print()

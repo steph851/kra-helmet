@@ -74,146 +74,206 @@ class DashboardGenerator(BaseAgent):
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="refresh" content="{refresh_sec}">
 <title>KRA HELMET — Tax Compliance Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-* {{ margin: 0; padding: 0; box-sizing: border-box; }}
-body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f1117; color: #e0e0e0; }}
+*, *::before, *::after {{ margin: 0; padding: 0; box-sizing: border-box; }}
+body {{
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0f1117; color: #e8eaed; line-height: 1.6;
+    -webkit-font-smoothing: antialiased; min-height: 100vh;
+}}
 
 .header {{
-    background: linear-gradient(135deg, #1a1d29 0%, #0d2137 100%);
-    padding: 24px 32px;
-    border-bottom: 2px solid #2a5a3a;
+    background: #1a1d2e; padding: 20px 32px;
+    border-bottom: 1px solid #2a2d3e;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
 }}
-.header h1 {{ font-size: 1.6rem; color: #4ade80; }}
-.header .subtitle {{ color: #888; font-size: 0.9rem; margin-top: 4px; }}
+.header-left {{ display: flex; align-items: center; gap: 12px; }}
+.brand-icon {{
+    width: 36px; height: 36px; border-radius: 6px;
+    background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #34d399; flex-shrink: 0;
+}}
+.brand-icon svg {{ width: 20px; height: 20px; }}
+.brand-name {{ font-weight: 800; font-size: 0.9rem; color: #e8eaed; letter-spacing: 0.04em; }}
+.brand-sub {{ font-size: 0.6rem; color: #9aa0b0; letter-spacing: 0.06em; font-weight: 600; }}
+.header-meta {{ font-size: 0.72rem; color: #5a6070; }}
 
-.summary-bar {{
-    display: flex; gap: 16px; padding: 16px 32px; flex-wrap: wrap;
-    background: #161822; border-bottom: 1px solid #2a2d3a;
+.stats-row {{
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;
+    padding: 20px 32px; border-bottom: 1px solid #2a2d3e;
 }}
-.stat {{
-    background: #1e2130; padding: 12px 20px; border-radius: 8px; min-width: 140px;
-    border-left: 3px solid #444;
+.stat-card {{
+    background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 10px;
+    padding: 16px 18px; transition: border-color 0.15s;
 }}
-.stat.green {{ border-left-color: #4ade80; }}
-.stat.yellow {{ border-left-color: #facc15; }}
-.stat.red {{ border-left-color: #f87171; }}
-.stat.blue {{ border-left-color: #60a5fa; }}
-.stat.purple {{ border-left-color: #c084fc; }}
-.stat .label {{ font-size: 0.75rem; color: #888; text-transform: uppercase; }}
-.stat .value {{ font-size: 1.5rem; font-weight: 700; margin-top: 2px; }}
+.stat-card:hover {{ border-color: #353850; }}
+.stat-card .label {{
+    font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em;
+    color: #5a6070; text-transform: uppercase;
+}}
+.stat-card .value {{
+    font-size: 1.5rem; font-weight: 800; line-height: 1; margin-top: 6px;
+}}
+.stat-card.blue .value {{ color: #60a5fa; }}
+.stat-card.green .value {{ color: #34d399; }}
+.stat-card.amber .value {{ color: #fbbf24; }}
+.stat-card.red .value {{ color: #f87171; }}
+.stat-card.purple .value {{ color: #a78bfa; }}
 
 .filters {{
-    padding: 12px 32px; display: flex; gap: 8px; flex-wrap: wrap;
-    background: #161822; border-bottom: 1px solid #2a2d3a;
+    padding: 14px 32px; display: flex; gap: 8px; flex-wrap: wrap;
+    border-bottom: 1px solid #2a2d3e;
 }}
 .filters button {{
-    padding: 6px 16px; border-radius: 20px; border: 1px solid #3a3d4a;
-    background: transparent; color: #aaa; cursor: pointer; font-size: 0.85rem;
+    padding: 6px 14px; border-radius: 20px;
+    border: 1px solid #2a2d3e; background: transparent;
+    color: #9aa0b0; cursor: pointer; font-size: 0.78rem;
+    font-weight: 600; transition: all 0.15s;
 }}
-.filters button.active {{ background: #4ade80; color: #000; border-color: #4ade80; font-weight: 600; }}
-.filters button:hover {{ border-color: #4ade80; }}
+.filters button.active {{
+    background: rgba(52,211,153,0.1); color: #34d399;
+    border-color: rgba(52,211,153,0.3);
+}}
+.filters button:hover {{ border-color: #353850; color: #e8eaed; }}
 
-.cards {{ padding: 24px 32px; display: grid; gap: 20px; }}
+.cards {{ padding: 24px 32px; display: grid; gap: 20px; max-width: 1280px; }}
 
 .card {{
-    background: #1e2130; border-radius: 12px; overflow: hidden;
-    border: 1px solid #2a2d3a; transition: border-color 0.2s;
+    background: #1a1d2e; border-radius: 10px; overflow: hidden;
+    border: 1px solid #2a2d3e; transition: border-color 0.15s;
 }}
-.card:hover {{ border-color: #4ade80; }}
+.card:hover {{ border-color: #353850; }}
 
 .card-header {{
     display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 20px; border-bottom: 1px solid #2a2d3a;
+    padding: 14px 20px; border-bottom: 1px solid #2a2d3e;
 }}
-.card-header .name {{ font-size: 1.1rem; font-weight: 600; }}
-.card-header .pin {{ color: #888; font-size: 0.85rem; }}
+.card-header .name {{ font-size: 1rem; font-weight: 700; }}
+.card-header .pin {{ color: #5a6070; font-size: 0.75rem; }}
 
 .badge {{
-    padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
-    text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
 }}
-.badge.compliant {{ background: #16532d; color: #4ade80; }}
-.badge.at_risk {{ background: #533e16; color: #facc15; }}
-.badge.non_compliant {{ background: #531616; color: #f87171; }}
-.badge.not_checked {{ background: #2a2d3a; color: #888; }}
+.badge .bdot {{ width: 5px; height: 5px; border-radius: 50%; }}
+.badge.compliant {{ background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }}
+.badge.compliant .bdot {{ background: #34d399; }}
+.badge.at_risk {{ background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }}
+.badge.at_risk .bdot {{ background: #fbbf24; }}
+.badge.non_compliant {{ background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); }}
+.badge.non_compliant .bdot {{ background: #f87171; }}
+.badge.not_checked {{ background: rgba(154,160,176,0.08); color: #9aa0b0; border: 1px solid rgba(154,160,176,0.15); }}
+.badge.not_checked .bdot {{ background: #9aa0b0; }}
 
 .card-body {{ padding: 16px 20px; }}
 
 .info-row {{
-    display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 12px;
-    font-size: 0.85rem; color: #aaa;
+    display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 12px;
+    font-size: 0.8rem; color: #9aa0b0;
 }}
 .info-row span {{ display: inline-flex; align-items: center; gap: 4px; }}
 
 .risk-bar-container {{
-    margin: 12px 0; background: #2a2d3a; border-radius: 6px; height: 8px; overflow: hidden;
+    margin: 10px 0; background: #222538; border-radius: 6px;
+    height: 6px; overflow: hidden;
 }}
-.risk-bar {{
-    height: 100%; border-radius: 6px; transition: width 0.5s;
-}}
+.risk-bar {{ height: 100%; border-radius: 6px; transition: width 0.5s; }}
 
 .obligations-table {{
-    width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.85rem;
+    width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.82rem;
 }}
 .obligations-table th {{
-    text-align: left; padding: 8px 12px; background: #161822; color: #888;
-    font-weight: 600; font-size: 0.75rem; text-transform: uppercase;
+    text-align: left; padding: 8px 12px; background: #161822;
+    color: #5a6070; font-weight: 600; font-size: 0.7rem;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 1px solid #2a2d3e;
 }}
-.obligations-table td {{ padding: 8px 12px; border-top: 1px solid #2a2d3a; }}
+.obligations-table td {{
+    padding: 8px 12px; border-top: 1px solid #222538; color: #9aa0b0;
+}}
+.obligations-table tr:hover td {{ background: #222538; }}
 
 .status-dot {{
-    display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px;
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px;
 }}
-.status-dot.upcoming {{ background: #4ade80; }}
-.status-dot.due_soon {{ background: #facc15; }}
+.status-dot.upcoming {{ background: #34d399; }}
+.status-dot.due_soon {{ background: #fbbf24; }}
 .status-dot.urgent {{ background: #fb923c; }}
 .status-dot.critical {{ background: #f87171; }}
-.status-dot.overdue {{ background: #ef4444; animation: pulse 1s infinite; }}
-
+.status-dot.overdue {{ background: #ef4444; animation: pulse 1.5s infinite; }}
 @keyframes pulse {{ 0%,100% {{ opacity: 1; }} 50% {{ opacity: 0.4; }} }}
 
 .card-footer {{
-    padding: 12px 20px; border-top: 1px solid #2a2d3a;
-    display: flex; justify-content: space-between; font-size: 0.8rem; color: #666;
+    padding: 10px 20px; border-top: 1px solid #2a2d3e;
+    display: flex; justify-content: space-between; font-size: 0.72rem; color: #5a6070;
 }}
 
 .penalty-tag {{
-    background: #3d1616; color: #f87171; padding: 2px 10px;
-    border-radius: 12px; font-size: 0.8rem; font-weight: 600;
+    background: rgba(248,113,113,0.1); color: #f87171;
+    border: 1px solid rgba(248,113,113,0.2);
+    padding: 3px 10px; border-radius: 12px;
+    font-size: 0.72rem; font-weight: 700;
+}}
+
+.page-footer {{
+    text-align: center; padding: 24px 32px 16px;
+    font-size: 0.7rem; color: #5a6070;
 }}
 
 @media (max-width: 768px) {{
-    .summary-bar {{ flex-direction: column; }}
+    .stats-row {{ grid-template-columns: repeat(2, 1fr); }}
     .info-row {{ flex-direction: column; gap: 6px; }}
-    .header, .cards, .filters {{ padding-left: 16px; padding-right: 16px; }}
+    .header, .cards, .filters, .stats-row {{ padding-left: 16px; padding-right: 16px; }}
+    .header {{ flex-direction: column; gap: 10px; align-items: flex-start; }}
+}}
+@media (max-width: 480px) {{
+    .stats-row {{ grid-template-columns: 1fr; }}
 }}
 </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>KRA HELMET — Tax Compliance Dashboard</h1>
-    <div class="subtitle">Generated: {now} | Auto-refreshes every {refresh_sec // 60}min | Protecting Kenyan SMEs from tax penalties</div>
+    <div class="header-left">
+        <div class="brand-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+        </div>
+        <div>
+            <div class="brand-name">KRA HELMET</div>
+            <div class="brand-sub">Tax Compliance Dashboard</div>
+        </div>
+    </div>
+    <div class="header-meta">
+        Generated: {now} | Auto-refresh {refresh_sec // 60}min
+    </div>
 </div>
 
-<div class="summary-bar">
-    <div class="stat blue">
+<div class="stats-row">
+    <div class="stat-card blue">
         <div class="label">Total SMEs</div>
         <div class="value">{total}</div>
     </div>
-    <div class="stat green">
+    <div class="stat-card green">
         <div class="label">Compliant</div>
         <div class="value">{compliant}</div>
     </div>
-    <div class="stat yellow">
+    <div class="stat-card amber">
         <div class="label">At Risk</div>
         <div class="value">{at_risk}</div>
     </div>
-    <div class="stat red">
+    <div class="stat-card red">
         <div class="label">Non-Compliant</div>
         <div class="value">{non_compliant}</div>
     </div>
-    <div class="stat purple">
+    <div class="stat-card purple">
         <div class="label">Penalty Exposure</div>
         <div class="value">KES {total_penalty:,.0f}</div>
     </div>
@@ -229,6 +289,10 @@ body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; backgroun
 
 <div class="cards" id="cards-container"></div>
 
+<div class="page-footer">
+    KRA HELMET v2.0 — Tax Compliance Autopilot for Kenyan SMEs
+</div>
+
 <script>
 const DATA = {cards_json};
 
@@ -238,8 +302,8 @@ function getStatus(sme) {{
 }}
 
 function getRiskColor(score) {{
-    if (score <= 25) return '#4ade80';
-    if (score <= 50) return '#facc15';
+    if (score <= 25) return '#34d399';
+    if (score <= 50) return '#fbbf24';
     if (score <= 75) return '#fb923c';
     return '#f87171';
 }}
@@ -281,7 +345,7 @@ function renderCard(sme) {{
             </div>
             <div style="display:flex;gap:8px;align-items:center">
                 ${{penaltyTag}}
-                <span class="badge ${{status}}">${{status.replace('_', ' ')}}</span>
+                <span class="badge ${{status}}"><span class="bdot"></span>${{status.replace('_', ' ')}}</span>
             </div>
         </div>
         <div class="card-body">
@@ -293,21 +357,21 @@ function renderCard(sme) {{
                 ${{profile.has_employees ? `<span>Employees: ${{profile.employee_count || 0}}</span>` : ''}}
             </div>
 
-            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.85rem">
-                <span>Risk Score: <strong>${{riskScore}}</strong>/100 (${{risk.risk_level || '-'}})</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;color:#9aa0b0">
+                <span>Risk Score: <strong style="color:#e8eaed">${{riskScore}}</strong>/100 (${{risk.risk_level || '-'}})</span>
                 <span>${{urgency.emoji || ''}} ${{urgency.prefix || ''}}</span>
             </div>
             <div class="risk-bar-container">
                 <div class="risk-bar" style="width:${{riskScore}}%;background:${{getRiskColor(riskScore)}}"></div>
             </div>
 
-            ${{risk.factors ? `<div style="font-size:0.8rem;color:#888;margin-bottom:8px">${{risk.factors.join(' | ')}}</div>` : ''}}
+            ${{risk.factors ? `<div style="font-size:0.75rem;color:#5a6070;margin-bottom:8px">${{risk.factors.join(' | ')}}</div>` : ''}}
 
             ${{obligations.length > 0 ? `
             <table class="obligations-table">
                 <thead><tr><th>Tax Type</th><th>Rate</th><th>Next Deadline</th><th>Days</th><th>Status</th></tr></thead>
                 <tbody>${{oblRows}}</tbody>
-            </table>` : '<div style="color:#666;padding:12px">No compliance check run yet.</div>'}}
+            </table>` : '<div style="color:#5a6070;padding:12px;font-size:0.82rem">No compliance check run yet.</div>'}}
         </div>
         <div class="card-footer">
             <span>Last checked: ${{report.checked_at ? report.checked_at.substring(0,16).replace('T',' ') : 'Never'}}</span>

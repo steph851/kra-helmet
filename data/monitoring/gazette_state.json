@@ -2,13 +2,13 @@
   "pages": {
     "kenya_law_acts": {
       "hash": "8af9520c2a3dff8b3f70b34c3e32a07d0ea431e32892824da8bcabf48f3503c2",
-      "last_checked": "2026-04-02T19:36:31.876706+03:00",
+      "last_checked": "2026-04-03T18:02:43.566717+03:00",
       "last_changed": "2026-04-02T19:36:31.876787+03:00"
     },
     "parliament_bills": {
-      "hash": "ae288a6ce1cac6d5aa58059f8c16e994a98ad26e091bee347ee6771df295a6af",
-      "last_checked": "2026-04-02T19:36:37.587068+03:00",
-      "last_changed": "2026-04-02T19:36:37.587080+03:00"
+      "hash": "a9e65fbfcca47ff54e246c4f39e2a525213b58da0b37248dca324917e25573d4",
+      "last_checked": "2026-04-03T18:02:46.072402+03:00",
+      "last_changed": "2026-04-03T18:02:46.072413+03:00"
     }
   },
   "notices": [
@@ -57,7 +57,37 @@
         "amendment"
       ],
       "notice_count": 0
+    },
+    {
+      "source": "parliament_bills",
+      "detected_at": "2026-04-03T00:10:03.877196+03:00",
+      "keywords": [
+        "tax",
+        "revenue",
+        "amendment"
+      ],
+      "notice_count": 0
+    },
+    {
+      "source": "parliament_bills",
+      "detected_at": "2026-04-03T06:03:25.296756+03:00",
+      "keywords": [
+        "tax",
+        "revenue",
+        "amendment"
+      ],
+      "notice_count": 0
+    },
+    {
+      "source": "parliament_bills",
+      "detected_at": "2026-04-03T18:02:46.072361+03:00",
+      "keywords": [
+        "tax",
+        "revenue",
+        "amendment"
+      ],
+      "notice_count": 0
     }
   ],
-  "last_scan": "2026-04-02T19:36:37.652200+03:00"
+  "last_scan": "2026-04-03T18:02:46.113614+03:00"
 }

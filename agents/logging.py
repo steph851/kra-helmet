@@ -23,30 +23,23 @@ class StructuredLogger:
         self.name = name
         self.log_dir = log_dir
         self.log_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Set up Python logger
         self.logger = logging.getLogger(name)
         self.logger.setLevel(logging.INFO)
-        
-        # Remove existing handlers to avoid duplicates
-        self.logger.handlers.clear()
-        
-        # Create file handler for JSON logs
-        log_file = self.log_dir / f"{name}.jsonl"
-        handler = logging.FileHandler(log_file, encoding="utf-8")
-        handler.setLevel(logging.INFO)
-        
-        # Don't use formatter - we'll write JSON directly
-        self.logger.addHandler(handler)
-        
-        # Also log to console for development
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
-        console_formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
-        console_handler.setFormatter(console_formatter)
-        self.logger.addHandler(console_handler)
+        # Prevent messages from propagating to root logger (avoids duplicates)
+        self.logger.propagate = False
+
+        # Only add handlers if this logger doesn't already have them
+        if not self.logger.handlers:
+            # Console handler only — file writes are handled by _write_log()
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(logging.INFO)
+            console_formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
+            console_handler.setFormatter(console_formatter)
+            self.logger.addHandler(console_handler)
 
     def _create_log_entry(
         self,

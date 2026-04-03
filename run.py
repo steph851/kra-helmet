@@ -459,7 +459,10 @@ def main():
         print("  Open http://localhost:8000 in your browser")
         print("  API docs: http://localhost:8000/docs\n")
         import subprocess
-        subprocess.run([sys.executable, "-m", "uvicorn", "api:app", "--reload", "--port", "8000"], cwd=str(ROOT))
+        try:
+            subprocess.run([sys.executable, "-m", "uvicorn", "api:app", "--reload", "--port", "8000"], cwd=str(ROOT))
+        except KeyboardInterrupt:
+            pass  # Clean shutdown via Ctrl+C
 
     elif command == "demo":
         print("\n  Running demo with test SME...\n")

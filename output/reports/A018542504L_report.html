@@ -4,138 +4,219 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KRA HELMET Report — STEPHEN WANJUKI (A018542504L)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Segoe UI', system-ui, sans-serif; background: #fff; color: #1a1a1a; max-width: 900px; margin: 0 auto; padding: 24px; }
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0f1117; color: #e8eaed; line-height: 1.6;
+    -webkit-font-smoothing: antialiased; min-height: 100vh;
+}
+
+.report-container {
+    max-width: 900px; margin: 0 auto; padding: 32px 24px;
+}
+
+.report-card {
+    background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 10px;
+    overflow: hidden; margin-bottom: 20px;
+}
 
 .report-header {
-    border-bottom: 3px solid #16a34a;
-    padding-bottom: 16px; margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px; border-bottom: 1px solid #2a2d3e;
 }
-.report-header h1 { font-size: 1.4rem; color: #16a34a; }
-.report-header .meta { color: #666; font-size: 0.85rem; margin-top: 4px; }
+.report-header h1 { font-size: 1.1rem; font-weight: 700; color: #e8eaed; }
+.report-meta {
+    font-size: 0.72rem; color: #5a6070;
+    padding: 10px 24px; border-bottom: 1px solid #2a2d3e;
+}
 
-.section { margin-bottom: 24px; }
-.section h2 {
-    font-size: 1rem; text-transform: uppercase; color: #444;
-    border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 12px;
-    letter-spacing: 0.05em;
+.section-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 24px; border-bottom: 1px solid #2a2d3e;
 }
+.section-header h2 { font-size: 0.85rem; font-weight: 600; color: #e8eaed; }
+.section-body { padding: 18px 24px; }
 
 .profile-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; font-size: 0.9rem;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 32px; font-size: 0.88rem;
 }
-.profile-grid dt { color: #666; }
-.profile-grid dd { font-weight: 600; margin-bottom: 4px; }
+.profile-grid dt { color: #5a6070; font-size: 0.78rem; font-weight: 500; }
+.profile-grid dd { font-weight: 600; color: #e8eaed; margin-bottom: 2px; }
 
 .status-badge {
-    display: inline-block; padding: 6px 16px; border-radius: 6px;
-    font-weight: 700; font-size: 0.9rem; text-transform: uppercase;
-    background: #dcfce7; color: #16a34a; border: 1px solid #16a34a;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 14px; border-radius: 20px;
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.2);
 }
+.status-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: #34d399;
+}
+.next-action { font-size: 0.82rem; color: #9aa0b0; }
 
+.risk-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.85rem; color: #9aa0b0; margin-bottom: 8px;
+}
+.risk-row strong { color: #e8eaed; }
 .risk-meter {
-    height: 12px; background: #e5e7eb; border-radius: 6px; overflow: hidden;
-    margin: 8px 0;
+    height: 8px; background: #222538; border-radius: 6px;
+    overflow: hidden; margin: 8px 0;
 }
 .risk-fill { height: 100%; border-radius: 6px; }
+.risk-factors {
+    list-style: none; padding: 0; margin-top: 10px;
+}
+.risk-factors li { font-size: 0.8rem; color: #5a6070; padding: 3px 0; }
 
-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 8px; }
-th { text-align: left; padding: 8px; background: #f9fafb; border-bottom: 2px solid #e5e7eb; font-size: 0.75rem; text-transform: uppercase; color: #666; }
-td { padding: 8px; border-bottom: 1px solid #f3f4f6; }
-tr:hover { background: #f9fafb; }
-
-.disclaimer {
-    margin-top: 32px; padding: 12px 16px; background: #fef3c7;
-    border: 1px solid #f59e0b; border-radius: 6px; font-size: 0.8rem;
-    color: #92400e;
+table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+th {
+    text-align: left; padding: 9px 12px; background: #161822;
+    color: #5a6070; font-weight: 600; font-size: 0.7rem;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 1px solid #2a2d3e;
+}
+td { padding: 9px 12px; border-bottom: 1px solid #222538; color: #9aa0b0; }
+tr:hover td { background: #222538; }
+.obl-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 8px;
 }
 
-.footer {
-    margin-top: 24px; padding-top: 12px; border-top: 1px solid #e5e7eb;
-    font-size: 0.75rem; color: #999; text-align: center;
+.disclaimer {
+    padding: 14px 20px; background: rgba(251,191,36,0.06);
+    border: 1px solid rgba(251,191,36,0.15); border-radius: 10px;
+    font-size: 0.78rem; color: #fbbf24;
+}
+
+.report-footer {
+    text-align: center; padding: 18px 0 8px; font-size: 0.7rem; color: #5a6070;
 }
 
 @media print {
-    body { padding: 12px; }
+    body { background: #fff; color: #1a1a1a; }
+    .report-card { background: #fff; border: 1px solid #e5e7eb; }
+    .report-header h1, .section-header h2 { color: #1a1a1a; }
+    .report-meta { color: #666; }
+    .profile-grid dt { color: #666; }
+    .profile-grid dd { color: #1a1a1a; }
+    .risk-row, .risk-row strong, td { color: #1a1a1a; }
+    .next-action, .risk-factors li { color: #666; }
+    th { background: #f9fafb; color: #666; }
+    td { border-bottom-color: #f3f4f6; }
+    .disclaimer { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
+    .report-footer { color: #999; }
     .no-print { display: none; }
 }
 </style>
 </head>
 <body>
 
-<div class="report-header">
-    <h1>KRA HELMET — Tax Compliance Report</h1>
-    <div class="meta">Generated: 2026-03-30 03:30 | PIN: A018542504L</div>
-</div>
+<div class="report-container">
+    <div class="report-card">
+        <div class="report-header">
+            <h1>KRA HELMET — Tax Compliance Report</h1>
+        </div>
+        <div class="report-meta">Generated: 2026-04-03 11:23 | PIN: A018542504L</div>
 
-<div class="section">
-    <h2>SME Profile</h2>
-    <dl class="profile-grid">
-        <dt>Name</dt><dd>STEPHEN WANJUKI</dd>
-        <dt>Business</dt><dd>STEPHEN WANJUKI</dd>
-        <dt>Type</dt><dd>Sole Proprietor</dd>
-        <dt>Industry</dt><dd>Digital / Online Business</dd>
-        <dt>County</dt><dd>NAKURU</dd>
-        <dt>Turnover Bracket</dt><dd>below_1m</dd>
-        <dt>Employees</dt><dd>0</dd>
-        <dt>Phone</dt><dd>0114179880</dd>
-    </dl>
-</div>
+        <div class="section-header"><h2>SME Profile</h2></div>
+        <div class="section-body">
+            <dl class="profile-grid">
+                <dt>Name</dt><dd>STEPHEN WANJUKI</dd>
+                <dt>Business</dt><dd>STEPHEN WANJUKI</dd>
+                <dt>Type</dt><dd>Sole Proprietor</dd>
+                <dt>Industry</dt><dd>Professional Services</dd>
+                <dt>County</dt><dd>NAKURU</dd>
+                <dt>Turnover Bracket</dt><dd>below_1m</dd>
+                <dt>Employees</dt><dd>0</dd>
+                <dt>Phone</dt><dd>0114179880</dd>
+            </dl>
+        </div>
 
-<div class="section">
-    <h2>Compliance Status</h2>
-    <div style="display:flex;justify-content:space-between;align-items:center">
-        <span class="status-badge">compliant</span>
-        <span style="font-size:0.9rem;color:#666">All obligations on track. Next filing is upcoming.</span>
-    </div>
-</div>
+        <div class="section-header"><h2>Compliance Status</h2></div>
+        <div class="section-body" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+            <span class="status-badge"><span class="status-dot"></span>compliant</span>
+            <span class="next-action">All obligations on track. Next filing is upcoming.</span>
+        </div>
 
-<div class="section">
-    <h2>Risk Assessment</h2>
-    <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.9rem">
-        <span>Score: <strong>5/100</strong> (low)</span>
-        <span>Audit Probability: <strong>3.0%</strong></span>
-    </div>
-    <div class="risk-meter">
-        <div class="risk-fill" style="width:5%;background:#22c55e"></div>
-    </div>
-    <ul style="font-size:0.85rem;color:#666;padding-left:20px;margin-top:8px"><li>[+5] Business recently registered</li></ul>
-</div>
+        <div class="section-header"><h2>Risk Assessment</h2></div>
+        <div class="section-body">
+            <div class="risk-row">
+                <span>Score: <strong>5/100</strong> (low)</span>
+                <span>Audit Probability: <strong>3.0%</strong></span>
+            </div>
+            <div class="risk-meter">
+                <div class="risk-fill" style="width:5%;background:#34d399"></div>
+            </div>
+            <ul class="risk-factors"><li>[+5] Business recently registered</li></ul>
+        </div>
 
-<div class="section">
-    <h2>Tax Obligations (1)</h2>
-    <table>
-        <thead><tr><th>Tax Type</th><th>Rate</th><th>Frequency</th><th>Next Deadline</th><th>Days Left</th><th>File By</th><th>Status</th></tr></thead>
-        <tbody>
+        <div class="section-header"><h2>Tax Obligations (3)</h2></div>
+        <div style="padding:0">
+            <table>
+                <thead><tr><th>Tax Type</th><th>Rate</th><th>Frequency</th><th>Next Deadline</th><th>Days Left</th><th>File By</th><th>Status</th></tr></thead>
+                <tbody>
             <tr>
-                <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;margin-right:6px"></span>Presumptive Tax</td>
+                <td><span class="obl-dot" style="background:#34d399"></span>Presumptive Tax</td>
                 <td>KES 15,000/year</td>
                 <td>annual</td>
                 <td>2026-12-31</td>
-                <td>277d</td>
+                <td>272d</td>
                 <td>2026-12-28</td>
                 <td style="text-transform:capitalize">upcoming</td>
+            </tr>
+            <tr>
+                <td><span class="obl-dot" style="background:#34d399"></span>Withholding Tax (Professional Fees)</td>
+                <td>5.0%</td>
+                <td>monthly</td>
+                <td>2026-04-20</td>
+                <td>17d</td>
+                <td>2026-04-17</td>
+                <td style="text-transform:capitalize">upcoming</td>
+            </tr>
+            <tr>
+                <td><span class="obl-dot" style="background:#34d399"></span>Withholding Tax (Management Fees)</td>
+                <td>5.0%</td>
+                <td>monthly</td>
+                <td>2026-04-20</td>
+                <td>17d</td>
+                <td>2026-04-17</td>
+                <td style="text-transform:capitalize">upcoming</td>
             </tr></tbody>
-    </table>
-</div>
+            </table>
+        </div>
 
 
 
-<div class="section">
-    <h2>Filing History</h2>
-    <div style="color:#999;font-size:0.85rem">No filings recorded yet. Use <code>python run.py file {pin}</code> to record.</div>
-</div>
+        <div class="section-header"><h2>Filing History</h2></div>
+        <div style='padding:0'>
+            <table>
+                <thead><tr><th>Date</th><th>Tax Type</th><th>Period</th><th>Amount</th><th>Reference</th></tr></thead>
+                <tbody>
+            <tr>
+                <td>2026-04-03T11:22</td>
+                <td>presumptive_tax</td>
+                <td>273</td>
+                <td>KES 15,000</td>
+                <td></td>
+            </tr></tbody>
+            </table>
+        </div>
+    </div>
 
-<div class="disclaimer">
-    <strong>DISCLAIMER:</strong> This report is generated by an automated system for guidance purposes only.
-    It does NOT constitute legal, tax, or financial advice. Tax laws change frequently.
-    Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making filing or payment decisions.
-</div>
+    <div class="disclaimer">
+        <strong>DISCLAIMER:</strong> This report is generated by an automated system for guidance purposes only.
+        It does NOT constitute legal, tax, or financial advice. Tax laws change frequently.
+        Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making filing or payment decisions.
+    </div>
 
-<div class="footer">
-    KRA HELMET v1.0 — Tax Compliance Autopilot for Kenyan SMEs<br>
-    Report generated 2026-03-30 03:30
+    <div class="report-footer">
+        KRA HELMET v2.0 — Tax Compliance Autopilot for Kenyan SMEs<br>
+        Report generated 2026-04-03 11:23
+    </div>
 </div>
 
 </body>

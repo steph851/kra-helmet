@@ -1,0 +1,10 @@
+{
+  "sme_pin": "A123456789B",
+  "channel": "whatsapp",
+  "message": "🟡 *DUE SOON* — Hi Jane!\n\n  ⏳ SHIF (Social Health Insurance Fund) — 7 day(s) left (by 2026-04-09)\n\n👉 File on iTax now to avoid penalties.",
+  "urgency_level": "yellow",
+  "scheduled_at": "2026-04-03T07:00:00+03:00",
+  "obligation": "SHIF (Social Health Insurance Fund)",
+  "days_until_deadline": 7,
+  "created_at": "2026-04-03T00:06:35.935272+03:00"
+}

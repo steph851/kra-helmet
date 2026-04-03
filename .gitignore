@@ -17,6 +17,10 @@ logs/*.jsonl
 # Memory (agent decisions — ephemeral)
 memory/
 
+# Node
+node_modules/
+package-lock.json
+
 # IDE
 .vscode/
 .idea/

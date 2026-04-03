@@ -110,11 +110,11 @@ class ReportGenerator(BaseAgent):
                 days_str = f'{days}d' if days is not None else '-'
 
             status = ob.get("status", "-")
-            dot_color = {"upcoming": "#22c55e", "due_soon": "#eab308", "urgent": "#f97316", "critical": "#ef4444", "overdue": "#dc2626"}.get(status, "#9ca3af")
+            dot_color = {"upcoming": "#34d399", "due_soon": "#fbbf24", "urgent": "#fb923c", "critical": "#f87171", "overdue": "#ef4444"}.get(status, "#5a6070")
 
             obl_rows += f"""
             <tr>
-                <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{dot_color};margin-right:6px"></span>{ob.get('tax_name', '-')}</td>
+                <td><span class="obl-dot" style="background:{dot_color}"></span>{ob.get('tax_name', '-')}</td>
                 <td>{ob.get('rate', '-')}</td>
                 <td>{ob.get('frequency', '-')}</td>
                 <td>{ob.get('next_deadline', '-')}</td>
@@ -154,144 +154,207 @@ class ReportGenerator(BaseAgent):
                     <td>KES {p.get('total_exposure_kes', 0):,.0f}</td>
                 </tr>"""
 
+        # Status colors for dark theme
+        dark_status_colors = {
+            "compliant": ("#34d399", "rgba(52,211,153,0.1)", "rgba(52,211,153,0.2)"),
+            "at_risk": ("#fbbf24", "rgba(251,191,36,0.1)", "rgba(251,191,36,0.2)"),
+            "non_compliant": ("#f87171", "rgba(248,113,113,0.1)", "rgba(248,113,113,0.2)"),
+            "not_checked": ("#9aa0b0", "rgba(154,160,176,0.08)", "rgba(154,160,176,0.15)"),
+        }
+        neon_color, neon_bg, neon_border = dark_status_colors.get(overall, dark_status_colors["not_checked"])
+        risk_bar_color = '#34d399' if risk_score <= 25 else '#fbbf24' if risk_score <= 50 else '#fb923c' if risk_score <= 75 else '#f87171'
+
         return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KRA HELMET Report — {name} ({pin})</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-* {{ margin: 0; padding: 0; box-sizing: border-box; }}
-body {{ font-family: 'Segoe UI', system-ui, sans-serif; background: #fff; color: #1a1a1a; max-width: 900px; margin: 0 auto; padding: 24px; }}
+*, *::before, *::after {{ margin: 0; padding: 0; box-sizing: border-box; }}
+body {{
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0f1117; color: #e8eaed; line-height: 1.6;
+    -webkit-font-smoothing: antialiased; min-height: 100vh;
+}}
+
+.report-container {{
+    max-width: 900px; margin: 0 auto; padding: 32px 24px;
+}}
+
+.report-card {{
+    background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 10px;
+    overflow: hidden; margin-bottom: 20px;
+}}
 
 .report-header {{
-    border-bottom: 3px solid #16a34a;
-    padding-bottom: 16px; margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px; border-bottom: 1px solid #2a2d3e;
 }}
-.report-header h1 {{ font-size: 1.4rem; color: #16a34a; }}
-.report-header .meta {{ color: #666; font-size: 0.85rem; margin-top: 4px; }}
+.report-header h1 {{ font-size: 1.1rem; font-weight: 700; color: #e8eaed; }}
+.report-meta {{
+    font-size: 0.72rem; color: #5a6070;
+    padding: 10px 24px; border-bottom: 1px solid #2a2d3e;
+}}
 
-.section {{ margin-bottom: 24px; }}
-.section h2 {{
-    font-size: 1rem; text-transform: uppercase; color: #444;
-    border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 12px;
-    letter-spacing: 0.05em;
+.section-header {{
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 24px; border-bottom: 1px solid #2a2d3e;
 }}
+.section-header h2 {{ font-size: 0.85rem; font-weight: 600; color: #e8eaed; }}
+.section-body {{ padding: 18px 24px; }}
 
 .profile-grid {{
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; font-size: 0.9rem;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 32px; font-size: 0.88rem;
 }}
-.profile-grid dt {{ color: #666; }}
-.profile-grid dd {{ font-weight: 600; margin-bottom: 4px; }}
+.profile-grid dt {{ color: #5a6070; font-size: 0.78rem; font-weight: 500; }}
+.profile-grid dd {{ font-weight: 600; color: #e8eaed; margin-bottom: 2px; }}
 
 .status-badge {{
-    display: inline-block; padding: 6px 16px; border-radius: 6px;
-    font-weight: 700; font-size: 0.9rem; text-transform: uppercase;
-    background: {sbg}; color: {sc}; border: 1px solid {sc};
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 14px; border-radius: 20px;
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    background: {neon_bg}; color: {neon_color}; border: 1px solid {neon_border};
 }}
+.status-dot {{
+    width: 6px; height: 6px; border-radius: 50%; background: {neon_color};
+}}
+.next-action {{ font-size: 0.82rem; color: #9aa0b0; }}
 
+.risk-row {{
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.85rem; color: #9aa0b0; margin-bottom: 8px;
+}}
+.risk-row strong {{ color: #e8eaed; }}
 .risk-meter {{
-    height: 12px; background: #e5e7eb; border-radius: 6px; overflow: hidden;
-    margin: 8px 0;
+    height: 8px; background: #222538; border-radius: 6px;
+    overflow: hidden; margin: 8px 0;
 }}
 .risk-fill {{ height: 100%; border-radius: 6px; }}
+.risk-factors {{
+    list-style: none; padding: 0; margin-top: 10px;
+}}
+.risk-factors li {{ font-size: 0.8rem; color: #5a6070; padding: 3px 0; }}
 
-table {{ width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 8px; }}
-th {{ text-align: left; padding: 8px; background: #f9fafb; border-bottom: 2px solid #e5e7eb; font-size: 0.75rem; text-transform: uppercase; color: #666; }}
-td {{ padding: 8px; border-bottom: 1px solid #f3f4f6; }}
-tr:hover {{ background: #f9fafb; }}
-
-.disclaimer {{
-    margin-top: 32px; padding: 12px 16px; background: #fef3c7;
-    border: 1px solid #f59e0b; border-radius: 6px; font-size: 0.8rem;
-    color: #92400e;
+table {{ width: 100%; border-collapse: collapse; font-size: 0.82rem; }}
+th {{
+    text-align: left; padding: 9px 12px; background: #161822;
+    color: #5a6070; font-weight: 600; font-size: 0.7rem;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 1px solid #2a2d3e;
+}}
+td {{ padding: 9px 12px; border-bottom: 1px solid #222538; color: #9aa0b0; }}
+tr:hover td {{ background: #222538; }}
+.obl-dot {{
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 8px;
 }}
 
-.footer {{
-    margin-top: 24px; padding-top: 12px; border-top: 1px solid #e5e7eb;
-    font-size: 0.75rem; color: #999; text-align: center;
+.disclaimer {{
+    padding: 14px 20px; background: rgba(251,191,36,0.06);
+    border: 1px solid rgba(251,191,36,0.15); border-radius: 10px;
+    font-size: 0.78rem; color: #fbbf24;
+}}
+
+.report-footer {{
+    text-align: center; padding: 18px 0 8px; font-size: 0.7rem; color: #5a6070;
 }}
 
 @media print {{
-    body {{ padding: 12px; }}
+    body {{ background: #fff; color: #1a1a1a; }}
+    .report-card {{ background: #fff; border: 1px solid #e5e7eb; }}
+    .report-header h1, .section-header h2 {{ color: #1a1a1a; }}
+    .report-meta {{ color: #666; }}
+    .profile-grid dt {{ color: #666; }}
+    .profile-grid dd {{ color: #1a1a1a; }}
+    .risk-row, .risk-row strong, td {{ color: #1a1a1a; }}
+    .next-action, .risk-factors li {{ color: #666; }}
+    th {{ background: #f9fafb; color: #666; }}
+    td {{ border-bottom-color: #f3f4f6; }}
+    .disclaimer {{ background: #fef3c7; border-color: #f59e0b; color: #92400e; }}
+    .report-footer {{ color: #999; }}
     .no-print {{ display: none; }}
 }}
 </style>
 </head>
 <body>
 
-<div class="report-header">
-    <h1>KRA HELMET — Tax Compliance Report</h1>
-    <div class="meta">Generated: {now} | PIN: {pin}</div>
-</div>
+<div class="report-container">
+    <div class="report-card">
+        <div class="report-header">
+            <h1>KRA HELMET — Tax Compliance Report</h1>
+        </div>
+        <div class="report-meta">Generated: {now} | PIN: {pin}</div>
 
-<div class="section">
-    <h2>SME Profile</h2>
-    <dl class="profile-grid">
-        <dt>Name</dt><dd>{name}</dd>
-        <dt>Business</dt><dd>{biz}</dd>
-        <dt>Type</dt><dd>{btype}</dd>
-        <dt>Industry</dt><dd>{industry}</dd>
-        <dt>County</dt><dd>{county}</dd>
-        <dt>Turnover Bracket</dt><dd>{bracket}</dd>
-        <dt>Employees</dt><dd>{employees}</dd>
-        <dt>Phone</dt><dd>{phone}</dd>
-    </dl>
-</div>
+        <div class="section-header"><h2>SME Profile</h2></div>
+        <div class="section-body">
+            <dl class="profile-grid">
+                <dt>Name</dt><dd>{name}</dd>
+                <dt>Business</dt><dd>{biz}</dd>
+                <dt>Type</dt><dd>{btype}</dd>
+                <dt>Industry</dt><dd>{industry}</dd>
+                <dt>County</dt><dd>{county}</dd>
+                <dt>Turnover Bracket</dt><dd>{bracket}</dd>
+                <dt>Employees</dt><dd>{employees}</dd>
+                <dt>Phone</dt><dd>{phone}</dd>
+            </dl>
+        </div>
 
-<div class="section">
-    <h2>Compliance Status</h2>
-    <div style="display:flex;justify-content:space-between;align-items:center">
-        <span class="status-badge">{overall.replace('_', ' ')}</span>
-        <span style="font-size:0.9rem;color:#666">{compliance.get('next_action', '-')}</span>
+        <div class="section-header"><h2>Compliance Status</h2></div>
+        <div class="section-body" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+            <span class="status-badge"><span class="status-dot"></span>{overall.replace('_', ' ')}</span>
+            <span class="next-action">{compliance.get('next_action', '-')}</span>
+        </div>
+
+        <div class="section-header"><h2>Risk Assessment</h2></div>
+        <div class="section-body">
+            <div class="risk-row">
+                <span>Score: <strong>{risk_score}/100</strong> ({risk_level})</span>
+                <span>Audit Probability: <strong>{audit_prob}%</strong></span>
+            </div>
+            <div class="risk-meter">
+                <div class="risk-fill" style="width:{risk_score}%;background:{risk_bar_color}"></div>
+            </div>
+            {'<ul class="risk-factors">' + ''.join(f'<li>{f}</li>' for f in risk.get('factors', [])) + '</ul>' if risk.get('factors') else ''}
+        </div>
+
+        <div class="section-header"><h2>Tax Obligations ({len(obligations)})</h2></div>
+        <div style="padding:0">
+            <table>
+                <thead><tr><th>Tax Type</th><th>Rate</th><th>Frequency</th><th>Next Deadline</th><th>Days Left</th><th>File By</th><th>Status</th></tr></thead>
+                <tbody>{obl_rows if obl_rows else '<tr><td colspan="7" style="color:#5a6070;text-align:center;padding:20px">No compliance check run yet</td></tr>'}</tbody>
+            </table>
+        </div>
+
+{f"""        <div class="section-header"><h2>Penalty Exposure — KES {penalty_total:,.0f} ({penalty_severity})</h2></div>
+        <div style="padding:0">
+            <table>
+                <thead><tr><th>Tax Type</th><th>Days Overdue</th><th>Penalty</th><th>Interest</th><th>Total</th></tr></thead>
+                <tbody>{penalty_html}</tbody>
+            </table>
+        </div>""" if penalty_total > 0 else ""}
+
+        <div class="section-header"><h2>Filing History</h2></div>
+        <div {"style='padding:0'" if filing_rows else "class='section-body'"}>
+            {f"""<table>
+                <thead><tr><th>Date</th><th>Tax Type</th><th>Period</th><th>Amount</th><th>Reference</th></tr></thead>
+                <tbody>{filing_rows}</tbody>
+            </table>""" if filing_rows else f'<div style="color:#5a6070;font-size:0.82rem">No filings recorded yet. Use <code style="color:#34d399">python run.py file {pin}</code> to record.</div>'}
+        </div>
     </div>
-</div>
 
-<div class="section">
-    <h2>Risk Assessment</h2>
-    <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.9rem">
-        <span>Score: <strong>{risk_score}/100</strong> ({risk_level})</span>
-        <span>Audit Probability: <strong>{audit_prob}%</strong></span>
+    <div class="disclaimer">
+        <strong>DISCLAIMER:</strong> This report is generated by an automated system for guidance purposes only.
+        It does NOT constitute legal, tax, or financial advice. Tax laws change frequently.
+        Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making filing or payment decisions.
     </div>
-    <div class="risk-meter">
-        <div class="risk-fill" style="width:{risk_score}%;background:{'#22c55e' if risk_score <= 25 else '#eab308' if risk_score <= 50 else '#f97316' if risk_score <= 75 else '#ef4444'}"></div>
+
+    <div class="report-footer">
+        KRA HELMET v2.0 — Tax Compliance Autopilot for Kenyan SMEs<br>
+        Report generated {now}
     </div>
-    {'<ul style="font-size:0.85rem;color:#666;padding-left:20px;margin-top:8px">' + risk_factors_html + '</ul>' if risk_factors_html else ''}
-</div>
-
-<div class="section">
-    <h2>Tax Obligations ({len(obligations)})</h2>
-    <table>
-        <thead><tr><th>Tax Type</th><th>Rate</th><th>Frequency</th><th>Next Deadline</th><th>Days Left</th><th>File By</th><th>Status</th></tr></thead>
-        <tbody>{obl_rows if obl_rows else '<tr><td colspan="7" style="color:#999;text-align:center">No compliance check run yet</td></tr>'}</tbody>
-    </table>
-</div>
-
-{f"""<div class="section">
-    <h2>Penalty Exposure — KES {penalty_total:,.0f} ({penalty_severity})</h2>
-    <table>
-        <thead><tr><th>Tax Type</th><th>Days Overdue</th><th>Penalty</th><th>Interest</th><th>Total</th></tr></thead>
-        <tbody>{penalty_html}</tbody>
-    </table>
-</div>""" if penalty_total > 0 else ""}
-
-<div class="section">
-    <h2>Filing History</h2>
-    {f"""<table>
-        <thead><tr><th>Date</th><th>Tax Type</th><th>Period</th><th>Amount</th><th>Reference</th></tr></thead>
-        <tbody>{filing_rows}</tbody>
-    </table>""" if filing_rows else '<div style="color:#999;font-size:0.85rem">No filings recorded yet. Use <code>python run.py file {pin}</code> to record.</div>'}
-</div>
-
-<div class="disclaimer">
-    <strong>DISCLAIMER:</strong> This report is generated by an automated system for guidance purposes only.
-    It does NOT constitute legal, tax, or financial advice. Tax laws change frequently.
-    Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making filing or payment decisions.
-</div>
-
-<div class="footer">
-    KRA HELMET v1.0 — Tax Compliance Autopilot for Kenyan SMEs<br>
-    Report generated {now}
 </div>
 
 </body>

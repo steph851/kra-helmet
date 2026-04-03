@@ -1,14 +1,94 @@
-// KRA HELMET Dashboard JavaScript
+// KRA HELMET Dashboard — v4
 
 const API_BASE = window.location.origin;
+const _startTime = Date.now();
 
-// Initialize dashboard
-document.addEventListener('DOMContentLoaded', function() {
-    loadDashboard();
+// ── Initialization ────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    initSidebar();
+    initNavigation();
     setupEventListeners();
+    setCurrentDate();
+    loadDashboard();
+    startUptimeTimer();
 });
 
-// Load dashboard data
+// ── Sidebar ───────────────────────────────────────────────────
+function initSidebar() {
+    const toggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    toggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('visible');
+    });
+
+    overlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('visible');
+    });
+}
+
+// ── Navigation ────────────────────────────────────────────────
+function initNavigation() {
+    document.querySelectorAll('[data-section]').forEach(el => {
+        el.addEventListener('click', (e) => {
+            e.preventDefault();
+            const section = el.dataset.section;
+            navigateTo(section);
+        });
+    });
+}
+
+function navigateTo(sectionId) {
+    // Update nav active state
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    const activeNav = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
+    if (activeNav) activeNav.classList.add('active');
+
+    // Show correct section
+    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(`section-${sectionId}`);
+    if (target) target.classList.add('active');
+
+    // Update page title
+    const titles = {
+        overview: 'Overview',
+        smes: 'SME Management',
+        activity: 'Activity Log',
+        recommendations: 'Recommendations',
+        system: 'System Status'
+    };
+    document.getElementById('pageTitle').textContent = titles[sectionId] || 'Dashboard';
+
+    // Close mobile sidebar
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('visible');
+}
+
+function setCurrentDate() {
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('currentDate').textContent = now.toLocaleDateString('en-KE', options);
+}
+
+// ── Event Listeners ───────────────────────────────────────────
+function setupEventListeners() {
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+        const btn = document.getElementById('refreshBtn');
+        btn.classList.add('spinning');
+        loadDashboard().finally(() => {
+            setTimeout(() => btn.classList.remove('spinning'), 300);
+        });
+    });
+
+    document.getElementById('addSMEBtn').addEventListener('click', showAddSMEModal);
+    document.getElementById('searchSME').addEventListener('input', filterSMEs);
+    document.getElementById('addSMEForm').addEventListener('submit', addSME);
+}
+
+// ── Data Loading ──────────────────────────────────────────────
 async function loadDashboard() {
     try {
         await Promise.all([
@@ -24,44 +104,67 @@ async function loadDashboard() {
     }
 }
 
-// Load statistics
+// ── Stats ─────────────────────────────────────────────────────
 async function loadStats() {
     try {
         const response = await fetch(`${API_BASE}/api/stats`);
         const data = await response.json();
 
-        document.getElementById('totalSMEs').textContent = data.total_smes || 0;
-        document.getElementById('compliantSMEs').textContent = data.compliant_smes || 0;
-        document.getElementById('atRiskSMEs').textContent = data.at_risk_smes || 0;
-        document.getElementById('nonCompliantSMEs').textContent = data.non_compliant_smes || 0;
+        animateValue('totalSMEs', data.total_smes || 0);
+        animateValue('compliantSMEs', data.compliant_smes || 0);
+        animateValue('atRiskSMEs', data.at_risk_smes || 0);
+        animateValue('nonCompliantSMEs', data.non_compliant_smes || 0);
     } catch (error) {
         console.error('Error loading stats:', error);
     }
 }
 
-// Load SMEs
+function animateValue(elementId, target) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const current = parseInt(el.textContent) || 0;
+    if (current === target) return;
+
+    const duration = 400;
+    const start = performance.now();
+
+    function step(timestamp) {
+        const progress = Math.min((timestamp - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        el.textContent = Math.round(current + (target - current) * eased);
+        if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+
+// ── SMEs ──────────────────────────────────────────────────────
 async function loadSMEs() {
     try {
         const response = await fetch(`${API_BASE}/api/smes`);
         const data = await response.json();
 
         const smeList = document.getElementById('smeList');
-        smeList.innerHTML = '';
 
         if (data.smes && data.smes.length > 0) {
+            smeList.innerHTML = '';
             data.smes.forEach(sme => {
-                const smeItem = createSMEItem(sme);
-                smeList.appendChild(smeItem);
+                smeList.appendChild(createSMEItem(sme));
             });
         } else {
-            smeList.innerHTML = '<p class="no-data">No SMEs found. Add your first SME to get started.</p>';
+            smeList.innerHTML = `
+                <div class="empty-state">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <p>No SMEs found. Add your first SME to get started.</p>
+                </div>`;
         }
     } catch (error) {
         console.error('Error loading SMEs:', error);
     }
 }
 
-// Create SME item element
 function createSMEItem(sme) {
     const div = document.createElement('div');
     div.className = 'sme-item';
@@ -71,17 +174,16 @@ function createSMEItem(sme) {
 
     div.innerHTML = `
         <div class="sme-info">
-            <h3>${sme.name || 'Unknown'}</h3>
-            <p>PIN: ${sme.pin} | ${sme.business_name || 'No business name'}</p>
+            <h3>${escapeHtml(sme.name || 'Unknown')}</h3>
+            <p>${escapeHtml(sme.pin)} &middot; ${escapeHtml(sme.business_name || 'No business name')}</p>
         </div>
         <span class="sme-status ${statusClass}">${statusText}</span>
     `;
 
-    div.onclick = () => viewSMEDetails(sme.pin);
+    div.addEventListener('click', () => viewSMEDetails(sme.pin));
     return div;
 }
 
-// Get status class
 function getStatusClass(status) {
     switch (status) {
         case 'compliant': return 'status-compliant';
@@ -91,7 +193,6 @@ function getStatusClass(status) {
     }
 }
 
-// Get status text
 function getStatusText(status) {
     switch (status) {
         case 'compliant': return 'Compliant';
@@ -101,143 +202,205 @@ function getStatusText(status) {
     }
 }
 
-// Load activity
+// ── Activity ──────────────────────────────────────────────────
 async function loadActivity() {
     try {
         const response = await fetch(`${API_BASE}/api/activity`);
         const data = await response.json();
 
-        const activityList = document.getElementById('activityList');
-        activityList.innerHTML = '';
-
-        if (data.activities && data.activities.length > 0) {
-            data.activities.forEach(activity => {
-                const activityItem = createActivityItem(activity);
-                activityList.appendChild(activityItem);
-            });
-        } else {
-            activityList.innerHTML = '<p class="no-data">No recent activity.</p>';
-        }
+        // Full list
+        renderActivityList('activityList', data.activities, false);
+        // Compact overview list (max 5)
+        renderActivityList('overviewActivityList', (data.activities || []).slice(0, 5), true);
     } catch (error) {
         console.error('Error loading activity:', error);
     }
 }
 
-// Load proactive recommendations
+function renderActivityList(containerId, activities, compact) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (activities && activities.length > 0) {
+        container.innerHTML = '';
+        activities.forEach(activity => {
+            container.appendChild(createActivityItem(activity));
+        });
+    } else {
+        container.innerHTML = `
+            <div class="empty-state">
+                ${compact ? '' : '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'}
+                <p>No recent activity</p>
+            </div>`;
+    }
+}
+
+function createActivityItem(activity) {
+    const div = document.createElement('div');
+    div.className = 'activity-item';
+
+    const time = new Date(activity.timestamp).toLocaleString('en-KE', {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+
+    div.innerHTML = `
+        <div class="activity-dot"></div>
+        <div class="activity-body">
+            <div class="activity-text">${escapeHtml(activity.description)}</div>
+            <div class="activity-time">${time}</div>
+        </div>
+    `;
+
+    return div;
+}
+
+// ── Proactive Recommendations ─────────────────────────────────
 async function loadProactiveRecommendations() {
     try {
         const response = await fetch(`${API_BASE}/api/proactive`);
         const data = await response.json();
 
-        const proactiveList = document.getElementById('proactiveList');
-        proactiveList.innerHTML = '';
-
-        if (data.recommendations && data.recommendations.length > 0) {
-            data.recommendations.forEach(rec => {
-                const recItem = createProactiveItem(rec);
-                proactiveList.appendChild(recItem);
-            });
-        } else {
-            proactiveList.innerHTML = '<p class="no-data">No proactive recommendations at this time.</p>';
-        }
+        // Full list
+        renderProactiveList('proactiveList', data.recommendations, false);
+        // Compact overview list (max 3)
+        renderProactiveList('overviewProactiveList', (data.recommendations || []).slice(0, 3), true);
     } catch (error) {
         console.error('Error loading proactive recommendations:', error);
     }
 }
 
-// Create proactive recommendation item
+function renderProactiveList(containerId, recommendations, compact) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (recommendations && recommendations.length > 0) {
+        container.innerHTML = '';
+        recommendations.forEach(rec => {
+            container.appendChild(createProactiveItem(rec));
+        });
+    } else {
+        container.innerHTML = `
+            <div class="empty-state">
+                ${compact ? '' : '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'}
+                <p>No recommendations at this time</p>
+            </div>`;
+    }
+}
+
 function createProactiveItem(rec) {
     const div = document.createElement('div');
     div.className = 'proactive-item';
 
     const urgencyClass = `urgency-${rec.urgency || 'green'}`;
-    const autoIcon = rec.autonomous ? '🤖' : '👤';
+    const autoIcon = rec.autonomous ? '&#9881;' : '&#128100;';
 
     div.innerHTML = `
         <div class="proactive-header">
             <span class="proactive-icon">${autoIcon}</span>
-            <span class="proactive-title">${rec.title}</span>
+            <span class="proactive-title">${escapeHtml(rec.title)}</span>
             <span class="proactive-urgency ${urgencyClass}">${rec.urgency || 'green'}</span>
         </div>
-        <div class="proactive-detail">${rec.detail}</div>
-        <div class="proactive-reasoning">Reasoning: ${rec.reasoning || 'N/A'}</div>
+        <div class="proactive-detail">${escapeHtml(rec.detail)}</div>
+        <div class="proactive-reasoning">${escapeHtml(rec.reasoning || 'N/A')}</div>
     `;
 
     return div;
 }
 
-// Create activity item element
-function createActivityItem(activity) {
-    const div = document.createElement('div');
-    div.className = 'activity-item';
-
-    const time = new Date(activity.timestamp).toLocaleString();
-
-    div.innerHTML = `
-        <div class="activity-time">${time}</div>
-        <div class="activity-text">${activity.description}</div>
-    `;
-
-    return div;
+// ── Uptime Timer ─────────────────────────────────────────────
+function startUptimeTimer() {
+    function update() {
+        const elapsed = Math.floor((Date.now() - _startTime) / 1000);
+        const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+        const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+        const s = String(elapsed % 60).padStart(2, '0');
+        const el = document.getElementById('pulseUptime');
+        if (el) el.textContent = `Uptime: ${h}:${m}:${s}`;
+    }
+    update();
+    setInterval(update, 1000);
 }
 
-// Check system status
+// ── System Status ─────────────────────────────────────────────
 async function checkSystemStatus() {
     try {
         const response = await fetch(`${API_BASE}/health`);
         const data = await response.json();
 
-        updateStatusIndicator('apiStatus', data.status === 'healthy');
-        updateStatusIndicator('dbStatus', data.database === 'connected');
-        updateStatusIndicator('schedulerStatus', data.scheduler === 'running');
-        updateStatusIndicator('monitoringStatus', data.monitoring === 'active');
+        const apiOk = data.status === 'healthy';
+        const dbOk = data.database === 'connected';
+        const schedOk = data.scheduler === 'running';
+        const monOk = data.monitoring === 'active';
+
+        updateStatusIndicator('apiStatus', apiOk);
+        updateStatusIndicator('dbStatus', dbOk);
+        updateStatusIndicator('schedulerStatus', schedOk);
+        updateStatusIndicator('monitoringStatus', monOk);
+
+        setText('apiStatusText', apiOk ? 'Healthy' : 'Offline');
+        setText('dbStatusText', dbOk ? 'Connected' : 'Disconnected');
+        setText('schedulerStatusText', schedOk ? 'Running' : 'Stopped');
+        setText('monitoringStatusText', monOk ? 'Active' : 'Inactive');
+
+        // Update sidebar pulse
+        const allOk = apiOk && dbOk && schedOk && monOk;
+        const pulseOrb = document.querySelector('.pulse-orb-core');
+        const pulseText = document.getElementById('pulseStatusText');
+
+        if (allOk) {
+            if (pulseOrb) pulseOrb.style.background = '';
+            if (pulseText) { pulseText.textContent = 'Systems Online'; pulseText.classList.remove('offline'); }
+        } else {
+            if (pulseOrb) pulseOrb.style.background = 'var(--red)';
+            if (pulseText) { pulseText.textContent = 'Issues Detected'; pulseText.classList.add('offline'); }
+        }
     } catch (error) {
         console.error('Error checking system status:', error);
         updateStatusIndicator('apiStatus', false);
         updateStatusIndicator('dbStatus', false);
         updateStatusIndicator('schedulerStatus', false);
         updateStatusIndicator('monitoringStatus', false);
+
+        setText('apiStatusText', 'Unreachable');
+        setText('dbStatusText', 'Unknown');
+        setText('schedulerStatusText', 'Unknown');
+        setText('monitoringStatusText', 'Unknown');
+
+        const pulseOrb2 = document.querySelector('.pulse-orb-core');
+        const pulseText2 = document.getElementById('pulseStatusText');
+        if (pulseOrb2) pulseOrb2.style.background = 'var(--red)';
+        if (pulseText2) { pulseText2.textContent = 'Cannot reach server'; pulseText2.classList.add('offline'); }
     }
 }
 
-// Update status indicator
 function updateStatusIndicator(elementId, isOnline) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.className = `status-indicator ${isOnline ? 'online' : 'offline'}`;
+    const el = document.getElementById(elementId);
+    if (el) {
+        el.className = `system-node-ring ${isOnline ? 'online' : 'offline'}`;
     }
 }
 
-// Setup event listeners
-function setupEventListeners() {
-    // Refresh button
-    document.getElementById('refreshBtn').onclick = loadDashboard;
-
-    // Settings button
-    document.getElementById('settingsBtn').onclick = showSettings;
-
-    // Add SME button
-    document.getElementById('addSMEBtn').onclick = showAddSMEModal;
-
-    // Search input
-    document.getElementById('searchSME').oninput = filterSMEs;
-
-    // Form submission
-    document.getElementById('addSMEForm').onsubmit = addSME;
+function setText(elementId, text) {
+    const el = document.getElementById(elementId);
+    if (el) el.textContent = text;
 }
 
-// Show add SME modal
+// ── Modal ─────────────────────────────────────────────────────
 function showAddSMEModal() {
-    document.getElementById('addSMEModal').style.display = 'block';
+    document.getElementById('addSMEModal').classList.add('visible');
 }
 
-// Close modal
 function closeModal() {
-    document.getElementById('addSMEModal').style.display = 'none';
+    document.getElementById('addSMEModal').classList.remove('visible');
     document.getElementById('addSMEForm').reset();
 }
 
-// Add SME
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+});
+
+// ── Add SME ───────────────────────────────────────────────────
 async function addSME(event) {
     event.preventDefault();
 
@@ -253,9 +416,7 @@ async function addSME(event) {
     try {
         const response = await fetch(`${API_BASE}/api/smes`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(smeData)
         });
 
@@ -274,30 +435,23 @@ async function addSME(event) {
     }
 }
 
-// Filter SMEs
+// ── Filter SMEs ───────────────────────────────────────────────
 function filterSMEs() {
-    const searchTerm = document.getElementById('searchSME').value.toLowerCase();
-    const smeItems = document.querySelectorAll('.sme-item');
-
-    smeItems.forEach(item => {
-        const text = item.textContent.toLowerCase();
-        item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+    const term = document.getElementById('searchSME').value.toLowerCase();
+    document.querySelectorAll('.sme-item').forEach(item => {
+        item.style.display = item.textContent.toLowerCase().includes(term) ? 'flex' : 'none';
     });
 }
 
-// View SME details
+// ── Quick Actions ─────────────────────────────────────────────
 function viewSMEDetails(pin) {
-    window.open(`${API_BASE}/api/smes/${pin}`, '_blank');
+    window.location.href = `${API_BASE}/ui/sme/${encodeURIComponent(pin)}`;
 }
 
-// Run compliance check
 async function runComplianceCheck() {
+    showNotification('Running compliance check...', 'info');
     try {
-        showNotification('Running compliance check...', 'info');
-        const response = await fetch(`${API_BASE}/api/check`, {
-            method: 'POST'
-        });
-
+        const response = await fetch(`${API_BASE}/api/check`, { method: 'POST' });
         if (response.ok) {
             showNotification('Compliance check completed', 'success');
             loadDashboard();
@@ -305,84 +459,64 @@ async function runComplianceCheck() {
             showNotification('Error running compliance check', 'error');
         }
     } catch (error) {
-        console.error('Error running compliance check:', error);
+        console.error('Error:', error);
         showNotification('Error running compliance check', 'error');
     }
 }
 
-// View reports
 function viewReports() {
-    window.open(`${API_BASE}/api/reports`, '_blank');
+    window.location.href = `${API_BASE}/ui/reports`;
 }
 
-// Check monitoring
 async function checkMonitoring() {
+    showNotification('Checking monitoring...', 'info');
     try {
-        showNotification('Checking monitoring...', 'info');
         const response = await fetch(`${API_BASE}/api/monitoring/status`);
-
         if (response.ok) {
             const data = await response.json();
-            showNotification(`Monitoring status: ${data.status}`, 'success');
+            showNotification(`Monitoring: ${data.status || 'checked'}`, 'success');
         } else {
             showNotification('Error checking monitoring', 'error');
         }
     } catch (error) {
-        console.error('Error checking monitoring:', error);
+        console.error('Error:', error);
         showNotification('Error checking monitoring', 'error');
     }
 }
 
-// View audit trail
 function viewAuditTrail() {
-    window.open(`${API_BASE}/api/audit`, '_blank');
+    window.location.href = `${API_BASE}/ui/audit`;
 }
 
-// Show settings
-function showSettings() {
-    showNotification('Settings feature coming soon', 'info');
-}
+// ── Toast Notifications ───────────────────────────────────────
+function showNotification(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
 
-// Show notification
-function showNotification(message, type) {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
+    const icons = {
+        success: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+        error: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+        info: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+    };
 
-    // Style the notification
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 1rem 1.5rem;
-        border-radius: 5px;
-        color: white;
-        font-weight: bold;
-        z-index: 10000;
-        animation: slideIn 0.3s ease;
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || icons.info}</span>
+        <span>${escapeHtml(message)}</span>
     `;
 
-    // Set background color based on type
-    switch (type) {
-        case 'success':
-            notification.style.backgroundColor = '#4CAF50';
-            break;
-        case 'error':
-            notification.style.backgroundColor = '#f44336';
-            break;
-        case 'info':
-            notification.style.backgroundColor = '#2196F3';
-            break;
-        default:
-            notification.style.backgroundColor = '#9e9e9e';
-    }
+    container.appendChild(toast);
 
-    // Add to page
-    document.body.appendChild(notification);
-
-    // Remove after 3 seconds
     setTimeout(() => {
-        notification.remove();
+        toast.classList.add('removing');
+        toast.addEventListener('animationend', () => toast.remove());
     }, 3000);
+}
+
+// ── Utility ───────────────────────────────────────────────────
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }

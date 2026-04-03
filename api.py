@@ -22,7 +22,9 @@ load_dotenv(ROOT / ".env")
 from fastapi import FastAPI, HTTPException, Depends, Security, Request
 from fastapi.security import APIKeyHeader
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from starlette.responses import Response
 from fastapi.staticfiles import StaticFiles
+import os
 from pydantic import BaseModel, field_validator
 import re
 
@@ -58,6 +60,7 @@ app = FastAPI(
         {"name": "Webhooks", "description": "External event webhooks for The Pulse"},
         {"name": "Monitoring", "description": "The Eyes — external source monitoring"},
         {"name": "Actions", "description": "The Hands — recommendations, filing prep, alerts, escalations"},
+        {"name": "Shuru", "description": "KRA Shuru — WhatsApp tax filing and payment via +254 711 099 999"},
         {"name": "Brain", "description": "The Brain — learning, patterns, feedback, model updates"},
     ],
 )
@@ -67,11 +70,45 @@ tracker = FilingTracker()
 audit = AuditTrail()
 validator = InputValidator()
 
+# Serve React static assets
+react_static_path = ROOT / "output" / "dashboard-react"
+
+
+@app.get("/assets/{path:path}", include_in_schema=False)
+async def serve_react_assets(path: str):
+    """Serve React built assets from output/dashboard-react."""
+    if not react_static_path.exists():
+        raise HTTPException(status_code=404, detail="React assets not found")
+    
+    file_path = react_static_path / "assets" / path
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"Asset not found: {path}")
+    
+    ext = file_path.suffix.lower()
+    media_type = {
+        ".js": "application/javascript",
+        ".css": "text/css",
+        ".map": "application/json",
+        ".svg": "image/svg+xml",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+    }.get(ext, "application/octet-stream")
+    
+    return FileResponse(file_path, media_type=media_type)
+
 
 # ── Authentication ──────────────────────────────────────────────
 
 API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
 API_KEY = os.getenv("HELMET_API_KEY", "")
+
+# Warn once at startup if no API key is configured
+if not API_KEY and settings["api"].get("require_auth", True):
+    import logging as _logging
+    _logging.getLogger("kra_helmet.api").warning(
+        "HELMET_API_KEY not set — all endpoints are unauthenticated. "
+        "Set HELMET_API_KEY in .env to enable authentication."
+    )
 
 
 async def verify_api_key(api_key: str = Security(API_KEY_HEADER)):
@@ -79,12 +116,7 @@ async def verify_api_key(api_key: str = Security(API_KEY_HEADER)):
     if not settings["api"].get("require_auth", True):
         return True
     if not API_KEY:
-        import logging
-        logging.getLogger("kra_helmet.api").warning(
-            "HELMET_API_KEY not set — all endpoints are unauthenticated. "
-            "Set HELMET_API_KEY in .env to enable authentication."
-        )
-        return True  # no key configured = auth disabled
+        return True  # no key configured = auth disabled (warned at startup)
     if api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Invalid or missing API key. Set X-API-Key header.")
     return True
@@ -252,30 +284,63 @@ class FilingRequest(BaseModel):
 
 # ── Endpoints ───────────────────────────────────────────────────
 
-@app.get("/", tags=["System"], summary="Web dashboard", response_class=HTMLResponse)
+@app.get("/", tags=["System"], summary="Web dashboard")
 def root():
-    """Serve the web dashboard at the root URL."""
-    dashboard_path = ROOT / "dashboard" / "index.html"
-    if not dashboard_path.exists():
-        # Fallback to JSON if dashboard not built
-        return {
-            "service": settings["system"]["name"],
-            "version": settings["system"]["version"],
-            "status": "running",
-            "auth_required": settings["api"].get("require_auth", True) and bool(API_KEY),
-            "endpoints": {
-                "health": "/health",
-                "smes": "/smes",
-                "check": "/check/{pin}",
-                "onboard": "POST /onboard",
-                "filing": "POST /file/{pin}",
-                "dashboard": "/dashboard",
-                "report": "/report/{pin}",
-                "audit": "/audit",
-                "guides": "/guides",
-            }
+    """Serve the React web dashboard at the root URL."""
+    # Try built React dashboard first, fallback to dev
+    react_dashboard = ROOT / "output" / "dashboard-react" / "index.html"
+    if react_dashboard.exists():
+        return FileResponse(react_dashboard, media_type="text/html")
+    
+    # Fallback to dev dashboard
+    dev_dashboard = ROOT / "dashboard" / "index.html"
+    if dev_dashboard.exists():
+        return FileResponse(dev_dashboard, media_type="text/html")
+    
+    # Last resort: JSON info
+    return {
+        "service": settings["system"]["name"],
+        "version": settings["system"]["version"],
+        "status": "running",
+        "auth_required": settings["api"].get("require_auth", True) and bool(API_KEY),
+        "endpoints": {
+            "health": "/health",
+            "smes": "/smes",
+            "check": "/check/{pin}",
+            "onboard": "POST /onboard",
+            "filing": "POST /file/{pin}",
+            "dashboard": "/dashboard",
+            "report": "/report/{pin}",
+            "audit": "/audit",
+            "guides": "/guides",
         }
-    return dashboard_path.read_text(encoding="utf-8")
+    }
+
+
+@app.get("/favicon.svg", include_in_schema=False)
+async def favicon_svg():
+    """Serve favicon SVG (prevents browser 404 noise)."""
+    icon_path = ROOT / "output" / "dashboard-react" / "favicon.svg"
+    if not icon_path.exists():
+        icon_path = ROOT / "dashboard" / "favicon.svg"
+    if icon_path.exists():
+        return FileResponse(icon_path, media_type="image/svg+xml")
+    return Response(status_code=204)
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon_ico():
+    """Serve favicon ICO (prevents browser 404 noise)."""
+    icon_path = ROOT / "dashboard" / "favicon.ico"
+    if icon_path.exists():
+        return FileResponse(icon_path, media_type="image/x-icon")
+    return Response(status_code=204)
+    """Serve favicon (prevents browser 404 noise)."""
+    icon_path = ROOT / "dashboard" / "favicon.ico"
+    if icon_path.exists():
+        return FileResponse(icon_path, media_type="image/x-icon")
+    # Return a 204 No Content to silence browser requests
+    return Response(status_code=204)
 
 
 @app.get("/health", tags=["System"], summary="Health check")
@@ -322,15 +387,34 @@ def health_check():
         "status": "enabled" if API_KEY else "disabled",
     }
 
+    # Scheduler (The Pulse)
+    scheduler_running = _pulse is not None and _pulse.is_running
+    checks["scheduler"] = {"status": "running" if scheduler_running else "stopped"}
+
+    # Monitoring (The Eyes)
+    try:
+        _monitor.status()  # verify orchestrator is functional
+        monitoring_active = True
+    except Exception:
+        monitoring_active = False
+    checks["monitoring"] = {"status": "active" if monitoring_active else "inactive"}
+
+    # Database (SME registry serves as the data store)
+    db_ok = checks.get("sme_registry", {}).get("status") == "ok"
+    checks["database"] = {"status": "connected" if db_ok else "disconnected"}
+
     # Overall
     all_ok = all(
-        c.get("status") in ("ok", "enabled", "disabled", "not_started")
+        c.get("status") in ("ok", "enabled", "disabled", "not_started", "running", "active", "connected")
         for c in checks.values()
     )
 
     return {
         "status": "healthy" if all_ok else "degraded",
         "timestamp": datetime.now().isoformat(),
+        "database": "connected" if db_ok else "disconnected",
+        "scheduler": "running" if scheduler_running else "stopped",
+        "monitoring": "active" if monitoring_active else "inactive",
         "checks": checks,
     }
 
@@ -462,7 +546,7 @@ def dashboard():
     return output_path.read_text(encoding="utf-8")
 
 
-@app.get("/report/{pin}", tags=["Reports"], summary="SME report", response_class=HTMLResponse, dependencies=[Depends(verify_api_key)])
+@app.get("/report/{pin}", tags=["Reports"], summary="SME report", response_class=HTMLResponse)
 def report(pin: str):
     """Generate a print-ready HTML compliance report for a specific SME."""
     ok, msg = validator.validate_pin(pin)
@@ -719,6 +803,47 @@ def execute_autonomous_action(pin: str, action: str):
     return _proactive.execute_autonomous_action(action, msg, {"source": "api"})
 
 
+# ── KRA Shuru — WhatsApp Tax Filing ─────────────────────────
+
+from tools.kra_shuru import KRAShuru
+
+_shuru = KRAShuru()
+
+
+@app.get("/shuru/{pin}", tags=["Shuru"], summary="KRA Shuru links for SME", dependencies=[Depends(verify_api_key)])
+def shuru_links(pin: str, tax_type: str = "", lang: str = "en"):
+    """Generate KRA Shuru WhatsApp deep links for an SME: filing, payment, compliance certificate, and step-by-step instructions."""
+    ok, msg = validator.validate_pin(pin)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+
+    instructions = _shuru.generate_instructions(msg, tax_type, lang)
+    filing = _shuru.generate_filing_link(msg, tax_type)
+    payment = _shuru.generate_payment_link(msg, tax_type)
+    cert = _shuru.generate_compliance_cert_link(msg)
+
+    return {
+        "pin": msg,
+        "shuru_number": "+254711099999",
+        "instructions": instructions,
+        "links": {
+            "filing": filing,
+            "payment": payment,
+            "compliance_certificate": cert,
+        },
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@app.get("/shuru/{pin}/pay", tags=["Shuru"], summary="Shuru payment link", dependencies=[Depends(verify_api_key)])
+def shuru_payment(pin: str, tax_type: str = "", amount: float = 0):
+    """Generate a KRA Shuru WhatsApp deep link for tax payment."""
+    ok, msg = validator.validate_pin(pin)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+    return _shuru.generate_payment_link(msg, tax_type, amount)
+
+
 # ── The Brain — Learning ─────────────────────────────────────
 
 from agents.learning import DecisionMemory, PatternMiner, FeedbackLoop, ModelUpdater
@@ -782,13 +907,13 @@ def brain_timeline(pin: str):
 
 # ── Dashboard — Web UI ──────────────────────────────────────────
 
-@app.get("/ui", tags=["Dashboard"], summary="Web dashboard", response_class=HTMLResponse)
+@app.get("/ui", tags=["Dashboard"], summary="Web dashboard")
 def web_dashboard():
     """Serve the web dashboard HTML page."""
     dashboard_path = ROOT / "dashboard" / "index.html"
     if not dashboard_path.exists():
         raise HTTPException(status_code=404, detail="Dashboard not found")
-    return dashboard_path.read_text(encoding="utf-8")
+    return FileResponse(dashboard_path, media_type="text/html")
 
 
 @app.get("/ui/styles.css", tags=["Dashboard"], summary="Dashboard styles")
@@ -818,7 +943,316 @@ def dashboard_manifest():
     return FileResponse(manifest_path, media_type="application/json")
 
 
-@app.get("/api/stats", tags=["Dashboard"], summary="Dashboard statistics", dependencies=[Depends(verify_api_key)])
+@app.get("/ui/reports", tags=["Dashboard"], summary="Reports page", response_class=HTMLResponse)
+def reports_page():
+    """Serve an HTML page listing all available reports."""
+    reports_dir = ROOT / "output" / "reports"
+    rows = ""
+    if reports_dir.exists():
+        for f in sorted(reports_dir.glob("*.html")):
+            pin = f.stem.replace("_report", "")
+            name = pin
+            profile = orch.load_sme(pin)
+            if profile:
+                name = f"{profile.get('name', pin)} ({pin})"
+            size_kb = f.stat().st_size / 1024
+            rows += (
+                f'<tr onclick="window.location=\'/report/{pin}\'" style="cursor:pointer">'
+                f'<td><strong>{name}</strong></td>'
+                f'<td>{size_kb:.1f} KB</td>'
+                f'<td><a class="btn-sm" href="/report/{pin}">View</a></td>'
+                f'</tr>'
+            )
+    if not rows:
+        rows = '<tr><td colspan="3" style="text-align:center;padding:2rem;color:#888">No reports yet. Run a compliance check first.</td></tr>'
+
+    return HTMLResponse(f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports - KRA HELMET</title>
+<link rel="stylesheet" href="/ui/styles.css">
+<style>
+  .page {{ max-width:900px; margin:0 auto; padding:1.5rem }}
+  .page h2 {{ margin-bottom:1rem }}
+  table {{ width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.08) }}
+  th {{ background:#1a5f2a; color:#fff; text-align:left; padding:.75rem 1rem; font-weight:600 }}
+  td {{ padding:.75rem 1rem; border-bottom:1px solid #eee }}
+  tr:hover td {{ background:#f0f9f2 }}
+  .btn-sm {{ background:#2d8a3e; color:#fff; padding:6px 14px; border-radius:4px; text-decoration:none; font-size:.85rem }}
+  .back {{ display:inline-block; margin-bottom:1rem; color:#1a5f2a; text-decoration:none; font-weight:600 }}
+  .back:hover {{ text-decoration:underline }}
+</style>
+</head>
+<body>
+<div class="page">
+  <a class="back" href="/">&larr; Back to Dashboard</a>
+  <h2>Reports</h2>
+  <table>
+    <thead><tr><th>SME</th><th>Size</th><th></th></tr></thead>
+    <tbody>{rows}</tbody>
+  </table>
+</div>
+</body>
+</html>""")
+
+
+@app.get("/ui/audit", tags=["Dashboard"], summary="Audit trail page", response_class=HTMLResponse)
+def audit_page(limit: int = 100):
+    """Serve an HTML page showing the audit trail."""
+    entries = audit.get_history(limit=limit)
+    rows = ""
+    for e in entries:
+        ts = e.get("timestamp", "")[:19].replace("T", " ")
+        event = e.get("event_type", "")
+        agent = e.get("agent", "")
+        pin = e.get("sme_pin") or ""
+        details = e.get("details", {})
+        status = details.get("compliance_status", details.get("reason", ""))
+        risk = details.get("risk_score", "")
+        risk_cell = f'{risk}/100' if risk != "" else ""
+
+        badge_cls = ""
+        if status == "compliant":
+            badge_cls = "badge-green"
+        elif status == "at_risk":
+            badge_cls = "badge-yellow"
+        elif status == "non_compliant":
+            badge_cls = "badge-red"
+
+        badge = f'<span class="badge {badge_cls}">{status}</span>' if status else ""
+
+        rows += (
+            f'<tr>'
+            f'<td class="ts">{ts}</td>'
+            f'<td><strong>{event}</strong></td>'
+            f'<td>{agent}</td>'
+            f'<td>{pin}</td>'
+            f'<td>{badge}</td>'
+            f'<td>{risk_cell}</td>'
+            f'</tr>'
+        )
+    if not rows:
+        rows = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#888">No audit trail entries yet.</td></tr>'
+
+    return HTMLResponse(f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit Trail - KRA HELMET</title>
+<link rel="stylesheet" href="/ui/styles.css">
+<style>
+  .page {{ max-width:1100px; margin:0 auto; padding:1.5rem }}
+  .page h2 {{ margin-bottom:1rem }}
+  table {{ width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.08) }}
+  th {{ background:#1a5f2a; color:#fff; text-align:left; padding:.6rem .8rem; font-weight:600; font-size:.85rem; white-space:nowrap }}
+  td {{ padding:.55rem .8rem; border-bottom:1px solid #eee; font-size:.85rem }}
+  tr:hover td {{ background:#f0f9f2 }}
+  .ts {{ white-space:nowrap; color:#666; font-size:.8rem }}
+  .badge {{ padding:3px 10px; border-radius:12px; font-size:.75rem; font-weight:600 }}
+  .badge-green {{ background:#d4edda; color:#155724 }}
+  .badge-yellow {{ background:#fff3cd; color:#856404 }}
+  .badge-red {{ background:#f8d7da; color:#721c24 }}
+  .back {{ display:inline-block; margin-bottom:1rem; color:#1a5f2a; text-decoration:none; font-weight:600 }}
+  .back:hover {{ text-decoration:underline }}
+  .count {{ color:#888; font-weight:normal; font-size:.9rem }}
+</style>
+</head>
+<body>
+<div class="page">
+  <a class="back" href="/">&larr; Back to Dashboard</a>
+  <h2>Audit Trail <span class="count">({len(entries)} entries)</span></h2>
+  <table>
+    <thead><tr><th>Time</th><th>Event</th><th>Agent</th><th>PIN</th><th>Status</th><th>Risk</th></tr></thead>
+    <tbody>{rows}</tbody>
+  </table>
+</div>
+</body>
+</html>""")
+
+
+@app.get("/ui/sme/{pin}", tags=["Dashboard"], summary="SME detail page", response_class=HTMLResponse)
+def sme_detail_page(pin: str):
+    """Serve an HTML page with full SME profile and compliance details."""
+    ok, clean_pin = validator.validate_pin(pin)
+    if not ok:
+        raise HTTPException(status_code=400, detail=clean_pin)
+
+    profile = orch.load_sme(clean_pin)
+    if not profile:
+        raise HTTPException(status_code=404, detail=f"SME not found: {pin}")
+
+    # Load compliance data
+    report_path = ROOT / "data" / "processed" / "obligations" / f"{clean_pin}.json"
+    report = {}
+    if report_path.exists():
+        try:
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    # Profile section
+    name = profile.get("name", "Unknown")
+    biz = profile.get("business_name", "")
+    btype = profile.get("business_type", "").replace("_", " ").title()
+    industry = profile.get("industry", "").replace("_", " ").title()
+    county = profile.get("county", "")
+    turnover = profile.get("annual_turnover_kes", 0)
+    phone = profile.get("phone", "")
+    email = profile.get("email", "")
+    employees = profile.get("employee_count", 0)
+    vat = "Yes" if profile.get("is_vat_registered") else "No"
+    etims = "Yes" if profile.get("has_etims") else "No"
+
+    # Compliance
+    compliance = report.get("compliance", {})
+    overall = compliance.get("overall", "unknown")
+    badge_cls = {"compliant": "badge-green", "at_risk": "badge-yellow", "non_compliant": "badge-red"}.get(overall, "")
+    next_action = compliance.get("next_action", "")
+    met = compliance.get("obligations_met", 0)
+    total = compliance.get("obligations_total", 0)
+
+    # Risk
+    risk = report.get("risk", {})
+    risk_score = risk.get("risk_score", "?")
+    risk_level = risk.get("risk_level", "unknown")
+    risk_factors = risk.get("factors", [])
+    factors_html = "".join(f"<li>{f}</li>" for f in risk_factors) if risk_factors else "<li>None</li>"
+
+    # Obligations table
+    obligations = report.get("obligations", [])
+    obl_rows = ""
+    for o in obligations:
+        status = o.get("status", "")
+        s_cls = {"overdue": "badge-red", "due_soon": "badge-yellow", "upcoming": "badge-green"}.get(status, "")
+        days = o.get("days_until_deadline", "")
+        days_str = f"{days}d" if days != "" else ""
+        obl_rows += (
+            f'<tr>'
+            f'<td><strong>{o.get("tax_name", "")}</strong></td>'
+            f'<td>{o.get("frequency", "")}</td>'
+            f'<td>{o.get("next_deadline", "")}</td>'
+            f'<td>{days_str}</td>'
+            f'<td><span class="badge {s_cls}">{status}</span></td>'
+            f'<td>{o.get("rate", "")}</td>'
+            f'</tr>'
+        )
+    if not obl_rows:
+        obl_rows = '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#888">No obligations data yet.</td></tr>'
+
+    # Penalties
+    penalties = report.get("penalties", {})
+    penalty_total = penalties.get("total_penalty_exposure_kes", 0)
+    severity = penalties.get("severity", "")
+
+    return HTMLResponse(f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{name} — KRA HELMET</title>
+<link rel="stylesheet" href="/ui/styles.css">
+<style>
+  .page {{ max-width:1000px; margin:0 auto; padding:1.5rem }}
+  .back {{ display:inline-block; margin-bottom:1rem; color:#1a5f2a; text-decoration:none; font-weight:600 }}
+  .back:hover {{ text-decoration:underline }}
+  .profile-header {{ display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem }}
+  .profile-header h2 {{ margin:0 }}
+  .profile-header .sub {{ color:#666; font-size:.9rem }}
+  .cards {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:1rem; margin-bottom:1.5rem }}
+  .card {{ background:#fff; border-radius:8px; padding:1rem; box-shadow:0 2px 8px rgba(0,0,0,.06) }}
+  .card .label {{ font-size:.75rem; text-transform:uppercase; color:#888; margin-bottom:.25rem }}
+  .card .value {{ font-size:1.3rem; font-weight:700 }}
+  .section {{ margin-bottom:1.5rem }}
+  .section h3 {{ margin-bottom:.75rem; color:#1a5f2a }}
+  table {{ width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.06) }}
+  th {{ background:#1a5f2a; color:#fff; text-align:left; padding:.6rem .8rem; font-weight:600; font-size:.85rem }}
+  td {{ padding:.55rem .8rem; border-bottom:1px solid #eee; font-size:.85rem }}
+  tr:hover td {{ background:#f0f9f2 }}
+  .badge {{ padding:3px 10px; border-radius:12px; font-size:.75rem; font-weight:600 }}
+  .badge-green {{ background:#d4edda; color:#155724 }}
+  .badge-yellow {{ background:#fff3cd; color:#856404 }}
+  .badge-red {{ background:#f8d7da; color:#721c24 }}
+  .info-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:.5rem 2rem; background:#fff; padding:1rem; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.06) }}
+  .info-grid dt {{ font-size:.75rem; text-transform:uppercase; color:#888 }}
+  .info-grid dd {{ margin:0 0 .75rem 0; font-weight:600 }}
+  .risk-factors {{ list-style:none; padding:0 }}
+  .risk-factors li {{ padding:.3rem 0; font-size:.85rem; color:#555 }}
+  .disclaimer {{ margin-top:2rem; padding:1rem; background:#fff8e1; border-left:4px solid #ffc107; border-radius:4px; font-size:.75rem; color:#666 }}
+</style>
+</head>
+<body>
+<div class="page">
+  <a class="back" href="/">&larr; Back to Dashboard</a>
+
+  <div class="profile-header">
+    <div>
+      <h2>{name}</h2>
+      <div class="sub">{biz} &middot; {clean_pin}</div>
+    </div>
+    <span class="badge {badge_cls}" style="font-size:.9rem;padding:6px 16px">{overall.replace("_"," ").upper()}</span>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="label">Risk Score</div>
+      <div class="value">{risk_score}/100 <span style="font-size:.7rem;color:#888">({risk_level})</span></div>
+    </div>
+    <div class="card">
+      <div class="label">Obligations</div>
+      <div class="value">{met}/{total} met</div>
+    </div>
+    <div class="card">
+      <div class="label">Penalty Exposure</div>
+      <div class="value">KES {penalty_total:,.0f}</div>
+    </div>
+    <div class="card">
+      <div class="label">Severity</div>
+      <div class="value">{severity.title()}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Business Profile</h3>
+    <dl class="info-grid">
+      <dt>Type</dt><dd>{btype}</dd>
+      <dt>Industry</dt><dd>{industry}</dd>
+      <dt>County</dt><dd>{county}</dd>
+      <dt>Annual Turnover</dt><dd>KES {turnover:,.0f}</dd>
+      <dt>Employees</dt><dd>{employees}</dd>
+      <dt>VAT Registered</dt><dd>{vat}</dd>
+      <dt>eTIMS</dt><dd>{etims}</dd>
+      <dt>Phone</dt><dd>{phone}</dd>
+      <dt>Email</dt><dd>{email or '—'}</dd>
+    </dl>
+  </div>
+
+  <div class="section">
+    <h3>Tax Obligations</h3>
+    {"<p style='margin-bottom:.75rem'><strong>Next action:</strong> " + next_action + "</p>" if next_action else ""}
+    <table>
+      <thead><tr><th>Tax</th><th>Freq</th><th>Next Deadline</th><th>Days</th><th>Status</th><th>Rate</th></tr></thead>
+      <tbody>{obl_rows}</tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Risk Factors</h3>
+    <ul class="risk-factors">{factors_html}</ul>
+  </div>
+
+  <div class="disclaimer">
+    DISCLAIMER: This information is generated by an automated system for guidance purposes only.
+    It does NOT constitute legal, tax, or financial advice. Always verify with KRA or a registered tax advisor.
+  </div>
+</div>
+</body>
+</html>""")
+
+
+@app.get("/api/stats", tags=["Dashboard"], summary="Dashboard statistics")
 def dashboard_stats():
     """Get statistics for the dashboard overview."""
     smes = orch.list_smes()
@@ -854,7 +1288,7 @@ def dashboard_stats():
     }
 
 
-@app.get("/api/activity", tags=["Dashboard"], summary="Recent activity", dependencies=[Depends(verify_api_key)])
+@app.get("/api/activity", tags=["Dashboard"], summary="Recent activity")
 def dashboard_activity(limit: int = 20):
     """Get recent activity for the dashboard."""
     entries = audit.get_history(limit=limit)
@@ -870,7 +1304,7 @@ def dashboard_activity(limit: int = 20):
     return {"activities": activities, "count": len(activities)}
 
 
-@app.get("/api/smes", tags=["Dashboard"], summary="List all SMEs", dependencies=[Depends(verify_api_key)])
+@app.get("/api/smes", tags=["Dashboard"], summary="List all SMEs")
 def api_list_smes():
     """Get list of all SMEs for the dashboard."""
     smes = orch.list_smes()
@@ -899,7 +1333,30 @@ def api_list_smes():
     return {"smes": sme_list, "count": len(sme_list)}
 
 
-@app.get("/api/reports", tags=["Dashboard"], summary="List reports", dependencies=[Depends(verify_api_key)])
+@app.get("/api/smes/{pin}", tags=["Dashboard"], summary="Get SME detail")
+def api_get_sme(pin: str):
+    """Get full SME profile for the dashboard."""
+    ok, msg = validator.validate_pin(pin)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+
+    profile = orch.load_sme(msg)
+    if not profile:
+        raise HTTPException(status_code=404, detail=f"SME not found: {pin}")
+
+    # Enrich with latest compliance data
+    report_path = ROOT / "data" / "processed" / "obligations" / f"{msg}.json"
+    compliance = {}
+    if report_path.exists():
+        try:
+            compliance = json.loads(report_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    return {**profile, "latest_report": compliance}
+
+
+@app.get("/api/reports", tags=["Dashboard"], summary="List reports")
 def api_list_reports():
     """Get list of available reports."""
     reports_dir = ROOT / "output" / "reports"
@@ -907,16 +1364,17 @@ def api_list_reports():
     
     if reports_dir.exists():
         for report_file in reports_dir.glob("*.html"):
+            pin = report_file.stem.replace("_report", "")
             reports.append({
                 "filename": report_file.name,
-                "path": f"/output/reports/{report_file.name}",
+                "path": f"/report/{pin}",
                 "size": report_file.stat().st_size,
             })
     
     return {"reports": reports, "count": len(reports)}
 
 
-@app.get("/api/monitoring/status", tags=["Dashboard"], summary="Monitoring status", dependencies=[Depends(verify_api_key)])
+@app.get("/api/monitoring/status", tags=["Dashboard"], summary="Monitoring status")
 def api_monitoring_status():
     """Get monitoring system status."""
     try:
@@ -928,14 +1386,14 @@ def api_monitoring_status():
         return {"status": "error", "message": str(e)}
 
 
-@app.get("/api/audit", tags=["Dashboard"], summary="Audit trail", dependencies=[Depends(verify_api_key)])
+@app.get("/api/audit", tags=["Dashboard"], summary="Audit trail")
 def api_audit_trail(limit: int = 50):
     """Get audit trail entries."""
     entries = audit.get_history(limit=limit)
     return {"entries": entries, "count": len(entries)}
 
 
-@app.post("/api/check", tags=["Dashboard"], summary="Run compliance check", dependencies=[Depends(verify_api_key)])
+@app.post("/api/check", tags=["Dashboard"], summary="Run compliance check")
 def api_run_check():
     """Run compliance check for all SMEs."""
     try:
@@ -950,7 +1408,7 @@ def api_run_check():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/proactive", tags=["Dashboard"], summary="Proactive recommendations", dependencies=[Depends(verify_api_key)])
+@app.get("/api/proactive", tags=["Dashboard"], summary="Proactive recommendations")
 def api_proactive_recommendations():
     """Get proactive recommendations for all SMEs."""
     try:
@@ -973,3 +1431,21 @@ def api_proactive_recommendations():
         }
     except Exception as e:
         return {"recommendations": [], "count": 0, "error": str(e)}
+
+
+@app.get("/api/shuru/{pin}", tags=["Dashboard"], summary="Shuru links for dashboard")
+def api_shuru_links(pin: str, lang: str = "en"):
+    """Get KRA Shuru WhatsApp links for the dashboard (no auth)."""
+    ok, msg = validator.validate_pin(pin)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+    instructions = _shuru.generate_instructions(msg, lang=lang)
+    filing = _shuru.generate_filing_link(msg)
+    payment = _shuru.generate_payment_link(msg)
+    cert = _shuru.generate_compliance_cert_link(msg)
+    return {
+        "pin": msg,
+        "shuru_number": "+254711099999",
+        "instructions": instructions,
+        "links": {"filing": filing, "payment": payment, "compliance_certificate": cert},
+    }
