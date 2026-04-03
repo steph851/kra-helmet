@@ -183,7 +183,7 @@ class WorkflowEngine(BaseAgent):
                 items.append({"step": "Ensure all eTIMS invoices are synced", "done": False})
 
         if tax_type == "tot":
-            items.append({"step": "Calculate 3% of gross monthly turnover", "done": False})
+            items.append({"step": "Calculate 1.5% of gross monthly turnover", "done": False})
 
         # Common final steps
         items.extend([

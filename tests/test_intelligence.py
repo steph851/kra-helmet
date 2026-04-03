@@ -79,7 +79,7 @@ class TestDeadlineCalculator:
             "tax_name": "TOT",
             "frequency": "monthly",
             "deadline_day": 20,
-            "rate": "3%",
+            "rate": "1.5%",
             "status": "upcoming",
         }]
         # as_of = March 25, deadline was March 20 → overdue
@@ -96,7 +96,7 @@ class TestDeadlineCalculator:
             "tax_name": "TOT",
             "frequency": "monthly",
             "deadline_day": 20,
-            "rate": "3%",
+            "rate": "1.5%",
             "status": "upcoming",
         }]
         result = calc.calculate_deadlines(obs, as_of=date(2026, 3, 1))
@@ -205,19 +205,20 @@ class TestPenaltyCalculator:
         result = calc.calculate_penalties(sample_profile, overdue_obligations)
         assert result["severity"] in ("manageable", "serious", "critical")
 
-    def test_tot_minimum_penalty(self, sample_profile):
-        """TOT late filing penalty should be at least KES 20,000."""
+    def test_tot_monthly_penalty(self, sample_profile):
+        """TOT late filing: KES 1,000/month + 5% of tax due + interest."""
         obs = [{
             "tax_type": "turnover_tax",
             "tax_name": "TOT",
             "status": "overdue",
             "days_until_deadline": -10,
-            "estimated_amount_kes": 1000,  # small amount
+            "estimated_amount_kes": 50000,
         }]
         calc = PenaltyCalculator()
         result = calc.calculate_penalties(sample_profile, obs)
-        total = result["penalties"][0]["total_exposure_kes"]
-        assert total >= 20000  # minimum flat penalty
+        penalty = result["penalties"][0]["estimated_penalty_kes"]
+        # 1 month × KES 1,000 + 5% of 50,000 = 1,000 + 2,500 = 3,500
+        assert penalty >= 3500
 
     def test_paye_penalty_higher_rate(self, sample_profile):
         """PAYE late filing is 25% — should be higher than 5% generic."""

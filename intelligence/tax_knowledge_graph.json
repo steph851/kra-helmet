@@ -1,10 +1,10 @@
 {
-  "_note": "Kenya tax obligations. Source: KRA, Finance Act 2023-2025. Updated 2026-03-29.",
+  "_note": "Kenya tax obligations. Source: KRA, Finance Act 2023, Affordable Housing Act 2024. Updated 2026-04-03.",
   "taxes": {
     "turnover_tax": {
       "name": "Turnover Tax (TOT)",
-      "description": "Simplified tax for small businesses. 3% of gross turnover.",
-      "rate_pct": 3.0,
+      "description": "Simplified tax for small businesses. 1.5% of gross turnover (reduced from 3% effective 22 March 2024).",
+      "rate_pct": 1.5,
       "threshold_min_kes": 1000000,
       "threshold_max_kes": 25000000,
       "filing_frequency": "monthly",
@@ -13,10 +13,11 @@
       "applies_to": ["sole_proprietor", "partnership"],
       "excludes": ["rental_income", "capital_gains", "employment_income"],
       "itax_obligation_code": "TOT",
-      "penalty_late_filing_kes": 20000,
+      "penalty_late_filing_kes_monthly": 1000,
       "penalty_late_payment_pct": 5.0,
       "interest_on_late_pct_monthly": 1.0,
       "replaces": ["income_tax"],
+      "is_final_tax": true,
       "etims_required": false
     },
     "vat": {
@@ -33,7 +34,8 @@
       "applies_to": ["all_registered"],
       "itax_obligation_code": "VAT",
       "penalty_late_filing_kes": 10000,
-      "penalty_late_payment_pct": 5.0,
+      "penalty_late_filing_pct": 5.0,
+      "penalty_late_filing_note": "Higher of 5% of tax due or KES 10,000",
       "interest_on_late_pct_monthly": 1.0,
       "etims_required": true,
       "etims_note": "All VAT-registered businesses must issue eTIMS invoices from 2024"
@@ -65,8 +67,9 @@
       "filing_deadline": "30 June",
       "filing_deadline_note": "30 June of the following year. E.g. 2025 income filed by 30 June 2026.",
       "itax_obligation_code": "IT",
+      "penalty_late_filing_kes": 2000,
       "penalty_late_filing_pct": 5.0,
-      "penalty_late_payment_pct": 20.0,
+      "penalty_late_filing_note": "Higher of 5% of tax due or KES 2,000 (individual)",
       "interest_on_late_pct_monthly": 1.0
     },
     "income_tax_corporate": {
@@ -77,6 +80,10 @@
       "filing_frequency": "annual",
       "filing_deadline_note": "6th month after end of accounting period",
       "itax_obligation_code": "IT_CORP",
+      "penalty_late_filing_kes": 20000,
+      "penalty_late_filing_pct": 5.0,
+      "penalty_late_filing_note": "Higher of 5% of tax due or KES 20,000 (corporate)",
+      "interest_on_late_pct_monthly": 1.0,
       "advance_tax_required": true,
       "advance_tax_installments": ["20 Apr", "20 Jun", "20 Sep", "20 Dec"]
     },
@@ -97,13 +104,16 @@
         "rent_commercial_pct": 10.0,
         "contractual_fees_pct": 3.0
       },
-      "itax_obligation_code": "WHT"
+      "itax_obligation_code": "WHT",
+      "penalty_late_payment_pct": 10.0,
+      "penalty_late_payment_note": "10% of tax due",
+      "interest_on_late_pct_monthly": 1.0
     },
     "presumptive_tax": {
       "name": "Presumptive Tax",
-      "description": "Lump-sum tax for businesses with turnover below KES 1M. Payable on business permit renewal.",
-      "rate_type": "fixed",
-      "amount_kes_annual": 15000,
+      "description": "15% of single business permit fee for businesses with turnover below KES 1M. Payable on permit renewal.",
+      "rate_type": "percentage_of_permit",
+      "rate_pct_of_permit": 15.0,
       "threshold_max_kes": 1000000,
       "filing_frequency": "annual",
       "filing_deadline_note": "Payable when renewing single business permit at county level",
@@ -111,14 +121,19 @@
     },
     "residential_rental_income": {
       "name": "Residential Rental Income Tax (MRI)",
-      "description": "Simplified tax on residential rental income between KES 288K and KES 15M per year.",
+      "description": "Simplified tax on residential rental income between KES 288K and KES 15M per year. This is a final tax.",
       "rate_pct": 7.5,
       "threshold_min_kes_annual": 288000,
       "threshold_max_kes_annual": 15000000,
       "filing_frequency": "monthly",
       "filing_deadline_day": 20,
       "filing_deadline_note": "20th of the following month",
-      "itax_obligation_code": "MRI"
+      "itax_obligation_code": "MRI",
+      "penalty_late_filing_kes": 2000,
+      "penalty_late_filing_pct": 5.0,
+      "penalty_late_filing_note": "Higher of 5% of tax due or KES 2,000 (individual) / KES 20,000 (corporate)",
+      "interest_on_late_pct_monthly": 1.0,
+      "is_final_tax": true
     },
     "nssf": {
       "name": "NSSF (National Social Security Fund)",
@@ -152,11 +167,16 @@
     },
     "excise_duty": {
       "name": "Excise Duty",
-      "description": "Tax on specific manufactured goods and services (alcohol, tobacco, betting, financial services).",
+      "description": "Tax on specific manufactured goods and services (alcohol, tobacco, betting, financial services). Rates vary 15-35%.",
+      "rate_range": "15%-35%",
       "filing_frequency": "monthly",
       "filing_deadline_day": 20,
       "applies_to_industries": ["manufacturing_alcohol", "manufacturing_tobacco", "betting", "financial_services", "telecommunications"],
-      "itax_obligation_code": "EXCISE"
+      "itax_obligation_code": "EXCISE",
+      "penalty_late_filing_kes": 10000,
+      "penalty_late_filing_pct": 5.0,
+      "penalty_late_filing_note": "Higher of 5% of tax or KES 10,000",
+      "interest_on_late_pct_monthly": 1.0
     },
     "digital_service_tax": {
       "name": "Digital Service Tax (DST)",

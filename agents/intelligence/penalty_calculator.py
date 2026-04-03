@@ -14,8 +14,9 @@ class PenaltyCalculator(BaseAgent):
 
     # ── KRA penalty rules (Kenya tax law) ────────────────────────────
 
-    # Income Tax / generic late filing: KES 20,000 or 5% of tax due, whichever is higher
-    INCOME_TAX_LATE_FILING_FLAT = 20_000
+    # Income Tax (Individual): KES 2,000 or 5% of tax due; (Corporate): KES 20,000 or 5%
+    INCOME_TAX_INDIVIDUAL_LATE_FILING_FLAT = 2_000
+    INCOME_TAX_CORPORATE_LATE_FILING_FLAT = 20_000
     INCOME_TAX_LATE_FILING_PCT = 0.05
 
     # Late payment: 5% one-time penalty + 1% monthly compounding interest
@@ -30,8 +31,8 @@ class PenaltyCalculator(BaseAgent):
     PAYE_LATE_FILING_PCT = 0.25
     PAYE_LATE_FILING_FLAT = 10_000
 
-    # Turnover Tax late filing: KES 20,000 or 5% of turnover tax due
-    TOT_LATE_FILING_FLAT = 20_000
+    # Turnover Tax late filing: KES 1,000 per month + 5% penalty + 1% interest
+    TOT_LATE_FILING_MONTHLY = 1_000
     TOT_LATE_FILING_PCT = 0.05
 
     # NSSF late penalty: 5% of contribution per month
@@ -43,22 +44,29 @@ class PenaltyCalculator(BaseAgent):
     # Housing Levy late penalty: 3% of amount due per month
     HOUSING_LEVY_LATE_MONTHLY_PCT = 0.03
 
+    # Withholding Tax late payment: 10% of tax due + 1% interest
+    WHT_LATE_PAYMENT_PCT = 0.10
+
     # eTIMS non-compliance: KES 50 per invoice not on eTIMS
     ETIMS_PER_INVOICE = 50
 
     # Tax types mapped to their penalty rules
     PENALTY_RULES = {
-        "income_tax":       "income_tax",
-        "vat":              "vat",
-        "paye":             "paye",
-        "turnover_tax":     "tot",
-        "nssf":             "nssf",
-        "shif":             "shif",
-        "nhif":             "shif",       # legacy name maps to SHIF
-        "housing_levy":     "housing_levy",
-        "withholding_tax":  "income_tax",
-        "installment_tax":  "income_tax",
-        "etims":            "etims",
+        "income_tax":              "income_tax_individual",
+        "income_tax_resident":     "income_tax_individual",
+        "income_tax_corporate":    "income_tax_corporate",
+        "vat":                     "vat",
+        "paye":                    "paye",
+        "turnover_tax":            "tot",
+        "nssf":                    "nssf",
+        "shif":                    "shif",
+        "nhif":                    "shif",
+        "housing_levy":            "housing_levy",
+        "withholding_tax":         "wht",
+        "installment_tax":         "income_tax_corporate",
+        "residential_rental_income": "income_tax_individual",
+        "excise_duty":             "vat",
+        "etims":                   "etims",
     }
 
     def calculate_penalties(self, profile: dict, obligations: list[dict]) -> dict:
@@ -132,7 +140,7 @@ class PenaltyCalculator(BaseAgent):
         months_overdue = math.ceil(days_overdue / 30) if days_overdue > 0 else 0
 
         # Filing penalty
-        filing_penalty = self._filing_penalty(rule_key, estimated_amount)
+        filing_penalty = self._filing_penalty(rule_key, estimated_amount, months_overdue)
 
         # Late payment penalty (one-time 5%) — only if there's a tax amount
         payment_penalty = 0.0
@@ -156,7 +164,7 @@ class PenaltyCalculator(BaseAgent):
             "breakdown": self._breakdown(rule_key, filing_penalty, payment_penalty, interest),
         }
 
-    def _filing_penalty(self, rule_key: str, amount: float) -> float:
+    def _filing_penalty(self, rule_key: str, amount: float, months_overdue: int = 1) -> float:
         """Calculate late filing penalty based on tax type."""
         if rule_key == "vat":
             return max(self.VAT_LATE_FILING_FLAT, amount * self.VAT_LATE_FILING_PCT)
@@ -165,10 +173,18 @@ class PenaltyCalculator(BaseAgent):
             return max(self.PAYE_LATE_FILING_FLAT, amount * self.PAYE_LATE_FILING_PCT)
 
         if rule_key == "tot":
-            return max(self.TOT_LATE_FILING_FLAT, amount * self.TOT_LATE_FILING_PCT)
+            # KES 1,000 per month + 5% penalty
+            return (self.TOT_LATE_FILING_MONTHLY * months_overdue) + (amount * self.TOT_LATE_FILING_PCT)
 
-        if rule_key == "income_tax":
-            return max(self.INCOME_TAX_LATE_FILING_FLAT, amount * self.INCOME_TAX_LATE_FILING_PCT)
+        if rule_key == "income_tax_individual":
+            return max(self.INCOME_TAX_INDIVIDUAL_LATE_FILING_FLAT, amount * self.INCOME_TAX_LATE_FILING_PCT)
+
+        if rule_key == "income_tax_corporate":
+            return max(self.INCOME_TAX_CORPORATE_LATE_FILING_FLAT, amount * self.INCOME_TAX_LATE_FILING_PCT)
+
+        if rule_key == "wht":
+            # 10% of tax due
+            return amount * self.WHT_LATE_PAYMENT_PCT
 
         # NSSF, SHIF, housing_levy, eTIMS have no flat filing penalty — handled via monthly rate
         return 0.0
@@ -213,9 +229,15 @@ class PenaltyCalculator(BaseAgent):
             elif rule_key == "vat":
                 lines.append(f"Late filing penalty: KES {filing:,.0f} (5% of VAT or KES 10,000)")
             elif rule_key == "tot":
-                lines.append(f"Late filing penalty: KES {filing:,.0f} (5% of TOT or KES 20,000)")
-            else:
+                lines.append(f"Late filing penalty: KES {filing:,.0f} (KES 1,000/month + 5% of TOT)")
+            elif rule_key == "wht":
+                lines.append(f"Late payment penalty: KES {filing:,.0f} (10% of WHT due)")
+            elif rule_key == "income_tax_individual":
+                lines.append(f"Late filing penalty: KES {filing:,.0f} (5% of tax or KES 2,000)")
+            elif rule_key == "income_tax_corporate":
                 lines.append(f"Late filing penalty: KES {filing:,.0f} (5% of tax or KES 20,000)")
+            else:
+                lines.append(f"Late filing penalty: KES {filing:,.0f}")
 
         if payment > 0:
             lines.append(f"Late payment penalty: KES {payment:,.0f} (one-time 5%)")

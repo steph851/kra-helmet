@@ -13,7 +13,7 @@
         "In the 'Tax Obligation' dropdown, select 'Turnover Tax'.",
         "Select the return period (month and year) you are filing for.",
         "Enter your total gross turnover for the month — this is ALL revenue before any expenses or deductions.",
-        "The system will automatically calculate 3% of your turnover as the tax due.",
+        "The system will automatically calculate 1.5% of your turnover as the tax due (reduced from 3% effective March 2024).",
         "Review the computed amount carefully. Confirm it matches your records.",
         "If you have already made any advance payments, enter them in the 'Payments' section.",
         "Click 'Submit' to file the return.",
@@ -34,7 +34,7 @@
         "Forgetting to include cash sales in the turnover figure.",
         "Filing for the wrong period (e.g. filing January instead of February).",
         "Not filing a NIL return when there was no income — you must still file even if turnover is zero.",
-        "Missing the 20th deadline and getting hit with the KES 20,000 late filing penalty.",
+        "Missing the 20th deadline — late filing incurs KES 1,000 per month plus 5% penalty and 1% monthly interest.",
         "Businesses with turnover above KES 25M or below KES 1M are not eligible for TOT."
       ],
       "tips": [
@@ -192,7 +192,7 @@
         "Using the wrong year of income (remember: 2025 income is filed in 2026).",
         "Not requesting your P9A form from your employer early enough.",
         "Claiming expenses that are not allowable (personal expenses, capital expenditure without proper allowances).",
-        "Missing the 30 June deadline — penalty is 5% of tax due or KES 20,000, whichever is higher."
+        "Missing the 30 June deadline — penalty is higher of 5% of tax due or KES 2,000 (individual) / KES 20,000 (corporate)."
       ],
       "tips": [
         "Request your P9A from your employer by April so you have time to prepare.",
@@ -490,11 +490,11 @@
         "Determine if you qualify: your annual business turnover must be below KES 1,000,000.",
         "Presumptive tax is typically paid when renewing your single business permit at the county government offices.",
         "The county government collects the presumptive tax on behalf of KRA at the time of business permit issuance or renewal.",
-        "The amount is a lump sum of KES 15,000 per year (fixed, regardless of actual turnover).",
+        "The amount is 15% of your single business permit fee (varies by county and business type).",
         "If filing through iTax: Log in to iTax at https://itax.kra.go.ke.",
         "Click 'Returns' > 'File Returns' > select 'Presumptive Tax' from the obligation dropdown.",
         "Enter your business details and the period.",
-        "The fixed amount of KES 15,000 will be shown.",
+        "The amount (15% of your business permit fee) will be shown.",
         "Click 'Submit' to file.",
         "Generate a payment slip if paying through iTax rather than at the county office.",
         "Pay via M-Pesa (Paybill 572572), bank, or at the county revenue office.",
@@ -515,7 +515,7 @@
         "Not keeping the receipt — you need proof of payment if KRA queries your compliance."
       ],
       "tips": [
-        "Presumptive tax is the simplest tax regime in Kenya. KES 15,000 per year, no calculations needed.",
+        "Presumptive tax is the simplest tax regime in Kenya. 15% of your business permit fee, no complex calculations needed.",
         "If your business is growing and turnover is approaching KES 1M, plan your transition to TOT in advance.",
         "Presumptive tax is ideal for very small businesses: mama mboga, small kiosks, bodaboda operators, etc.",
         "Even though it is paid at the county level, it is a KRA tax. Ensure it reflects in your iTax account.",

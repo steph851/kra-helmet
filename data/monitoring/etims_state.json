@@ -4,19 +4,19 @@
       "status": "non_compliant",
       "has_etims": false,
       "issue_count": 4,
-      "last_checked": "2026-04-03T18:02:46.150742+03:00"
+      "last_checked": "2026-04-04T00:10:43.724911+03:00"
     },
     "A018542504L": {
       "status": "non_compliant",
       "has_etims": false,
-      "issue_count": 1,
-      "last_checked": "2026-04-03T18:02:46.152961+03:00"
+      "issue_count": 4,
+      "last_checked": "2026-04-04T00:10:43.738062+03:00"
     },
     "A123456789B": {
       "status": "non_compliant",
       "has_etims": false,
       "issue_count": 1,
-      "last_checked": "2026-04-03T18:02:46.158916+03:00"
+      "last_checked": "2026-04-04T00:10:43.739662+03:00"
     }
   },
   "alerts": [
@@ -109,7 +109,22 @@
       "pin": "A123456789B",
       "issue_count": 1,
       "detected_at": "2026-04-03T18:02:46.158892+03:00"
+    },
+    {
+      "pin": "A000000001B",
+      "issue_count": 4,
+      "detected_at": "2026-04-04T00:10:43.724889+03:00"
+    },
+    {
+      "pin": "A018542504L",
+      "issue_count": 4,
+      "detected_at": "2026-04-04T00:10:43.738050+03:00"
+    },
+    {
+      "pin": "A123456789B",
+      "issue_count": 1,
+      "detected_at": "2026-04-04T00:10:43.739650+03:00"
     }
   ],
-  "last_scan": "2026-04-03T18:02:46.215526+03:00"
+  "last_scan": "2026-04-04T00:10:43.763435+03:00"
 }

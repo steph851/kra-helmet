@@ -36,7 +36,7 @@ AI Engineer specializing in building production-grade automation systems using m
 
 Full-stack AI system that automates tax compliance workflows for Kenyan SMEs.
 
-- Handles **12 tax types** including VAT (16%), PAYE (10-35%), Turnover Tax (3%), Corporate Income Tax (30%), NSSF, SHIF, Housing Levy, Withholding Tax, MRI, Presumptive Tax, and Excise Duty
+- Handles **12 tax types** including VAT (16%), PAYE (10-35%), Turnover Tax (1.5%), Corporate Income Tax (30%), NSSF, SHIF, Housing Levy, Withholding Tax, MRI, Presumptive Tax, and Excise Duty
 - Multi-agent workflow with **9-step pipeline**: Onboard → Map Obligations → Calculate Deadlines → Score Risk → Check Compliance → Calculate Penalties → Validate Confidence → Frame Urgency → Queue Notifications → Generate Explanation
 - REST API with **14 endpoints** + Swagger documentation
 - Real-time compliance dashboard with risk scoring (8-factor, 0-100 based on KRA patterns)

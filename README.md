@@ -268,20 +268,20 @@ integrations/
 
 12 tax types with real rates, penalties, and deadlines:
 
-| Tax | Rate | Deadline | Late Filing Penalty |
+| Tax | Rate | Deadline | Late Filing/Payment Penalty |
 |---|---|---|---|
-| Turnover Tax (TOT) | 3% of gross turnover | 20th monthly | KES 20,000 or 5% |
-| VAT | 16% | 20th monthly | KES 10,000 or 5% |
-| PAYE | 10-35% progressive | 9th monthly | 25% of tax or KES 10,000 |
-| NSSF | 6% | 9th monthly | 5%/month |
-| SHIF | 2.75% | 9th monthly | 5%/month |
-| Housing Levy | 1.5% + 1.5% | 9th monthly | 3%/month |
-| Income Tax (Resident) | 10-35% | June 30 | KES 20,000 or 5% |
-| Income Tax (Corporate) | 30% | June 30 | KES 20,000 or 5% |
-| Withholding Tax | 3-20% | 20th monthly | KES 20,000 or 5% |
-| MRI (Rental) | 7.5% | 20th monthly | KES 20,000 or 5% |
-| Presumptive Tax | KES 15,000/year | Dec 31 | -- |
-| Excise Duty | Varies | 20th monthly | -- |
+| Turnover Tax (TOT) | 1.5% of gross turnover | 20th monthly | KES 1,000/month + 5% penalty + 1% interest |
+| VAT | 16% | 20th monthly | Higher of 5% of tax due or KES 10,000 + 1% interest |
+| PAYE | 10-35% progressive | 9th monthly | Higher of 25% of tax or KES 10,000 |
+| NSSF | 6% (employer + employee) | 9th monthly | 5% penalty + interest |
+| SHIF | 2.75% of gross salary | 9th monthly | 5% penalty + interest |
+| Housing Levy | 1.5% (employer + employee) | 9th monthly | 3% of unpaid amount/month |
+| Income Tax (Resident) | 10-35% | June 30 | Higher of 5% of tax due or KES 2,000 |
+| Income Tax (Corporate) | 30% | June 30 | Higher of 5% of tax due or KES 20,000 |
+| Withholding Tax | 3-20% (varies by type) | 20th monthly | 10% of tax due + 1% interest |
+| MRI (Rental) | 7.5% (final tax) | 20th monthly | Higher of 5% of tax or KES 2,000/20,000 |
+| Presumptive Tax | 15% of business permit fee | Dec 31 | -- |
+| Excise Duty | Varies (15-35%) | 20th monthly | Higher of 5% of tax or KES 10,000 |
 
 12 industries supported: retail, professional services, food/hospitality, transport, manufacturing, rental income, digital/online, construction, agriculture, salon/beauty, education, healthcare.
 

@@ -60,14 +60,16 @@
   },
 
   "penalties": {
-    "income_tax_late_filing_flat_kes": 20000,
+    "income_tax_individual_late_filing_flat_kes": 2000,
+    "income_tax_corporate_late_filing_flat_kes": 20000,
     "income_tax_late_filing_pct": 0.05,
     "vat_late_filing_flat_kes": 10000,
     "vat_late_filing_pct": 0.05,
     "paye_late_filing_pct": 0.25,
     "paye_late_filing_flat_kes": 10000,
-    "tot_late_filing_flat_kes": 20000,
+    "tot_late_filing_monthly_kes": 1000,
     "tot_late_filing_pct": 0.05,
+    "wht_late_payment_pct": 0.10,
     "late_payment_penalty_pct": 0.05,
     "late_payment_interest_monthly": 0.01,
     "nssf_late_monthly_pct": 0.05,

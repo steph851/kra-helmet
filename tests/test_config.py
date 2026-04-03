@@ -14,7 +14,7 @@ class TestConfigLoader:
 
     def test_system_version(self):
         settings = get_settings()
-        assert settings["system"]["version"] == "1.0.0"
+        assert settings["system"]["version"] == "v1.0"
 
     def test_get_helper(self):
         port = get("api", "port")
@@ -28,7 +28,8 @@ class TestConfigLoader:
     def test_penalty_config_present(self):
         settings = get_settings()
         assert "penalties" in settings
-        assert settings["penalties"]["income_tax_late_filing_flat_kes"] == 20000
+        assert settings["penalties"]["income_tax_corporate_late_filing_flat_kes"] == 20000
+        assert settings["penalties"]["income_tax_individual_late_filing_flat_kes"] == 2000
 
     def test_risk_weights_present(self):
         settings = get_settings()

@@ -784,7 +784,7 @@ class TestWorkflowEngine:
         engine = WorkflowEngine()
         items = engine._build_checklist("tot", {"pin": "A000000001B"}, None)
         steps_text = " ".join(i["step"] for i in items)
-        assert "3%" in steps_text
+        assert "1.5%" in steps_text
 
     def test_build_checklist_with_guide_docs(self):
         engine = WorkflowEngine()
