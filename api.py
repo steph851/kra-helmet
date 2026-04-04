@@ -23,11 +23,16 @@ load_dotenv(ROOT / ".env")
 from fastapi import FastAPI, HTTPException, Depends, Security, Request
 from fastapi.security import APIKeyHeader
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import Response
 from fastapi.staticfiles import StaticFiles
 import os
 from pydantic import BaseModel, field_validator
 import re
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from agents.orchestrator import Orchestrator
 from agents.dashboard import DashboardGenerator
@@ -69,6 +74,27 @@ app = FastAPI(
         {"name": "Subscriptions", "description": "Subscription management — plans, payments, M-Pesa"},
     ],
 )
+
+# ── CORS — allow dashboard + Render domain ────────────────────────
+RENDER_URL = os.getenv("RENDER_EXTERNAL_URL", "")
+CORS_ORIGINS = [
+    "http://localhost:5173",   # Vite dev server
+    "http://localhost:8000",   # Local API
+]
+if RENDER_URL:
+    CORS_ORIGINS.append(RENDER_URL)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
+
+# ── Rate limiting — protect public endpoints ──────────────────────
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 orch = Orchestrator()
 tracker = FilingTracker()
@@ -313,6 +339,16 @@ class SignupRequest(BaseModel):
         v = v.strip().upper()
         if not re.match(r"^[A-Z]\d{9}[A-Z]$", v):
             raise ValueError(f"Invalid KRA PIN format: {v}")
+        return v
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v):
+        v = v.strip()
+        if not (2 <= len(v) <= 200):
+            raise ValueError("Name must be 2-200 characters")
+        if re.search(r'[<>&\'\";]', v):
+            raise ValueError("Name contains invalid characters")
         return v
 
     @field_validator("phone")
@@ -1535,7 +1571,8 @@ def api_shuru_links(pin: str, lang: str = "en"):
 # ── Public Signup (no auth) ───────────────────────────────────────
 
 @app.post("/signup", tags=["Subscriptions"], summary="Public signup")
-def public_signup(req: SignupRequest):
+@limiter.limit("5/minute")
+def public_signup(request: Request, req: SignupRequest):
     """
     Public endpoint — onboard an SME and start a 7-day free trial.
     No API key required. After trial, pay via M-Pesa to continue receiving reports.
@@ -1547,10 +1584,21 @@ def public_signup(req: SignupRequest):
 
     existing = orch.load_sme(data["pin"])
     if existing:
-        # Already onboarded — just check/start subscription
+        # Already onboarded — return current subscription (no new trial)
         sub = subs.get(data["pin"])
         if not sub:
+            # First time — hasn't had a trial yet, start one
             sub = subs.start_trial(data["pin"], data["name"])
+        elif sub["status"] == "expired" and sub.get("plan") == "trial":
+            # Trial expired — don't give another free trial, ask them to pay
+            return {
+                "status": "trial_expired",
+                "pin": data["pin"],
+                "name": existing["name"],
+                "message": "Your free trial has expired. Pay via M-Pesa to continue.",
+                "subscription": sub,
+                "payment": subs.get_payment_instructions(data["pin"]),
+            }
         return {
             "status": "already_onboarded",
             "pin": data["pin"],
@@ -1599,7 +1647,8 @@ def bot_status():
 
 
 @app.get("/plans", tags=["Subscriptions"], summary="Available plans")
-def get_plans():
+@limiter.limit("30/minute")
+def get_plans(request: Request):
     """Public endpoint — list subscription plans and pricing."""
     return {
         "mpesa_number": "0114179880",
@@ -1608,7 +1657,8 @@ def get_plans():
 
 
 @app.get("/subscription/{pin}", tags=["Subscriptions"], summary="Check subscription")
-def check_subscription(pin: str):
+@limiter.limit("10/minute")
+def check_subscription(request: Request, pin: str):
     """Public endpoint — check subscription status for a PIN."""
     ok, msg = validator.validate_pin(pin)
     if not ok:
@@ -1626,7 +1676,8 @@ def check_subscription(pin: str):
 
 
 @app.get("/pay/{pin}", tags=["Subscriptions"], summary="Payment instructions")
-def payment_instructions(pin: str, plan: str = "monthly"):
+@limiter.limit("10/minute")
+def payment_instructions(request: Request, pin: str, plan: str = "monthly"):
     """Public endpoint — get M-Pesa payment instructions for a PIN."""
     ok, msg = validator.validate_pin(pin)
     if not ok:

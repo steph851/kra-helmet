@@ -6,5 +6,6 @@ pydantic==2.12.5
 pytest==9.0.2
 requests==2.32.3
 cryptography==44.0.0
+slowapi==0.1.9
 # psycopg2-binary==2.9.9  # not used yet — enable when adding PostgreSQL
 # sqlalchemy==2.0.23       # not used yet — enable when adding PostgreSQL

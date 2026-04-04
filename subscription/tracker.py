@@ -78,7 +78,9 @@ class SubscriptionTracker:
         self, pin: str, amount_kes: float, plan: str = "monthly",
         mpesa_ref: str = "", phone: str = "",
     ) -> dict:
-        """Record an M-Pesa payment and activate/extend subscription."""
+        """Record an M-Pesa payment and activate/extend subscription.
+        Idempotent: duplicate mpesa_ref for same PIN is silently ignored.
+        """
         if plan not in PLANS:
             raise ValueError(f"Invalid plan: {plan}. Valid: {list(PLANS.keys())}")
 
@@ -95,6 +97,12 @@ class SubscriptionTracker:
 
         with self._lock:
             sub = self._subs.get(pin)
+
+            # Duplicate payment guard — Safaricom may retry webhooks
+            if sub and mpesa_ref:
+                if any(p.get("mpesa_ref") == mpesa_ref for p in sub.get("payments", [])):
+                    return sub  # Already recorded — idempotent
+
             if not sub:
                 sub = {
                     "pin": pin,
