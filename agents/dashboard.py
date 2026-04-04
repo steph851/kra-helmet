@@ -73,7 +73,7 @@ class DashboardGenerator(BaseAgent):
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="refresh" content="{refresh_sec}">
-<title>KRA HELMET — Tax Compliance Dashboard</title>
+<title>KRA Deadline Tracker — Tax Compliance Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -247,7 +247,7 @@ body {{
             </svg>
         </div>
         <div>
-            <div class="brand-name">KRA HELMET</div>
+            <div class="brand-name">KRA Deadline Tracker</div>
             <div class="brand-sub">Tax Compliance Dashboard</div>
         </div>
     </div>
@@ -290,7 +290,7 @@ body {{
 <div class="cards" id="cards-container"></div>
 
 <div class="page-footer">
-    KRA HELMET v2.0 — Tax Compliance Autopilot for Kenyan SMEs
+    KRA Deadline Tracker v2.0 — Tax Compliance Autopilot for Kenyan SMEs
 </div>
 
 <script>

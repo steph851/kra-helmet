@@ -24,7 +24,7 @@ class EmailSender:
         self.smtp_user = os.getenv("EMAIL_SMTP_USER", "")
         self.smtp_password = os.getenv("EMAIL_SMTP_PASSWORD", "")
         self.from_email = os.getenv("EMAIL_FROM", "noreply@kra-helmet.co.ke")
-        self.from_name = os.getenv("EMAIL_FROM_NAME", "KRA Helmet")
+        self.from_name = os.getenv("EMAIL_FROM_NAME", "KRA Deadline Tracker")
         self._log_dir = Path(__file__).parent.parent.parent / "logs"
         self._log_dir.mkdir(exist_ok=True)
 

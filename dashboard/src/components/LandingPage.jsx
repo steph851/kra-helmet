@@ -88,13 +88,13 @@ export default function LandingPage() {
       <div className="landing-hero">
         <div className="hero-badge">
           <Shield size={20} />
-          KRA HELMET
+          KRA Deadline Tracker
         </div>
         <h1 className="hero-title">
           Never Miss a Tax Deadline Again
         </h1>
         <p className="hero-subtitle">
-          KRA Helmet tracks your tax obligations, warns you before deadlines,
+          KRA Deadline Tracker tracks your tax obligations, warns you before deadlines,
           calculates penalties, and sends reports straight to your WhatsApp.
         </p>
         <div className="hero-features">

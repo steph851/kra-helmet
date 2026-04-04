@@ -1,4 +1,4 @@
-// KRA HELMET Dashboard — v4
+// KRA Deadline Tracker Dashboard — v4
 
 const API_BASE = window.location.origin;
 const _startTime = Date.now();

@@ -1,7 +1,7 @@
 {
   "name": "kra-helmet-whatsapp-bot",
   "version": "1.0.0",
-  "description": "WhatsApp bot for KRA HELMET — sends compliance reports to subscribers",
+  "description": "WhatsApp bot for KRA Deadline Tracker — sends compliance reports to subscribers",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

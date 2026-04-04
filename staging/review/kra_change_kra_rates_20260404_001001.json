@@ -1,0 +1,14 @@
+{
+  "type": "kra_change_detected",
+  "source": "kra_rates",
+  "label": "KRA Tax Rates",
+  "url": "https://www.kra.go.ke/individual/filing-paying/types-of-taxes",
+  "keywords": [
+    "rate",
+    "turnover"
+  ],
+  "snippet": "...ing Residents Importation Diplomatic &amp; First Arrival Privileges Legacy Ledger Reconciliation Migrated Ledger Balances --> Background of the Legacy Tax System How to Access the Migrated Data and Adjusting the Migrated Balances How and Where to get Support/Assistance Migrated Legacy System Credit Bala...",
+  "detected_at": "2026-04-04T00:10:01.651656+03:00",
+  "status": "pending_review",
+  "action_needed": "Review KRA page for tax rate, deadline, or policy changes"
+}

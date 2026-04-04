@@ -1,0 +1,10 @@
+{
+  "sme_pin": "A000000001B",
+  "channel": "whatsapp",
+  "message": "🟡 *DUE SOON* — Hi Brian!\n\n  ⏳ SHIF (Social Health Insurance Fund) — 6 day(s) left (by 2026-04-09)\n\n👉 *Two ways to file:*\n1️⃣ iTax: https://itax.kra.go.ke\n2️⃣ WhatsApp: Send 'Hi' to +254711099999 (KRA Shuru)",
+  "urgency_level": "yellow",
+  "scheduled_at": "2026-04-04T07:00:00+03:00",
+  "obligation": "SHIF (Social Health Insurance Fund)",
+  "days_until_deadline": 6,
+  "created_at": "2026-04-04T00:39:21.113846+03:00"
+}

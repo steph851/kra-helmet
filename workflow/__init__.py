@@ -1,5 +1,5 @@
 """
-WORKFLOW — Human gate, audit trail, and filing tracker for KRA Helmet.
+WORKFLOW — Human gate, audit trail, and filing tracker for KRA Deadline Tracker.
 """
 from .human_gate import HumanGate
 from .audit_trail import AuditTrail

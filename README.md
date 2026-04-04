@@ -1,8 +1,8 @@
-# KRA HELMET
+# KRA Deadline Tracker
 
 **Tax Compliance Autopilot for Kenyan SMEs**
 
-KRA Helmet figures out which taxes your business owes, tracks every deadline, calculates penalties if you're late, and tells you exactly how to file — on iTax or via KRA's WhatsApp bot (Shuru). Step by step.
+KRA Deadline Tracker figures out which taxes your business owes, tracks every deadline, calculates penalties if you're late, and tells you exactly how to file — on iTax or via KRA's WhatsApp bot (Shuru). Step by step.
 
 Built for small business owners in Kenya who don't want to get surprised by KRA demand letters.
 
@@ -65,7 +65,7 @@ python run.py dashboard     # Generate HTML dashboard
 
 ## Web Dashboard (React)
 
-KRA HELMET includes a futuristic React dashboard built with Vite, React Query, and Lucide icons:
+KRA Deadline Tracker includes a futuristic React dashboard built with Vite, React Query, and Lucide icons:
 
 - **Overview** — Stats cards, recent SMEs, activity feed, KRA Shuru WhatsApp quick action
 - **SME Management** — Search, filter, and manage all onboarded SMEs
@@ -81,7 +81,7 @@ KRA HELMET includes a futuristic React dashboard built with Vite, React Query, a
 
 KRA launched **Shuru** (April 2026) — a WhatsApp chatbot that lets taxpayers file returns, pay taxes, and get compliance certificates in 3 steps.
 
-KRA Helmet integrates Shuru throughout the system:
+KRA Deadline Tracker integrates Shuru throughout the system:
 
 | Integration Point | What Happens |
 |---|---|

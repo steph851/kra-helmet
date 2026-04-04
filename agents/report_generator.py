@@ -169,7 +169,7 @@ class ReportGenerator(BaseAgent):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KRA HELMET Report — {name} ({pin})</title>
+<title>KRA Deadline Tracker Report — {name} ({pin})</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -284,7 +284,7 @@ tr:hover td {{ background: #222538; }}
 <div class="report-container">
     <div class="report-card">
         <div class="report-header">
-            <h1>KRA HELMET — Tax Compliance Report</h1>
+            <h1>KRA Deadline Tracker — Tax Compliance Report</h1>
         </div>
         <div class="report-meta">Generated: {now} | PIN: {pin}</div>
 
@@ -352,7 +352,7 @@ tr:hover td {{ background: #222538; }}
     </div>
 
     <div class="report-footer">
-        KRA HELMET v2.0 — Tax Compliance Autopilot for Kenyan SMEs<br>
+        KRA Deadline Tracker v2.0 — Tax Compliance Autopilot for Kenyan SMEs<br>
         Report generated {now}
     </div>
 </div>

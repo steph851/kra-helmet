@@ -1,5 +1,5 @@
 """
-KRA HELMET — CLI Entry Point
+KRA Deadline Tracker — CLI Entry Point
 Usage:
     python run.py onboard              → Interactive SME onboarding
     python run.py import <csv_file>    → Batch import SMEs from CSV
@@ -65,7 +65,7 @@ from workflow.audit_trail import AuditTrail
 
 BANNER = """
 ╔═══════════════════════════════════════════════════════╗
-║  🛡️  KRA HELMET — Tax Compliance Autopilot  v1.0     ║
+║  🛡️  KRA Deadline Tracker — Tax Compliance Autopilot  v1.0     ║
 ║  Protecting Kenyan SMEs from tax penalties            ║
 ╚═══════════════════════════════════════════════════════╝"""
 
@@ -455,7 +455,7 @@ def main():
                   f"{summary['outcome_rate']*100:.0f}% with outcomes\n")
 
     elif command == "api":
-        print("\n  Starting KRA HELMET API server...")
+        print("\n  Starting KRA Deadline Tracker API server...")
         print("  Open http://localhost:8000 in your browser")
         print("  API docs: http://localhost:8000/docs\n")
         import subprocess

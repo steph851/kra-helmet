@@ -22,7 +22,7 @@ PLANS = {
 
 # M-Pesa payment details
 MPESA_PAYBILL = "0114179880"  # Stephen's M-Pesa number (Buy Goods / Till)
-MPESA_ACCOUNT_PREFIX = "HELMET"
+MPESA_ACCOUNT_PREFIX = "KRADTC"
 
 
 class SubscriptionTracker:

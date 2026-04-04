@@ -1,7 +1,7 @@
 """
 PROACTIVE ENGINE — anticipates needs and makes autonomous recommendations.
 BOUNDARY: Makes low-risk decisions autonomously. Routes critical decisions to human gate.
-This agent transforms KRA HELMET from reactive to proactive by:
+This agent transforms KRA Deadline Tracker from reactive to proactive by:
   - Anticipating SME needs based on patterns
   - Making autonomous recommendations for low-risk actions
   - Providing contextual reasoning for suggestions

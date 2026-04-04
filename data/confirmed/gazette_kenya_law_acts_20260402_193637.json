@@ -10,5 +10,8 @@
   "detected_at": "2026-04-02T19:36:31.876663+03:00",
   "status": "pending_review",
   "action_needed": "Review gazette for new tax legislation, rate changes, or deadline amendments",
-  "impact": "May require updates to tax_knowledge_graph.json or deadline_calendar.json"
+  "impact": "May require updates to tax_knowledge_graph.json or deadline_calendar.json",
+  "_approved": true,
+  "_approved_by": "Steph",
+  "_approved_at": "2026-04-04T05:52:17.995211"
 }

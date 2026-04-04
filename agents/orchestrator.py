@@ -237,7 +237,7 @@ class Orchestrator(BaseAgent):
         """Print system status to console."""
         smes = self.list_smes()
         print(f"\n{'='*60}")
-        print(f"  KRA HELMET — System Status")
+        print(f"  KRA Deadline Tracker — System Status")
         print(f"  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"{'='*60}")
         print(f"  Onboarded SMEs: {len(smes)}")

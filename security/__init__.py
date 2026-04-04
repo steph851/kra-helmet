@@ -1,5 +1,5 @@
 """
-THE SHIELD — Security layer for KRA Helmet.
+THE SHIELD — Security layer for KRA Deadline Tracker.
 Protects sensitive data with encryption, PII anonymization, and access control.
 """
 from .encryption import DataEncryptor

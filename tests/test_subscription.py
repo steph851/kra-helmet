@@ -133,7 +133,7 @@ class TestPaymentInstructions:
     def test_instructions_format(self, tracker):
         instr = tracker.get_payment_instructions("A123456789B", "monthly")
         assert instr["mpesa_number"] == "0114179880"
-        assert instr["account_reference"] == "HELMET-A123456789B"
+        assert instr["account_reference"] == "KRADTC-A123456789B"
         assert instr["amount_kes"] == 500
         assert len(instr["instructions_en"]) >= 6
         assert len(instr["instructions_sw"]) >= 6

@@ -1,5 +1,5 @@
 """
-KRA HELMET — REST API
+KRA Deadline Tracker — REST API
 Usage: uvicorn api:app --reload --port 8000
 """
 import sys
@@ -41,10 +41,10 @@ from tools.whatsapp_sender import WhatsAppSender
 settings = get_settings()
 
 app = FastAPI(
-    title="KRA HELMET API",
+    title="KRA Deadline Tracker API",
     description=(
         "Tax Compliance Autopilot for Kenyan SMEs.\n\n"
-        "KRA Helmet maps your tax obligations, tracks every KRA deadline, "
+        "KRA Deadline Tracker maps your tax obligations, tracks every KRA deadline, "
         "calculates penalties, scores audit risk, and gives step-by-step iTax filing instructions.\n\n"
         "**Authentication:** Set `HELMET_API_KEY` in `.env` and pass `X-API-Key` header on protected endpoints.\n\n"
         "**Docs:** [Full API Reference](https://github.com/steph851/kra-helmet/blob/master/docs/API.md)"
@@ -1029,7 +1029,7 @@ def reports_page():
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reports - KRA HELMET</title>
+<title>Reports - KRA Deadline Tracker</title>
 <link rel="stylesheet" href="/ui/styles.css">
 <style>
   .page {{ max-width:900px; margin:0 auto; padding:1.5rem }}
@@ -1099,7 +1099,7 @@ def audit_page(limit: int = 100):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Audit Trail - KRA HELMET</title>
+<title>Audit Trail - KRA Deadline Tracker</title>
 <link rel="stylesheet" href="/ui/styles.css">
 <style>
   .page {{ max-width:1100px; margin:0 auto; padding:1.5rem }}
@@ -1210,7 +1210,7 @@ def sme_detail_page(pin: str):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{name} — KRA HELMET</title>
+<title>{name} — KRA Deadline Tracker</title>
 <link rel="stylesheet" href="/ui/styles.css">
 <style>
   .page {{ max-width:1000px; margin:0 auto; padding:1.5rem }}
@@ -1546,14 +1546,14 @@ def public_signup(req: SignupRequest):
     obligations = profile.get("classification", {}).get("obligations", [])
     ob_list = ", ".join(o.replace("_", " ").title() for o in obligations)
     welcome_msg = (
-        f"*Welcome to KRA HELMET!* \n\n"
+        f"*Welcome to KRA Deadline Tracker!* \n\n"
         f"Hi {profile['name'].split()[0]}, your business has been registered.\n\n"
         f"*Your tax obligations:*\n{ob_list}\n\n"
         f"You have a *7-day free trial*. "
         f"We'll send you deadline alerts, risk reports, and filing instructions right here on WhatsApp.\n\n"
         f"To continue after the trial, pay *KES 500/month* via M-Pesa:\n"
         f"Send to *0114179880*\n"
-        f"Reference: *HELMET-{profile['pin']}*\n\n"
+        f"Reference: *KRADTC-{profile['pin']}*\n\n"
         f"File taxes via KRA Shuru: https://wa.me/254711099999"
     )
     if data.get("phone"):

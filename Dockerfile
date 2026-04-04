@@ -1,4 +1,4 @@
-# KRA HELMET — Tax Compliance Autopilot for Kenyan SMEs
+# KRA Deadline Tracker — Tax Compliance Autopilot for Kenyan SMEs
 # Multi-stage build for production deployment
 
 FROM python:3.13-slim AS builder

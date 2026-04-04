@@ -1,4 +1,4 @@
-"""Subscription management for KRA HELMET."""
+"""Subscription management for KRA Deadline Tracker."""
 from .tracker import SubscriptionTracker
 
 __all__ = ["SubscriptionTracker"]

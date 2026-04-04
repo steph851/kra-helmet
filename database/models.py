@@ -1,5 +1,5 @@
 """
-DATABASE MODELS — SQLAlchemy ORM models for KRA Helmet data.
+DATABASE MODELS — SQLAlchemy ORM models for KRA Deadline Tracker data.
 """
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, Text, JSON, ForeignKey

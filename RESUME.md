@@ -30,7 +30,7 @@ AI Engineer specializing in building production-grade automation systems using m
 
 ## SELECTED ENGINEERING WORK
 
-### KRA Helmet — Tax Compliance Automation System
+### KRA Deadline Tracker — Tax Compliance Automation System
 
 **Founder & Developer | 2024 – Present**
 
@@ -92,7 +92,7 @@ Lightweight AI-powered dashboard for analyzing email data.
 
 | Project | Test Count | Coverage Areas |
 |---|---|---|
-| KRA Helmet | 357 tests | Input validation, intelligence, communication, workflow, config, error recovery, scheduler, monitoring, action engines, learning |
+| KRA Deadline Tracker | 357 tests | Input validation, intelligence, communication, workflow, config, error recovery, scheduler, monitoring, action engines, learning |
 | Prop Firm Compare | Comprehensive | Pipeline validation, data extraction, scoring accuracy |
 
 ---

@@ -1,5 +1,5 @@
 /**
- * KRA HELMET — WhatsApp Bot Server
+ * KRA Deadline Tracker — WhatsApp Bot Server
  *
  * Uses whatsapp-web.js to send messages from your own WhatsApp number.
  * Exposes a simple HTTP API for the Python backend to call.
@@ -193,7 +193,7 @@ app.get('/health', (req, res) => {
 
 app.listen(PORT, () => {
   console.log('╔═══════════════════════════════════════════════╗');
-  console.log('║  KRA HELMET — WhatsApp Bot                    ║');
+  console.log('║  KRA Deadline Tracker — WhatsApp Bot                    ║');
   console.log(`║  API: http://localhost:${PORT}                    ║`);
   console.log('║  Initializing WhatsApp connection...           ║');
   console.log('╚═══════════════════════════════════════════════╝');

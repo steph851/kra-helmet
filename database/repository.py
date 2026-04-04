@@ -1,5 +1,5 @@
 """
-DATABASE REPOSITORY — Data access layer for KRA Helmet.
+DATABASE REPOSITORY — Data access layer for KRA Deadline Tracker.
 Replaces JSON file operations with PostgreSQL database operations.
 """
 from datetime import datetime, timedelta

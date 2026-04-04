@@ -1,5 +1,5 @@
 """
-ACCESS CONTROL — role-based access control for KRA Helmet.
+ACCESS CONTROL — role-based access control for KRA Deadline Tracker.
 BOUNDARY: Checks permissions only. Never executes actions.
 Roles: admin, operator, viewer, api_client
 Permissions: read, write, approve, configure, export

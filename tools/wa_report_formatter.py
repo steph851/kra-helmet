@@ -20,7 +20,7 @@ def format_compliance_report(result: dict) -> str:
     risk_level = risk.get("risk_level", "unknown")
 
     lines = [
-        f"*KRA HELMET — Compliance Report*",
+        f"*KRA Deadline Tracker — Compliance Report*",
         f"*{name}* ({pin})",
         "",
         f"{status_emoji} Status: *{status.replace('_', ' ').upper()}*",
@@ -104,7 +104,7 @@ def format_deadline_alert(profile: dict, obligation: dict) -> str:
         f"File now:\n"
         f"- iTax: https://itax.kra.go.ke\n"
         f"- WhatsApp: Send 'Hi' to +254711099999\n\n"
-        f"_KRA HELMET — keeping you compliant_"
+        f"_KRA Deadline Tracker — keeping you compliant_"
     )
 
 
@@ -119,5 +119,5 @@ def format_payment_confirmation(profile: dict, plan_name: str, expires_at: str) 
         f"- Deadline alerts before due dates\n"
         f"- Compliance reports with risk scoring\n"
         f"- Filing instructions via WhatsApp\n\n"
-        f"_KRA HELMET — taxes payment made easy_"
+        f"_KRA Deadline Tracker — taxes payment made easy_"
     )

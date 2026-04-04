@@ -1,8 +1,8 @@
-# KRA HELMET — User Guide
+# KRA Deadline Tracker — User Guide
 
-## How to Use KRA HELMET
+## How to Use KRA Deadline Tracker
 
-KRA HELMET is a tax compliance autopilot for Kenyan SMEs. Here's how to use it:
+KRA Deadline Tracker is a tax compliance autopilot for Kenyan SMEs. Here's how to use it:
 
 ---
 
@@ -26,7 +26,7 @@ Then open **http://localhost:8000** in your browser to see the dashboard.
 
 ---
 
-## 📱 Three Ways to Use KRA HELMET
+## 📱 Three Ways to Use KRA Deadline Tracker
 
 ### Option 1: Web Dashboard (Easiest)
 
@@ -86,7 +86,7 @@ Full API docs at: http://localhost:8000/docs
 
 ## 🤖 The Autonomous Agents
 
-KRA HELMET uses 5 autonomous agent systems:
+KRA Deadline Tracker uses 5 autonomous agent systems:
 
 ### 1. The Pulse (Scheduler)
 **What it does:** Automatically checks compliance on schedule
@@ -341,4 +341,4 @@ python -m pytest tests/ -v
 
 ---
 
-**KRA HELMET** — Protecting Kenyan SMEs from tax penalties 🛡️
+**KRA Deadline Tracker** — Protecting Kenyan SMEs from tax penalties 🛡️

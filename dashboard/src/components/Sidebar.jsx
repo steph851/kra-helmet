@@ -44,7 +44,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
           <Shield size={24} />
         </div>
         <div className="brand-text">
-          <span className="brand-name">KRA HELMET</span>
+          <span className="brand-name">KRA Deadline Tracker</span>
           <span className="brand-tagline">TAX COMPLIANCE</span>
         </div>
       </div>

@@ -1,5 +1,5 @@
 """
-DATABASE — PostgreSQL database layer for KRA Helmet.
+DATABASE — PostgreSQL database layer for KRA Deadline Tracker.
 Replaces JSON file storage with proper database for concurrency safety.
 """
 from .models import Base, SME, Filing, Obligation, MonitoringState, DecisionMemory

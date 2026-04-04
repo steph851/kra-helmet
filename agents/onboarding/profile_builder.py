@@ -15,7 +15,7 @@ class ProfileBuilder(BaseAgent):
         """Run CLI interview to build an SME profile."""
         self.log("Starting SME onboarding interview")
         print("\n" + "=" * 60)
-        print("  KRA HELMET — SME Onboarding")
+        print("  KRA Deadline Tracker — SME Onboarding")
         print("  Answer the questions below to set up your tax profile.")
         print("=" * 60 + "\n")
 

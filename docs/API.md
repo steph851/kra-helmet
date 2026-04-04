@@ -1,4 +1,4 @@
-# KRA HELMET — API Documentation
+# KRA Deadline Tracker — API Documentation
 
 Base URL: `http://localhost:8000`
 Interactive docs: `http://localhost:8000/docs` (Swagger UI)
@@ -35,7 +35,7 @@ curl http://localhost:8000/
 
 ```json
 {
-  "service": "KRA HELMET",
+  "service": "KRA Deadline Tracker",
   "version": "1.0.0",
   "status": "running",
   "auth_required": false,

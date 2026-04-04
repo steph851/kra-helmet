@@ -1,5 +1,5 @@
 """
-DATABASE CONNECTION — PostgreSQL connection management for KRA Helmet.
+DATABASE CONNECTION — PostgreSQL connection management for KRA Deadline Tracker.
 """
 import os
 from sqlalchemy import create_engine

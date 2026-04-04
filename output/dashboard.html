@@ -5,146 +5,206 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="refresh" content="300">
 <title>KRA HELMET — Tax Compliance Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f1117; color: #e0e0e0; }
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0f1117; color: #e8eaed; line-height: 1.6;
+    -webkit-font-smoothing: antialiased; min-height: 100vh;
+}
 
 .header {
-    background: linear-gradient(135deg, #1a1d29 0%, #0d2137 100%);
-    padding: 24px 32px;
-    border-bottom: 2px solid #2a5a3a;
+    background: #1a1d2e; padding: 20px 32px;
+    border-bottom: 1px solid #2a2d3e;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
 }
-.header h1 { font-size: 1.6rem; color: #4ade80; }
-.header .subtitle { color: #888; font-size: 0.9rem; margin-top: 4px; }
+.header-left { display: flex; align-items: center; gap: 12px; }
+.brand-icon {
+    width: 36px; height: 36px; border-radius: 6px;
+    background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #34d399; flex-shrink: 0;
+}
+.brand-icon svg { width: 20px; height: 20px; }
+.brand-name { font-weight: 800; font-size: 0.9rem; color: #e8eaed; letter-spacing: 0.04em; }
+.brand-sub { font-size: 0.6rem; color: #9aa0b0; letter-spacing: 0.06em; font-weight: 600; }
+.header-meta { font-size: 0.72rem; color: #5a6070; }
 
-.summary-bar {
-    display: flex; gap: 16px; padding: 16px 32px; flex-wrap: wrap;
-    background: #161822; border-bottom: 1px solid #2a2d3a;
+.stats-row {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;
+    padding: 20px 32px; border-bottom: 1px solid #2a2d3e;
 }
-.stat {
-    background: #1e2130; padding: 12px 20px; border-radius: 8px; min-width: 140px;
-    border-left: 3px solid #444;
+.stat-card {
+    background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 10px;
+    padding: 16px 18px; transition: border-color 0.15s;
 }
-.stat.green { border-left-color: #4ade80; }
-.stat.yellow { border-left-color: #facc15; }
-.stat.red { border-left-color: #f87171; }
-.stat.blue { border-left-color: #60a5fa; }
-.stat.purple { border-left-color: #c084fc; }
-.stat .label { font-size: 0.75rem; color: #888; text-transform: uppercase; }
-.stat .value { font-size: 1.5rem; font-weight: 700; margin-top: 2px; }
+.stat-card:hover { border-color: #353850; }
+.stat-card .label {
+    font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em;
+    color: #5a6070; text-transform: uppercase;
+}
+.stat-card .value {
+    font-size: 1.5rem; font-weight: 800; line-height: 1; margin-top: 6px;
+}
+.stat-card.blue .value { color: #60a5fa; }
+.stat-card.green .value { color: #34d399; }
+.stat-card.amber .value { color: #fbbf24; }
+.stat-card.red .value { color: #f87171; }
+.stat-card.purple .value { color: #a78bfa; }
 
 .filters {
-    padding: 12px 32px; display: flex; gap: 8px; flex-wrap: wrap;
-    background: #161822; border-bottom: 1px solid #2a2d3a;
+    padding: 14px 32px; display: flex; gap: 8px; flex-wrap: wrap;
+    border-bottom: 1px solid #2a2d3e;
 }
 .filters button {
-    padding: 6px 16px; border-radius: 20px; border: 1px solid #3a3d4a;
-    background: transparent; color: #aaa; cursor: pointer; font-size: 0.85rem;
+    padding: 6px 14px; border-radius: 20px;
+    border: 1px solid #2a2d3e; background: transparent;
+    color: #9aa0b0; cursor: pointer; font-size: 0.78rem;
+    font-weight: 600; transition: all 0.15s;
 }
-.filters button.active { background: #4ade80; color: #000; border-color: #4ade80; font-weight: 600; }
-.filters button:hover { border-color: #4ade80; }
+.filters button.active {
+    background: rgba(52,211,153,0.1); color: #34d399;
+    border-color: rgba(52,211,153,0.3);
+}
+.filters button:hover { border-color: #353850; color: #e8eaed; }
 
-.cards { padding: 24px 32px; display: grid; gap: 20px; }
+.cards { padding: 24px 32px; display: grid; gap: 20px; max-width: 1280px; }
 
 .card {
-    background: #1e2130; border-radius: 12px; overflow: hidden;
-    border: 1px solid #2a2d3a; transition: border-color 0.2s;
+    background: #1a1d2e; border-radius: 10px; overflow: hidden;
+    border: 1px solid #2a2d3e; transition: border-color 0.15s;
 }
-.card:hover { border-color: #4ade80; }
+.card:hover { border-color: #353850; }
 
 .card-header {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 20px; border-bottom: 1px solid #2a2d3a;
+    padding: 14px 20px; border-bottom: 1px solid #2a2d3e;
 }
-.card-header .name { font-size: 1.1rem; font-weight: 600; }
-.card-header .pin { color: #888; font-size: 0.85rem; }
+.card-header .name { font-size: 1rem; font-weight: 700; }
+.card-header .pin { color: #5a6070; font-size: 0.75rem; }
 
 .badge {
-    padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
-    text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
 }
-.badge.compliant { background: #16532d; color: #4ade80; }
-.badge.at_risk { background: #533e16; color: #facc15; }
-.badge.non_compliant { background: #531616; color: #f87171; }
-.badge.not_checked { background: #2a2d3a; color: #888; }
+.badge .bdot { width: 5px; height: 5px; border-radius: 50%; }
+.badge.compliant { background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+.badge.compliant .bdot { background: #34d399; }
+.badge.at_risk { background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
+.badge.at_risk .bdot { background: #fbbf24; }
+.badge.non_compliant { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); }
+.badge.non_compliant .bdot { background: #f87171; }
+.badge.not_checked { background: rgba(154,160,176,0.08); color: #9aa0b0; border: 1px solid rgba(154,160,176,0.15); }
+.badge.not_checked .bdot { background: #9aa0b0; }
 
 .card-body { padding: 16px 20px; }
 
 .info-row {
-    display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 12px;
-    font-size: 0.85rem; color: #aaa;
+    display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 12px;
+    font-size: 0.8rem; color: #9aa0b0;
 }
 .info-row span { display: inline-flex; align-items: center; gap: 4px; }
 
 .risk-bar-container {
-    margin: 12px 0; background: #2a2d3a; border-radius: 6px; height: 8px; overflow: hidden;
+    margin: 10px 0; background: #222538; border-radius: 6px;
+    height: 6px; overflow: hidden;
 }
-.risk-bar {
-    height: 100%; border-radius: 6px; transition: width 0.5s;
-}
+.risk-bar { height: 100%; border-radius: 6px; transition: width 0.5s; }
 
 .obligations-table {
-    width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.85rem;
+    width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.82rem;
 }
 .obligations-table th {
-    text-align: left; padding: 8px 12px; background: #161822; color: #888;
-    font-weight: 600; font-size: 0.75rem; text-transform: uppercase;
+    text-align: left; padding: 8px 12px; background: #161822;
+    color: #5a6070; font-weight: 600; font-size: 0.7rem;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 1px solid #2a2d3e;
 }
-.obligations-table td { padding: 8px 12px; border-top: 1px solid #2a2d3a; }
+.obligations-table td {
+    padding: 8px 12px; border-top: 1px solid #222538; color: #9aa0b0;
+}
+.obligations-table tr:hover td { background: #222538; }
 
 .status-dot {
-    display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px;
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px;
 }
-.status-dot.upcoming { background: #4ade80; }
-.status-dot.due_soon { background: #facc15; }
+.status-dot.upcoming { background: #34d399; }
+.status-dot.due_soon { background: #fbbf24; }
 .status-dot.urgent { background: #fb923c; }
 .status-dot.critical { background: #f87171; }
-.status-dot.overdue { background: #ef4444; animation: pulse 1s infinite; }
-
+.status-dot.overdue { background: #ef4444; animation: pulse 1.5s infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
 .card-footer {
-    padding: 12px 20px; border-top: 1px solid #2a2d3a;
-    display: flex; justify-content: space-between; font-size: 0.8rem; color: #666;
+    padding: 10px 20px; border-top: 1px solid #2a2d3e;
+    display: flex; justify-content: space-between; font-size: 0.72rem; color: #5a6070;
 }
 
 .penalty-tag {
-    background: #3d1616; color: #f87171; padding: 2px 10px;
-    border-radius: 12px; font-size: 0.8rem; font-weight: 600;
+    background: rgba(248,113,113,0.1); color: #f87171;
+    border: 1px solid rgba(248,113,113,0.2);
+    padding: 3px 10px; border-radius: 12px;
+    font-size: 0.72rem; font-weight: 700;
+}
+
+.page-footer {
+    text-align: center; padding: 24px 32px 16px;
+    font-size: 0.7rem; color: #5a6070;
 }
 
 @media (max-width: 768px) {
-    .summary-bar { flex-direction: column; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
     .info-row { flex-direction: column; gap: 6px; }
-    .header, .cards, .filters { padding-left: 16px; padding-right: 16px; }
+    .header, .cards, .filters, .stats-row { padding-left: 16px; padding-right: 16px; }
+    .header { flex-direction: column; gap: 10px; align-items: flex-start; }
+}
+@media (max-width: 480px) {
+    .stats-row { grid-template-columns: 1fr; }
 }
 </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>KRA HELMET — Tax Compliance Dashboard</h1>
-    <div class="subtitle">Generated: 2026-04-03 00:00 | Auto-refreshes every 5min | Protecting Kenyan SMEs from tax penalties</div>
+    <div class="header-left">
+        <div class="brand-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+        </div>
+        <div>
+            <div class="brand-name">KRA HELMET</div>
+            <div class="brand-sub">Tax Compliance Dashboard</div>
+        </div>
+    </div>
+    <div class="header-meta">
+        Generated: 2026-04-04 01:56 | Auto-refresh 5min
+    </div>
 </div>
 
-<div class="summary-bar">
-    <div class="stat blue">
+<div class="stats-row">
+    <div class="stat-card blue">
         <div class="label">Total SMEs</div>
         <div class="value">3</div>
     </div>
-    <div class="stat green">
+    <div class="stat-card green">
         <div class="label">Compliant</div>
         <div class="value">1</div>
     </div>
-    <div class="stat yellow">
+    <div class="stat-card amber">
         <div class="label">At Risk</div>
         <div class="value">2</div>
     </div>
-    <div class="stat red">
+    <div class="stat-card red">
         <div class="label">Non-Compliant</div>
         <div class="value">0</div>
     </div>
-    <div class="stat purple">
+    <div class="stat-card purple">
         <div class="label">Penalty Exposure</div>
         <div class="value">KES 0</div>
     </div>
@@ -160,8 +220,12 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 
 <div class="cards" id="cards-container"></div>
 
+<div class="page-footer">
+    KRA HELMET v2.0 — Tax Compliance Autopilot for Kenyan SMEs
+</div>
+
 <script>
-const DATA = [{"pin": "A000000001B", "name": "Brian Ochieng", "active": true, "profile": {"sub_county": null, "employee_count": 2, "rental_income_annual_kes": null, "email": null, "preferred_language": "en", "preferred_channel": "whatsapp", "onboarded_at": "2026-04-02T10:46:41.022400", "last_updated": "2026-04-02T10:46:41.022400", "pin": "A000000001B", "name": "Brian Ochieng", "business_name": "Brian's Electronics", "business_type": "sole_proprietor", "industry": "retail_wholesale", "county": "Nairobi", "annual_turnover_kes": 3500000, "turnover_bracket": "1m_to_8m", "has_employees": true, "is_vat_registered": false, "has_etims": false, "phone": "0712345678", "classification": {"industry": "retail_wholesale", "industry_label": "Retail / Wholesale Shop", "turnover_bracket": "1m_to_8m", "obligations": ["turnover_tax", "paye", "nssf", "shif", "housing_levy"], "wht_triggers": ["rent_commercial"], "etims_required": false, "notes": null}}, "report": {"pin": "A000000001B", "checked_at": "2026-04-02T23:51:04.586527", "obligations": [{"tax_type": "turnover_tax", "tax_name": "Turnover Tax (TOT)", "description": "Simplified tax for small businesses. 3% of gross turnover.", "frequency": "monthly", "deadline_day": 20, "deadline_date": null, "rate": "3.0%", "penalty_late_filing": 20000, "penalty_late_payment_pct": 5.0, "interest_monthly_pct": 1.0, "etims_required": false, "itax_code": "TOT", "status": "upcoming", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-20", "recommended_file_by": "2026-04-17", "days_until_deadline": 18, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "paye", "tax_name": "Pay As You Earn (PAYE)", "description": "Tax deducted from employee salaries by employer.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "progressive (10%-35%)", "penalty_late_filing": 25.0, "penalty_late_payment_pct": 5.0, "interest_monthly_pct": 1.0, "etims_required": false, "itax_code": "PAYE", "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 7, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "nssf", "tax_name": "NSSF (National Social Security Fund)", "description": "Social security contribution. Employer and employee each contribute.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "6.0%", "penalty_late_filing": null, "penalty_late_payment_pct": null, "interest_monthly_pct": null, "etims_required": false, "itax_code": null, "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 7, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "shif", "tax_name": "SHIF (Social Health Insurance Fund)", "description": "Replaced NHIF. 2.75% of gross salary.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "2.75%", "penalty_late_filing": null, "penalty_late_payment_pct": null, "interest_monthly_pct": null, "etims_required": false, "itax_code": null, "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 7, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "housing_levy", "tax_name": "Affordable Housing Levy", "description": "1.5% of gross salary. Employer matches 1.5%.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "1.5% (employee) + 1.5% (employer)", "penalty_late_filing": null, "penalty_late_payment_pct": null, "interest_monthly_pct": null, "etims_required": false, "itax_code": null, "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 7, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "withholding_tax_rent_commercial", "tax_name": "Withholding Tax (Rent Commercial)", "description": "WHT on rent commercial payments", "frequency": "monthly", "deadline_day": 20, "deadline_date": null, "rate": "10.0%", "penalty_late_filing": null, "penalty_late_payment_pct": 5.0, "interest_monthly_pct": 1.0, "etims_required": false, "itax_code": "WHT", "status": "upcoming", "confidence": 0.65, "source": "obligation_mapper", "next_deadline": "2026-04-20", "recommended_file_by": "2026-04-17", "days_until_deadline": 18, "filing_month": "March 2026", "auto_proceed": false}], "compliance": {"overall": "at_risk", "obligations_met": 2, "obligations_total": 6, "overdue_count": 0, "overdue_list": [], "critical_list": [], "next_action": "File Pay As You Earn (PAYE) within 7 days.", "checked_at": "2026-04-02T23:50:58.402758", "disclaimer": "DISCLAIMER: This information is generated by an automated system for guidance purposes only. It does NOT constitute legal, tax, or financial advice. Tax laws change frequently. Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making any filing or payment decisions. KRA Helmet is not liable for any penalties, losses, or decisions made based on this information."}, "risk": {"risk_score": 15, "risk_level": "low", "factors": ["[+10] Cash-heavy industry (retail_wholesale)", "[+5] Business recently registered"], "audit_probability_pct": 9.0, "last_assessed": "2026-04-02T23:50:57.466759", "source": "risk_scorer", "disclaimer": "DISCLAIMER: This information is generated by an automated system for guidance purposes only. It does NOT constitute legal, tax, or financial advice. Tax laws change frequently. Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making any filing or payment decisions. KRA Helmet is not liable for any penalties, losses, or decisions made based on this information."}, "penalties": {"pin": "A000000001B", "overdue_count": 0, "penalties": [], "total_penalty_exposure_kes": 0, "severity": "manageable", "assessed_at": "2026-04-02T23:50:59.260352", "source": "penalty_calculator"}, "urgency": {"urgency_level": "yellow", "emoji": "🟡", "prefix": "DUE SOON", "action": "alert_once", "overdue_count": 0, "critical_count": 0, "urgent_count": 0, "should_alert": true}}}, {"pin": "A018542504L", "name": "STEPHEN WANJUKI", "active": true, "profile": {"pin": "A018542504L", "name": "STEPHEN WANJUKI", "business_name": "STEPHEN WANJUKI", "business_type": "sole_proprietor", "industry": "professional_services", "county": "NAKURU", "sub_county": null, "annual_turnover_kes": 500000, "turnover_bracket": "below_1m", "has_employees": false, "employee_count": null, "is_vat_registered": false, "has_etims": false, "rental_income_annual_kes": null, "phone": "0114179880", "email": null, "preferred_language": "en", "preferred_channel": "whatsapp", "onboarded_at": "2026-04-02T09:37:34.404414", "last_updated": "2026-04-02T09:37:34.414478", "classification": {"industry": "professional_services", "industry_label": "Professional Services", "turnover_bracket": "below_1m", "obligations": ["presumptive_tax"], "wht_triggers": ["professional_fees", "management_fees"], "etims_required": false, "notes": "Clients paying professional fees must deduct 5% WHT"}}, "report": {"pin": "A018542504L", "checked_at": "2026-04-02T23:01:36.637499", "obligations": [{"tax_type": "presumptive_tax", "tax_name": "Presumptive Tax", "description": "Lump-sum tax for businesses with turnover below KES 1M. Payable on business permit renewal.", "frequency": "annual", "deadline_day": null, "deadline_date": null, "rate": "KES 15,000/year", "penalty_late_filing": null, "penalty_late_payment_pct": null, "interest_monthly_pct": null, "etims_required": false, "itax_code": "PRESUMP", "status": "upcoming", "confidence": 0.85, "source": "obligation_mapper", "next_deadline": "2026-12-31", "recommended_file_by": "2026-12-28", "days_until_deadline": 273, "auto_proceed": true}, {"tax_type": "withholding_tax_professional_fees", "tax_name": "Withholding Tax (Professional Fees)", "description": "WHT on professional fees payments", "frequency": "monthly", "deadline_day": 20, "deadline_date": null, "rate": "5.0%", "penalty_late_filing": null, "penalty_late_payment_pct": 5.0, "interest_monthly_pct": 1.0, "etims_required": false, "itax_code": "WHT", "status": "upcoming", "confidence": 0.65, "source": "obligation_mapper", "next_deadline": "2026-04-20", "recommended_file_by": "2026-04-17", "days_until_deadline": 18, "filing_month": "March 2026", "auto_proceed": false}, {"tax_type": "withholding_tax_management_fees", "tax_name": "Withholding Tax (Management Fees)", "description": "WHT on management fees payments", "frequency": "monthly", "deadline_day": 20, "deadline_date": null, "rate": "5.0%", "penalty_late_filing": null, "penalty_late_payment_pct": 5.0, "interest_monthly_pct": 1.0, "etims_required": false, "itax_code": "WHT", "status": "upcoming", "confidence": 0.65, "source": "obligation_mapper", "next_deadline": "2026-04-20", "recommended_file_by": "2026-04-17", "days_until_deadline": 18, "filing_month": "March 2026", "auto_proceed": false}], "compliance": {"overall": "compliant", "obligations_met": 3, "obligations_total": 3, "overdue_count": 0, "overdue_list": [], "critical_list": [], "next_action": "All obligations on track. Next filing is upcoming.", "checked_at": "2026-04-02T23:01:15.249435", "disclaimer": "DISCLAIMER: This information is generated by an automated system for guidance purposes only. It does NOT constitute legal, tax, or financial advice. Tax laws change frequently. Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making any filing or payment decisions. KRA Helmet is not liable for any penalties, losses, or decisions made based on this information."}, "risk": {"risk_score": 5, "risk_level": "low", "factors": ["[+5] Business recently registered"], "audit_probability_pct": 3.0, "last_assessed": "2026-04-02T23:01:12.649354", "source": "risk_scorer", "disclaimer": "DISCLAIMER: This information is generated by an automated system for guidance purposes only. It does NOT constitute legal, tax, or financial advice. Tax laws change frequently. Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making any filing or payment decisions. KRA Helmet is not liable for any penalties, losses, or decisions made based on this information."}, "penalties": {"pin": "A018542504L", "overdue_count": 0, "penalties": [], "total_penalty_exposure_kes": 0, "severity": "manageable", "assessed_at": "2026-04-02T23:01:19.113587", "source": "penalty_calculator"}, "urgency": {"urgency_level": "green", "emoji": "🟢", "prefix": "ON TRACK", "action": "no_alert", "overdue_count": 0, "critical_count": 0, "urgent_count": 0, "should_alert": false}}}, {"pin": "A123456789B", "name": "Jane Wanjiru", "active": true, "profile": {"sub_county": null, "employee_count": 3, "rental_income_annual_kes": null, "email": "jane@example.com", "preferred_language": "en", "preferred_channel": "whatsapp", "onboarded_at": "2026-03-29T14:01:51.035653", "last_updated": "2026-03-29T14:01:51.035653", "pin": "A123456789B", "name": "Jane Wanjiru", "business_type": "sole_proprietor", "industry": "food_hospitality", "turnover_bracket": "1m_to_8m", "business_name": "Jane's Kitchen", "county": "Nairobi", "phone": "0723456789", "annual_turnover_kes": 2500000.0, "has_employees": true, "is_vat_registered": false, "has_etims": false, "classification": {"industry": "food_hospitality", "industry_label": "Food & Hospitality", "turnover_bracket": "1m_to_8m", "obligations": ["turnover_tax", "paye", "nssf", "shif", "housing_levy"], "wht_triggers": [], "etims_required": false, "notes": null}}, "report": {"pin": "A123456789B", "checked_at": "2026-04-02T23:51:04.591756", "obligations": [{"tax_type": "turnover_tax", "tax_name": "Turnover Tax (TOT)", "description": "Simplified tax for small businesses. 3% of gross turnover.", "frequency": "monthly", "deadline_day": 20, "deadline_date": null, "rate": "3.0%", "penalty_late_filing": 20000, "penalty_late_payment_pct": 5.0, "interest_monthly_pct": 1.0, "etims_required": false, "itax_code": "TOT", "status": "upcoming", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-20", "recommended_file_by": "2026-04-17", "days_until_deadline": 18, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "paye", "tax_name": "Pay As You Earn (PAYE)", "description": "Tax deducted from employee salaries by employer.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "progressive (10%-35%)", "penalty_late_filing": 25.0, "penalty_late_payment_pct": 5.0, "interest_monthly_pct": 1.0, "etims_required": false, "itax_code": "PAYE", "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 7, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "nssf", "tax_name": "NSSF (National Social Security Fund)", "description": "Social security contribution. Employer and employee each contribute.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "6.0%", "penalty_late_filing": null, "penalty_late_payment_pct": null, "interest_monthly_pct": null, "etims_required": false, "itax_code": null, "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 7, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "shif", "tax_name": "SHIF (Social Health Insurance Fund)", "description": "Replaced NHIF. 2.75% of gross salary.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "2.75%", "penalty_late_filing": null, "penalty_late_payment_pct": null, "interest_monthly_pct": null, "etims_required": false, "itax_code": null, "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 7, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "housing_levy", "tax_name": "Affordable Housing Levy", "description": "1.5% of gross salary. Employer matches 1.5%.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "1.5% (employee) + 1.5% (employer)", "penalty_late_filing": null, "penalty_late_payment_pct": null, "interest_monthly_pct": null, "etims_required": false, "itax_code": null, "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 7, "filing_month": "March 2026", "auto_proceed": true}], "compliance": {"overall": "at_risk", "obligations_met": 1, "obligations_total": 5, "overdue_count": 0, "overdue_list": [], "critical_list": [], "next_action": "File Pay As You Earn (PAYE) within 7 days.", "checked_at": "2026-04-02T23:50:58.408187", "disclaimer": "DISCLAIMER: This information is generated by an automated system for guidance purposes only. It does NOT constitute legal, tax, or financial advice. Tax laws change frequently. Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making any filing or payment decisions. KRA Helmet is not liable for any penalties, losses, or decisions made based on this information."}, "risk": {"risk_score": 15, "risk_level": "low", "factors": ["[+10] Cash-heavy industry (food_hospitality)", "[+5] Business recently registered"], "audit_probability_pct": 9.0, "last_assessed": "2026-04-02T23:50:57.469022", "source": "risk_scorer", "disclaimer": "DISCLAIMER: This information is generated by an automated system for guidance purposes only. It does NOT constitute legal, tax, or financial advice. Tax laws change frequently. Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making any filing or payment decisions. KRA Helmet is not liable for any penalties, losses, or decisions made based on this information."}, "penalties": {"pin": "A123456789B", "overdue_count": 0, "penalties": [], "total_penalty_exposure_kes": 0, "severity": "manageable", "assessed_at": "2026-04-02T23:50:59.276891", "source": "penalty_calculator"}, "urgency": {"urgency_level": "yellow", "emoji": "🟡", "prefix": "DUE SOON", "action": "alert_once", "overdue_count": 0, "critical_count": 0, "urgent_count": 0, "should_alert": true}}}];
+const DATA = [{"pin": "A000000001B", "name": "Brian Ochieng", "active": true, "profile": {"sub_county": null, "employee_count": 2, "rental_income_annual_kes": null, "email": null, "preferred_language": "en", "preferred_channel": "whatsapp", "onboarded_at": "2026-04-02T10:46:41.022400", "last_updated": "2026-04-02T10:46:41.022400", "pin": "A000000001B", "name": "Brian Ochieng", "business_name": "Brian's Electronics", "business_type": "sole_proprietor", "industry": "retail_wholesale", "county": "Nairobi", "annual_turnover_kes": 3500000, "turnover_bracket": "1m_to_8m", "has_employees": true, "is_vat_registered": false, "has_etims": false, "phone": "0712345678", "classification": {"industry": "retail_wholesale", "industry_label": "Retail / Wholesale Shop", "turnover_bracket": "1m_to_8m", "obligations": ["turnover_tax", "paye", "nssf", "shif", "housing_levy"], "wht_triggers": ["rent_commercial"], "etims_required": false, "notes": null}}, "report": {"pin": "A000000001B", "checked_at": "2026-04-04T01:47:38.235842", "obligations": [{"tax_type": "turnover_tax", "tax_name": "Turnover Tax (TOT)", "description": "Simplified tax for small businesses. 1.5% of gross turnover (reduced from 3% effective 22 March 2024).", "frequency": "monthly", "deadline_day": 20, "deadline_date": null, "rate": "1.5%", "penalty_late_filing": null, "penalty_late_payment_pct": 5.0, "interest_monthly_pct": 1.0, "etims_required": false, "itax_code": "TOT", "status": "upcoming", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-20", "recommended_file_by": "2026-04-17", "days_until_deadline": 16, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "paye", "tax_name": "Pay As You Earn (PAYE)", "description": "Tax deducted from employee salaries by employer.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "progressive (10%-35%)", "penalty_late_filing": 25.0, "penalty_late_payment_pct": 5.0, "interest_monthly_pct": 1.0, "etims_required": false, "itax_code": "PAYE", "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 5, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "nssf", "tax_name": "NSSF (National Social Security Fund)", "description": "Social security contribution. Employer and employee each contribute.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "6.0%", "penalty_late_filing": null, "penalty_late_payment_pct": null, "interest_monthly_pct": null, "etims_required": false, "itax_code": null, "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 5, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "shif", "tax_name": "SHIF (Social Health Insurance Fund)", "description": "Replaced NHIF. 2.75% of gross salary.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "2.75%", "penalty_late_filing": null, "penalty_late_payment_pct": null, "interest_monthly_pct": null, "etims_required": false, "itax_code": null, "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 5, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "housing_levy", "tax_name": "Affordable Housing Levy", "description": "1.5% of gross salary. Employer matches 1.5%.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "1.5% (employee) + 1.5% (employer)", "penalty_late_filing": null, "penalty_late_payment_pct": null, "interest_monthly_pct": null, "etims_required": false, "itax_code": null, "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 5, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "withholding_tax_rent_commercial", "tax_name": "Withholding Tax (Rent Commercial)", "description": "WHT on rent commercial payments", "frequency": "monthly", "deadline_day": 20, "deadline_date": null, "rate": "10.0%", "penalty_late_filing": null, "penalty_late_payment_pct": 5.0, "interest_monthly_pct": 1.0, "etims_required": false, "itax_code": "WHT", "status": "upcoming", "confidence": 0.65, "source": "obligation_mapper", "next_deadline": "2026-04-20", "recommended_file_by": "2026-04-17", "days_until_deadline": 16, "filing_month": "March 2026", "auto_proceed": false}], "compliance": {"overall": "at_risk", "obligations_met": 2, "obligations_total": 6, "overdue_count": 0, "overdue_list": [], "critical_list": [], "next_action": "File Pay As You Earn (PAYE) within 5 days.", "checked_at": "2026-04-04T01:47:27.146255", "disclaimer": "DISCLAIMER: This information is generated by an automated system for guidance purposes only. It does NOT constitute legal, tax, or financial advice. Tax laws change frequently. Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making any filing or payment decisions. KRA Helmet is not liable for any penalties, losses, or decisions made based on this information."}, "risk": {"risk_score": 15, "risk_level": "low", "factors": ["[+10] Cash-heavy industry (retail_wholesale)", "[+5] Business recently registered"], "audit_probability_pct": 9.0, "last_assessed": "2026-04-04T01:47:25.782457", "source": "risk_scorer", "disclaimer": "DISCLAIMER: This information is generated by an automated system for guidance purposes only. It does NOT constitute legal, tax, or financial advice. Tax laws change frequently. Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making any filing or payment decisions. KRA Helmet is not liable for any penalties, losses, or decisions made based on this information."}, "penalties": {"pin": "A000000001B", "overdue_count": 0, "penalties": [], "total_penalty_exposure_kes": 0, "severity": "manageable", "assessed_at": "2026-04-04T01:47:29.719031", "source": "penalty_calculator"}, "urgency": {"urgency_level": "yellow", "emoji": "🟡", "prefix": "DUE SOON", "action": "alert_once", "overdue_count": 0, "critical_count": 0, "urgent_count": 0, "should_alert": true}}}, {"pin": "A018542504L", "name": "STEPHEN WANJUKI", "active": true, "profile": {"pin": "A018542504L", "name": "STEPHEN WANJUKI", "business_name": "STEPHEN WANJUKI", "business_type": "sole_proprietor", "industry": "professional_services", "county": "NAKURU", "sub_county": null, "annual_turnover_kes": 500000, "turnover_bracket": "below_1m", "has_employees": false, "employee_count": null, "is_vat_registered": false, "has_etims": false, "rental_income_annual_kes": null, "phone": "0114179880", "email": null, "preferred_language": "en", "preferred_channel": "whatsapp", "onboarded_at": "2026-04-02T09:37:34.404414", "last_updated": "2026-04-02T09:37:34.414478", "classification": {"industry": "professional_services", "industry_label": "Professional Services", "turnover_bracket": "below_1m", "obligations": ["presumptive_tax"], "wht_triggers": ["professional_fees", "management_fees"], "etims_required": false, "notes": "Clients paying professional fees must deduct 5% WHT"}}, "report": {"pin": "A018542504L", "checked_at": "2026-04-03T17:39:21.393333", "obligations": [{"tax_type": "presumptive_tax", "tax_name": "Presumptive Tax", "description": "15% of single business permit fee for businesses with turnover below KES 1M. Payable on permit renewal.", "frequency": "annual", "deadline_day": null, "deadline_date": null, "rate": "varies", "penalty_late_filing": null, "penalty_late_payment_pct": null, "interest_monthly_pct": null, "etims_required": false, "itax_code": "PRESUMP", "status": "upcoming", "confidence": 0.85, "source": "obligation_mapper", "next_deadline": "2026-12-31", "recommended_file_by": "2026-12-28", "days_until_deadline": 272, "auto_proceed": true}, {"tax_type": "withholding_tax_professional_fees", "tax_name": "Withholding Tax (Professional Fees)", "description": "WHT on professional fees payments", "frequency": "monthly", "deadline_day": 20, "deadline_date": null, "rate": "5.0%", "penalty_late_filing": null, "penalty_late_payment_pct": 5.0, "interest_monthly_pct": 1.0, "etims_required": false, "itax_code": "WHT", "status": "upcoming", "confidence": 0.65, "source": "obligation_mapper", "next_deadline": "2026-04-20", "recommended_file_by": "2026-04-17", "days_until_deadline": 17, "filing_month": "March 2026", "auto_proceed": false}, {"tax_type": "withholding_tax_management_fees", "tax_name": "Withholding Tax (Management Fees)", "description": "WHT on management fees payments", "frequency": "monthly", "deadline_day": 20, "deadline_date": null, "rate": "5.0%", "penalty_late_filing": null, "penalty_late_payment_pct": 5.0, "interest_monthly_pct": 1.0, "etims_required": false, "itax_code": "WHT", "status": "upcoming", "confidence": 0.65, "source": "obligation_mapper", "next_deadline": "2026-04-20", "recommended_file_by": "2026-04-17", "days_until_deadline": 17, "filing_month": "March 2026", "auto_proceed": false}], "compliance": {"overall": "compliant", "obligations_met": 3, "obligations_total": 3, "overdue_count": 0, "overdue_list": [], "critical_list": [], "next_action": "All obligations on track. Next filing is upcoming.", "checked_at": "2026-04-03T17:39:13.545447", "disclaimer": "DISCLAIMER: This information is generated by an automated system for guidance purposes only. It does NOT constitute legal, tax, or financial advice. Tax laws change frequently. Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making any filing or payment decisions. KRA Helmet is not liable for any penalties, losses, or decisions made based on this information."}, "risk": {"risk_score": 5, "risk_level": "low", "factors": ["[+5] Business recently registered"], "audit_probability_pct": 3.0, "last_assessed": "2026-04-03T17:39:12.597910", "source": "risk_scorer", "disclaimer": "DISCLAIMER: This information is generated by an automated system for guidance purposes only. It does NOT constitute legal, tax, or financial advice. Tax laws change frequently. Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making any filing or payment decisions. KRA Helmet is not liable for any penalties, losses, or decisions made based on this information."}, "penalties": {"pin": "A018542504L", "overdue_count": 0, "penalties": [], "total_penalty_exposure_kes": 0, "severity": "manageable", "assessed_at": "2026-04-03T17:39:14.460902", "source": "penalty_calculator"}, "urgency": {"urgency_level": "green", "emoji": "🟢", "prefix": "ON TRACK", "action": "no_alert", "overdue_count": 0, "critical_count": 0, "urgent_count": 0, "should_alert": false}}}, {"pin": "A123456789B", "name": "Jane Wanjiru", "active": true, "profile": {"sub_county": null, "employee_count": 3, "rental_income_annual_kes": null, "email": "jane@example.com", "preferred_language": "en", "preferred_channel": "whatsapp", "onboarded_at": "2026-03-29T14:01:51.035653", "last_updated": "2026-03-29T14:01:51.035653", "pin": "A123456789B", "name": "Jane Wanjiru", "business_type": "sole_proprietor", "industry": "food_hospitality", "turnover_bracket": "1m_to_8m", "business_name": "Jane's Kitchen", "county": "Nairobi", "phone": "0723456789", "annual_turnover_kes": 2500000.0, "has_employees": true, "is_vat_registered": false, "has_etims": false, "classification": {"industry": "food_hospitality", "industry_label": "Food & Hospitality", "turnover_bracket": "1m_to_8m", "obligations": ["turnover_tax", "paye", "nssf", "shif", "housing_levy"], "wht_triggers": [], "etims_required": false, "notes": null}}, "report": {"pin": "A123456789B", "checked_at": "2026-04-04T01:47:38.314937", "obligations": [{"tax_type": "turnover_tax", "tax_name": "Turnover Tax (TOT)", "description": "Simplified tax for small businesses. 1.5% of gross turnover (reduced from 3% effective 22 March 2024).", "frequency": "monthly", "deadline_day": 20, "deadline_date": null, "rate": "1.5%", "penalty_late_filing": null, "penalty_late_payment_pct": 5.0, "interest_monthly_pct": 1.0, "etims_required": false, "itax_code": "TOT", "status": "upcoming", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-20", "recommended_file_by": "2026-04-17", "days_until_deadline": 16, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "paye", "tax_name": "Pay As You Earn (PAYE)", "description": "Tax deducted from employee salaries by employer.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "progressive (10%-35%)", "penalty_late_filing": 25.0, "penalty_late_payment_pct": 5.0, "interest_monthly_pct": 1.0, "etims_required": false, "itax_code": "PAYE", "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 5, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "nssf", "tax_name": "NSSF (National Social Security Fund)", "description": "Social security contribution. Employer and employee each contribute.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "6.0%", "penalty_late_filing": null, "penalty_late_payment_pct": null, "interest_monthly_pct": null, "etims_required": false, "itax_code": null, "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 5, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "shif", "tax_name": "SHIF (Social Health Insurance Fund)", "description": "Replaced NHIF. 2.75% of gross salary.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "2.75%", "penalty_late_filing": null, "penalty_late_payment_pct": null, "interest_monthly_pct": null, "etims_required": false, "itax_code": null, "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 5, "filing_month": "March 2026", "auto_proceed": true}, {"tax_type": "housing_levy", "tax_name": "Affordable Housing Levy", "description": "1.5% of gross salary. Employer matches 1.5%.", "frequency": "monthly", "deadline_day": 9, "deadline_date": null, "rate": "1.5% (employee) + 1.5% (employer)", "penalty_late_filing": null, "penalty_late_payment_pct": null, "interest_monthly_pct": null, "etims_required": false, "itax_code": null, "status": "due_soon", "confidence": 0.95, "source": "obligation_mapper", "next_deadline": "2026-04-09", "recommended_file_by": "2026-04-06", "days_until_deadline": 5, "filing_month": "March 2026", "auto_proceed": true}], "compliance": {"overall": "at_risk", "obligations_met": 1, "obligations_total": 5, "overdue_count": 0, "overdue_list": [], "critical_list": [], "next_action": "File Pay As You Earn (PAYE) within 5 days.", "checked_at": "2026-04-04T01:47:27.148526", "disclaimer": "DISCLAIMER: This information is generated by an automated system for guidance purposes only. It does NOT constitute legal, tax, or financial advice. Tax laws change frequently. Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making any filing or payment decisions. KRA Helmet is not liable for any penalties, losses, or decisions made based on this information."}, "risk": {"risk_score": 15, "risk_level": "low", "factors": ["[+10] Cash-heavy industry (food_hospitality)", "[+5] Business recently registered"], "audit_probability_pct": 9.0, "last_assessed": "2026-04-04T01:47:25.780395", "source": "risk_scorer", "disclaimer": "DISCLAIMER: This information is generated by an automated system for guidance purposes only. It does NOT constitute legal, tax, or financial advice. Tax laws change frequently. Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making any filing or payment decisions. KRA Helmet is not liable for any penalties, losses, or decisions made based on this information."}, "penalties": {"pin": "A123456789B", "overdue_count": 0, "penalties": [], "total_penalty_exposure_kes": 0, "severity": "manageable", "assessed_at": "2026-04-04T01:47:29.755097", "source": "penalty_calculator"}, "urgency": {"urgency_level": "yellow", "emoji": "🟡", "prefix": "DUE SOON", "action": "alert_once", "overdue_count": 0, "critical_count": 0, "urgent_count": 0, "should_alert": true}}}];
 
 function getStatus(sme) {
     if (!sme.report) return 'not_checked';
@@ -169,8 +233,8 @@ function getStatus(sme) {
 }
 
 function getRiskColor(score) {
-    if (score <= 25) return '#4ade80';
-    if (score <= 50) return '#facc15';
+    if (score <= 25) return '#34d399';
+    if (score <= 50) return '#fbbf24';
     if (score <= 75) return '#fb923c';
     return '#f87171';
 }
@@ -212,7 +276,7 @@ function renderCard(sme) {
             </div>
             <div style="display:flex;gap:8px;align-items:center">
                 ${penaltyTag}
-                <span class="badge ${status}">${status.replace('_', ' ')}</span>
+                <span class="badge ${status}"><span class="bdot"></span>${status.replace('_', ' ')}</span>
             </div>
         </div>
         <div class="card-body">
@@ -224,21 +288,21 @@ function renderCard(sme) {
                 ${profile.has_employees ? `<span>Employees: ${profile.employee_count || 0}</span>` : ''}
             </div>
 
-            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.85rem">
-                <span>Risk Score: <strong>${riskScore}</strong>/100 (${risk.risk_level || '-'})</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;color:#9aa0b0">
+                <span>Risk Score: <strong style="color:#e8eaed">${riskScore}</strong>/100 (${risk.risk_level || '-'})</span>
                 <span>${urgency.emoji || ''} ${urgency.prefix || ''}</span>
             </div>
             <div class="risk-bar-container">
                 <div class="risk-bar" style="width:${riskScore}%;background:${getRiskColor(riskScore)}"></div>
             </div>
 
-            ${risk.factors ? `<div style="font-size:0.8rem;color:#888;margin-bottom:8px">${risk.factors.join(' | ')}</div>` : ''}
+            ${risk.factors ? `<div style="font-size:0.75rem;color:#5a6070;margin-bottom:8px">${risk.factors.join(' | ')}</div>` : ''}
 
             ${obligations.length > 0 ? `
             <table class="obligations-table">
                 <thead><tr><th>Tax Type</th><th>Rate</th><th>Next Deadline</th><th>Days</th><th>Status</th></tr></thead>
                 <tbody>${oblRows}</tbody>
-            </table>` : '<div style="color:#666;padding:12px">No compliance check run yet.</div>'}
+            </table>` : '<div style="color:#5a6070;padding:12px;font-size:0.82rem">No compliance check run yet.</div>'}
         </div>
         <div class="card-footer">
             <span>Last checked: ${report.checked_at ? report.checked_at.substring(0,16).replace('T',' ') : 'Never'}</span>

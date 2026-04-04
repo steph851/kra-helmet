@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-KRA HELMET — Standalone Website Launcher
+KRA Deadline Tracker — Standalone Website Launcher
 Start the web dashboard accessible from any device on your network.
 """
 import sys
@@ -29,7 +29,7 @@ def get_local_ip():
 
 def main():
     print("\n" + "="*60)
-    print("  🛡️  KRA HELMET — Tax Compliance Dashboard")
+    print("  🛡️  KRA Deadline Tracker — Tax Compliance Dashboard")
     print("="*60)
     print()
     

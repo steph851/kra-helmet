@@ -1,6 +1,6 @@
 {
-    "name": "KRA HELMET",
-    "short_name": "KRA HELMET",
+    "name": "KRA Deadline Tracker",
+    "short_name": "KRA Deadline Tracker",
     "description": "Tax Compliance Autopilot for Kenyan SMEs",
     "start_url": "/",
     "display": "standalone",

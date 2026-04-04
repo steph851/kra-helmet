@@ -51,7 +51,7 @@ export default function WelcomePage() {
           </div>
           <div>
             <h1 className="welcome-title">
-              {signupData && !sub ? 'Welcome to KRA HELMET!' :
+              {signupData && !sub ? 'Welcome to KRA Deadline Tracker!' :
                isActive ? 'Your Subscription is Active' : 'Subscription Expired'}
             </h1>
             <p className="welcome-subtitle">
@@ -67,7 +67,7 @@ export default function WelcomePage() {
           <div className="welcome-card">
             <h2>Your Tax Obligations</h2>
             <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
-              Based on your business profile, here's what KRA HELMET tracks for you:
+              Based on your business profile, here's what KRA Deadline Tracker tracks for you:
             </p>
             <div className="obligation-tags">
               {(signupData.obligations || []).map(ob => (
@@ -160,8 +160,8 @@ export default function WelcomePage() {
               <div className="mpesa-step">
                 <span className="step-num">5</span>
                 <div>
-                  In reference, type: <strong className="copy-target" onClick={() => copyText(`HELMET-${pin}`, 'ref')}>
-                    HELMET-{pin} {copied === 'ref' ? <CheckCircle size={14} /> : <Copy size={14} />}
+                  In reference, type: <strong className="copy-target" onClick={() => copyText(`KRADTC-${pin}`, 'ref')}>
+                    KRADTC-{pin} {copied === 'ref' ? <CheckCircle size={14} /> : <Copy size={14} />}
                   </strong>
                 </div>
               </div>
