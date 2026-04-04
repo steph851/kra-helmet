@@ -7,7 +7,7 @@ Free deployment options optimized for Kenya.
 ## Option 1: Render (Recommended — Easiest)
 
 **Free tier**: 750 hours/month, auto-deploy from GitHub, free SSL.
-**Downside**: Sleeps after 15 min inactivity (built-in keep-alive mitigates this).
+**Sleep fix**: Free tier sleeps after 15 min — we fix this with UptimeRobot (free) + webhook buffer.
 
 ### Steps:
 
@@ -23,6 +23,24 @@ Free deployment options optimized for Kenya.
    - `HELMET_API_KEY` = your API key
 6. Click **Deploy** — takes ~3 minutes
 7. Your app is live at: `https://kra-deadline-tracker.onrender.com`
+
+### Keep-Alive Setup (IMPORTANT — prevents sleep):
+
+8. Go to [uptimerobot.com](https://uptimerobot.com) → sign up (free, no card)
+9. Click **Add New Monitor**:
+   - **Type**: HTTP(s)
+   - **Friendly Name**: KRA Deadline Tracker
+   - **URL**: `https://kra-deadline-tracker.onrender.com/health`
+   - **Interval**: 5 minutes
+10. Save — UptimeRobot pings your app every 5 min, Render never sleeps
+
+### M-Pesa Webhook Safety (built-in):
+
+Even if Render briefly sleeps before UptimeRobot wakes it:
+- Safaricom retries failed webhooks automatically
+- All incoming webhooks are **buffered to disk first** before processing
+- On startup, unprocessed webhooks are **automatically retried**
+- Zero payments lost
 
 ---
 
