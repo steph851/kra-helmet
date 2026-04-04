@@ -4,8 +4,8 @@
 # Stage 1: Build React dashboard
 FROM node:20-slim AS frontend
 WORKDIR /app/dashboard
-COPY dashboard/package.json dashboard/package-lock.json ./
-RUN npm ci --production=false
+COPY dashboard/package.json dashboard/package-lock.json* ./
+RUN npm install
 COPY dashboard/ .
 RUN npx vite build
 
