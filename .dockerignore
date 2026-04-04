@@ -12,4 +12,3 @@ node_modules/
 bot/.wwebjs_auth/
 bot/.wwebjs_cache/
 dashboard/node_modules/
-output/dashboard-react/
