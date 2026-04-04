@@ -26,10 +26,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
-# Copy built dashboard from stage 1
+# Copy built dashboard from stage 1 (overwrites any local build)
 COPY --from=frontend /app/output/dashboard-react ./output/dashboard-react
 
-# Create data dirs + fix permissions (all as root, before switching user)
+# Create data dirs
 RUN mkdir -p data/confirmed/sme_profiles \
              data/processed/obligations \
              data/filings \
@@ -43,10 +43,9 @@ RUN mkdir -p data/confirmed/sme_profiles \
              config && \
     chmod -R 777 data staging output logs memory config
 
-# Port (overridden by platform via $PORT)
+# Verify the app can import before we ship
+RUN python -c "from api import app; print('API module loads OK')"
+
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
-
-CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000} --timeout-keep-alive 120"]
+CMD uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000} --timeout-keep-alive 120
