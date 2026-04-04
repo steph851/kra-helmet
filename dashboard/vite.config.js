@@ -10,6 +10,26 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
+      '/signup': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/plans': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/subscription': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/pay': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/health': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
     },
   },
   build: {

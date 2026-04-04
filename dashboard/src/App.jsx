@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Users, Activity, Settings, Shield, LayoutGrid, FileText, ScrollText, MessageCircle } from 'lucide-react';
+import { Users, Activity, Settings, Shield, LayoutGrid, FileText, ScrollText, MessageCircle, CreditCard } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import StatsCards from './components/StatsCards';
 import SMEList from './components/SMEList';
@@ -10,6 +10,9 @@ import SystemStatus from './components/SystemStatus';
 import Reports from './components/Reports';
 import SMEDetail from './components/SMEDetail';
 import AuditLog from './components/AuditLog';
+import LandingPage from './components/LandingPage';
+import WelcomePage from './components/WelcomePage';
+import Subscriptions from './components/Subscriptions';
 
 const API_BASE = '/api';
 
@@ -17,6 +20,11 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public routes — no sidebar, no auth */}
+        <Route path="/signup" element={<LandingPage />} />
+        <Route path="/welcome/:pin" element={<WelcomePage />} />
+
+        {/* Admin dashboard routes */}
         <Route path="/" element={<DashboardLayout />} />
         <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>} />
         <Route path="/sme/:pin" element={<DashboardLayout><SMEDetail /></DashboardLayout>} />
@@ -41,6 +49,7 @@ function DashboardLayout({ children }) {
             {currentPage === 'system' && 'System Status'}
             {currentPage === 'reports' && 'Reports'}
             {currentPage === 'audit' && 'Audit Trail'}
+            {currentPage === 'subscriptions' && 'Subscriptions'}
           </h1>
         </header>
 
@@ -50,7 +59,8 @@ function DashboardLayout({ children }) {
         {currentPage === 'system' && <SystemStatus />}
         {currentPage === 'reports' && <Reports />}
         {currentPage === 'audit' && <AuditLog />}
-        
+        {currentPage === 'subscriptions' && <Subscriptions />}
+
         {children}
       </main>
     </div>
@@ -59,7 +69,7 @@ function DashboardLayout({ children }) {
 
 function OverviewPage() {
   const navigate = useNavigate();
-  
+
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['stats'],
     queryFn: async () => {
@@ -84,6 +94,15 @@ function OverviewPage() {
     },
   });
 
+  const { data: subData } = useQuery({
+    queryKey: ['subscriptions'],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/subscriptions`);
+      if (!res.ok) return { total: 0, active: 0, expired: 0 };
+      return res.json();
+    },
+  });
+
   if (statsLoading || smesLoading) {
     return <div className="loading">Loading...</div>;
   }
@@ -91,7 +110,33 @@ function OverviewPage() {
   return (
     <>
       <StatsCards stats={stats} />
-      
+
+      {/* Subscription Summary */}
+      <div className="stat-card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(135deg, #1e3a5f 0%, #2d6a9f 100%)', color: '#fff', borderColor: 'transparent' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h3 style={{ margin: '0 0 0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fff' }}>
+              <CreditCard size={20} />
+              Subscriptions
+            </h3>
+            <p style={{ margin: 0, opacity: 0.9, fontSize: '0.85rem' }}>
+              {subData?.active || 0} active / {subData?.total || 0} total subscribers.
+              {subData?.expired > 0 && ` ${subData.expired} expired (renewal targets).`}
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{subData?.active || 0}</div>
+              <div style={{ opacity: 0.8 }}>Active</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{subData?.expired || 0}</div>
+              <div style={{ opacity: 0.8 }}>Expired</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* KRA Shuru Quick Action */}
       <div className="stat-card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(135deg, #075E54 0%, #25D366 100%)', color: '#fff', borderColor: 'transparent' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
@@ -129,9 +174,9 @@ function OverviewPage() {
           {smesLoading ? (
             <div className="loading">Loading...</div>
           ) : smes?.smes?.slice(0, 5).map((sme) => (
-            <div 
-              key={sme.pin} 
-              className="sme-card" 
+            <div
+              key={sme.pin}
+              className="sme-card"
               style={{ marginBottom: '0.5rem' }}
               onClick={() => navigate(`/sme/${sme.pin}`)}
             >

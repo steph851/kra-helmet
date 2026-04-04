@@ -12,6 +12,7 @@ from pathlib import Path
 _ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(_ROOT))
 from tools.kra_shuru import KRAShuru
+from subscription.tracker import SubscriptionTracker
 
 # EAT = UTC+3
 EAT = timezone(timedelta(hours=3))
@@ -21,6 +22,7 @@ class NotificationEngine(BaseAgent):
     name = "notification_engine"
     boundary = "Generates and formats alerts only. Never delivers messages."
     _shuru = KRAShuru()
+    _subs = SubscriptionTracker()
 
     # ── Core: generate alerts ───────────────────────────────────────
 
@@ -35,11 +37,21 @@ class NotificationEngine(BaseAgent):
             self.log(f"No alert needed for {profile.get('pin', '?')} — urgency green")
             return []
 
+        # Subscription gate — only send alerts to active subscribers
+        pin = profile.get("pin", "UNKNOWN")
+        if not self._subs.is_active(pin):
+            self.log(f"Subscription inactive for {pin} — skipping alerts")
+            self.log_decision(
+                "alert_subscription_blocked",
+                f"SME {pin} does not have an active subscription",
+                pin=pin,
+            )
+            return []
+
         rules = self.load_config("alert_rules.json")
         max_per_day = rules.get("max_alerts_per_sme_per_day", 3)
         quiet = rules.get("quiet_hours", {})
 
-        pin = profile.get("pin", "UNKNOWN")
         channel = profile.get("preferred_channel", "sms")
         lang = profile.get("preferred_language", "en")
 

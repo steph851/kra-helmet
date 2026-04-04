@@ -19,7 +19,8 @@ Built for small business owners in Kenya who don't want to get surprised by KRA 
 | **Reports** | Professional HTML reports per SME — print-ready, shareable |
 | **React Dashboard** | Dark-themed futuristic UI with system diagnostics, SME management, activity feed, and real-time status |
 | **KRA Shuru Integration** | File returns, pay taxes, and get compliance certificates via KRA's WhatsApp bot (+254 711 099 999) |
-| **Alerts** | WhatsApp/SMS/email messages with Shuru deep links, quiet hours, and rate limits |
+| **Subscriptions** | Public signup with 7-day free trial, M-Pesa payments (0114179880), subscription gating on WhatsApp alerts |
+| **Alerts** | WhatsApp/SMS/email messages with Shuru deep links, quiet hours, and rate limits — only for active subscribers |
 | **Human Gate** | Low-confidence items routed to human review before proceeding |
 | **Audit Trail** | Immutable JSONL log of every decision |
 | **System Health** | Real-time diagnostics: API, database, scheduler (The Pulse), and monitoring (The Eyes) |
@@ -151,8 +152,15 @@ python run.py api
 | GET | `/shuru/{pin}/pay` | Shuru payment link with amount |
 | GET | `/proactive/{pin}` | Proactive recommendations |
 | POST | `/proactive/execute` | Execute autonomous action |
+| POST | `/signup` | **Public** — Sign up SME + start free trial |
+| GET | `/plans` | **Public** — List subscription plans and pricing |
+| GET | `/subscription/{pin}` | **Public** — Check subscription status |
+| GET | `/pay/{pin}` | **Public** — M-Pesa payment instructions |
+| GET | `/api/subscriptions` | Admin — list all subscriptions |
+| POST | `/api/subscriptions/confirm` | Admin — confirm M-Pesa payment |
+| POST | `/api/subscriptions/{pin}/deactivate` | Admin — deactivate subscription |
 
-**Authentication:** Set `HELMET_API_KEY` in `.env` and pass `X-API-Key` header.
+**Authentication:** Set `HELMET_API_KEY` in `.env` and pass `X-API-Key` header. Public endpoints (`/signup`, `/plans`, `/subscription/*`, `/pay/*`) do not require auth.
 
 ## Architecture
 
@@ -307,7 +315,7 @@ All settings in `config/settings.json`. Override with environment variables:
 python -m pytest tests/ -v
 ```
 
-357 tests across 11 test files:
+376 tests across 12 test files:
 - **test_input_validator.py** -- PIN, phone, email, period, amount, profile, filing validation
 - **test_intelligence.py** -- Obligation mapping, deadlines, risk scoring, compliance, penalties
 - **test_communication.py** -- Urgency framing, message generation, SMS/WhatsApp/email formatting
@@ -318,6 +326,7 @@ python -m pytest tests/ -v
 - **test_monitoring.py** -- Source health, KRA monitor, gazette monitor, eTIMS monitor
 - **test_hands.py** -- Alert engine, escalation engine, recommendation engine, workflow engine
 - **test_learning.py** -- Decision memory, pattern miner, feedback loop, model updater
+- **test_subscription.py** -- Plans, trial, payments, subscription gating, M-Pesa instructions
 
 ## Project Structure
 

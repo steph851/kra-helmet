@@ -1,9 +1,10 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutGrid, Users, Activity, Settings, Shield, FileText, ScrollText } from 'lucide-react';
+import { LayoutGrid, Users, Activity, Settings, Shield, FileText, ScrollText, CreditCard } from 'lucide-react';
 
 const navItems = [
   { id: 'overview', label: 'Overview', icon: LayoutGrid },
   { id: 'smes', label: 'SME Management', icon: Users },
+  { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
   { id: 'activity', label: 'Activity Feed', icon: Activity },
   { id: 'reports', label: 'Reports', icon: FileText },
   { id: 'audit', label: 'Audit Trail', icon: ScrollText },

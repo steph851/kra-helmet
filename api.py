@@ -35,6 +35,7 @@ from agents.validation.input_validator import InputValidator
 from workflow.filing_tracker import FilingTracker
 from workflow.audit_trail import AuditTrail
 from config.loader import get_settings
+from subscription.tracker import SubscriptionTracker
 
 settings = get_settings()
 
@@ -62,6 +63,7 @@ app = FastAPI(
         {"name": "Actions", "description": "The Hands — recommendations, filing prep, alerts, escalations"},
         {"name": "Shuru", "description": "KRA Shuru — WhatsApp tax filing and payment via +254 711 099 999"},
         {"name": "Brain", "description": "The Brain — learning, patterns, feedback, model updates"},
+        {"name": "Subscriptions", "description": "Subscription management — plans, payments, M-Pesa"},
     ],
 )
 
@@ -69,6 +71,7 @@ orch = Orchestrator()
 tracker = FilingTracker()
 audit = AuditTrail()
 validator = InputValidator()
+subs = SubscriptionTracker()
 
 # Serve React static assets
 react_static_path = ROOT / "output" / "dashboard-react"
@@ -280,6 +283,50 @@ class FilingRequest(BaseModel):
         if v < 0:
             raise ValueError("Amount cannot be negative")
         return v
+
+
+class SignupRequest(BaseModel):
+    """Public signup — onboards SME and starts free trial."""
+    pin: str
+    name: str
+    business_name: str | None = None
+    business_type: str = "sole_proprietor"
+    industry: str = "retail_wholesale"
+    county: str = "Nairobi"
+    annual_turnover_kes: float = 0
+    turnover_bracket: str = "below_1m"
+    has_employees: bool = False
+    employee_count: int = 0
+    is_vat_registered: bool = False
+    has_etims: bool = False
+    phone: str = ""
+    email: str | None = None
+    preferred_language: str = "en"
+
+    @field_validator("pin")
+    @classmethod
+    def validate_pin(cls, v):
+        v = v.strip().upper()
+        if not re.match(r"^[A-Z]\d{9}[A-Z]$", v):
+            raise ValueError(f"Invalid KRA PIN format: {v}")
+        return v
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v):
+        v = v.strip()
+        if v and not re.match(r"^(\+?254|0)\d{9}$", v):
+            raise ValueError("Invalid Kenya phone number")
+        return v
+
+
+class PaymentConfirmRequest(BaseModel):
+    """Admin confirms M-Pesa payment."""
+    pin: str
+    mpesa_ref: str
+    amount_kes: float
+    plan: str = "monthly"
+    phone: str = ""
 
 
 # ── Endpoints ───────────────────────────────────────────────────
@@ -1449,3 +1496,134 @@ def api_shuru_links(pin: str, lang: str = "en"):
         "instructions": instructions,
         "links": {"filing": filing, "payment": payment, "compliance_certificate": cert},
     }
+
+
+# ── Public Signup (no auth) ───────────────────────────────────────
+
+@app.post("/signup", tags=["Subscriptions"], summary="Public signup")
+def public_signup(req: SignupRequest):
+    """
+    Public endpoint — onboard an SME and start a 7-day free trial.
+    No API key required. After trial, pay via M-Pesa to continue receiving reports.
+    """
+    data = req.model_dump()
+    if not data.get("business_name"):
+        data["business_name"] = data["name"]
+    data["preferred_channel"] = "whatsapp"
+
+    existing = orch.load_sme(data["pin"])
+    if existing:
+        # Already onboarded — just check/start subscription
+        sub = subs.get(data["pin"])
+        if not sub:
+            sub = subs.start_trial(data["pin"], data["name"])
+        return {
+            "status": "already_onboarded",
+            "pin": data["pin"],
+            "name": existing["name"],
+            "subscription": sub,
+            "payment": subs.get_payment_instructions(data["pin"]),
+        }
+
+    profile = orch.onboard(interactive=False, data=data)
+    if not profile:
+        raise HTTPException(status_code=500, detail="Onboarding failed")
+
+    sub = subs.start_trial(data["pin"], data["name"])
+
+    return {
+        "status": "signed_up",
+        "pin": profile["pin"],
+        "name": profile["name"],
+        "obligations": profile.get("classification", {}).get("obligations", []),
+        "subscription": sub,
+        "payment": subs.get_payment_instructions(profile["pin"]),
+    }
+
+
+@app.get("/plans", tags=["Subscriptions"], summary="Available plans")
+def get_plans():
+    """Public endpoint — list subscription plans and pricing."""
+    return {
+        "mpesa_number": "0114179880",
+        "plans": subs.get_plans(),
+    }
+
+
+@app.get("/subscription/{pin}", tags=["Subscriptions"], summary="Check subscription")
+def check_subscription(pin: str):
+    """Public endpoint — check subscription status for a PIN."""
+    ok, msg = validator.validate_pin(pin)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+    sub = subs.get(msg)
+    if not sub:
+        raise HTTPException(status_code=404, detail=f"No subscription found for {pin}")
+    active = subs.is_active(msg)
+    return {
+        "pin": msg,
+        "active": active,
+        "subscription": sub,
+        "payment": subs.get_payment_instructions(msg) if not active else None,
+    }
+
+
+@app.get("/pay/{pin}", tags=["Subscriptions"], summary="Payment instructions")
+def payment_instructions(pin: str, plan: str = "monthly"):
+    """Public endpoint — get M-Pesa payment instructions for a PIN."""
+    ok, msg = validator.validate_pin(pin)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+    return subs.get_payment_instructions(msg, plan)
+
+
+# ── Admin subscription management (auth required) ─────────────────
+
+@app.get("/api/subscriptions", tags=["Subscriptions"], summary="List all subscriptions",
+         dependencies=[Depends(verify_api_key)])
+def list_subscriptions():
+    """Admin — list all subscriptions with status."""
+    all_subs = subs.list_all()
+    active = [s for s in all_subs if s["status"] == "active"]
+    expired = [s for s in all_subs if s["status"] == "expired"]
+    return {
+        "total": len(all_subs),
+        "active": len(active),
+        "expired": len(expired),
+        "subscriptions": all_subs,
+    }
+
+
+@app.post("/api/subscriptions/confirm", tags=["Subscriptions"],
+          summary="Confirm M-Pesa payment", dependencies=[Depends(verify_api_key)])
+def confirm_payment(req: PaymentConfirmRequest):
+    """Admin — confirm an M-Pesa payment and activate subscription."""
+    ok, msg = validator.validate_pin(req.pin)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+    sub = subs.confirm_payment(msg, req.mpesa_ref, req.amount_kes, req.plan, req.phone)
+    return {"status": "confirmed", "subscription": sub}
+
+
+@app.post("/api/subscriptions/{pin}/deactivate", tags=["Subscriptions"],
+          summary="Deactivate subscription", dependencies=[Depends(verify_api_key)])
+def deactivate_subscription(pin: str):
+    """Admin — deactivate a subscription."""
+    ok, msg = validator.validate_pin(pin)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+    sub = subs.deactivate(msg)
+    if not sub:
+        raise HTTPException(status_code=404, detail=f"No subscription found for {pin}")
+    return {"status": "deactivated", "subscription": sub}
+
+
+# ── React Router catch-all (must be LAST) ─────────────────────────
+
+@app.get("/{path:path}", include_in_schema=False)
+def react_catch_all(path: str):
+    """Serve React index.html for client-side routes (/signup, /welcome/*, etc.)."""
+    react_dashboard = ROOT / "output" / "dashboard-react" / "index.html"
+    if react_dashboard.exists():
+        return FileResponse(react_dashboard, media_type="text/html")
+    raise HTTPException(status_code=404, detail="Not found")
