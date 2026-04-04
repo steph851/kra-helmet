@@ -5,9 +5,9 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# System deps
+# System deps (curl for health check)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 curl && \
+    curl && \
     rm -rf /var/lib/apt/lists/*
 
 # Python deps (cached layer)
