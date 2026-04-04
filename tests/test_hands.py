@@ -123,10 +123,9 @@ class TestWebReader:
 
 
 class TestWhatsAppSender:
-    def test_default_is_dry_run(self):
+    def test_default_provider_is_bot(self):
         sender = WhatsAppSender()
-        assert sender.provider == "dry_run"
-        assert sender.is_configured is False
+        assert sender.provider == "bot"
 
     def test_send_returns_dry_run(self, tmp_path):
         sender = WhatsAppSender()

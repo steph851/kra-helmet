@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CreditCard, CheckCircle, XCircle, Clock, RefreshCw, Plus } from 'lucide-react';
+import { CreditCard, CheckCircle, XCircle, Clock, RefreshCw, Plus, Send } from 'lucide-react';
 
 const API_BASE = '/api';
 
@@ -91,6 +91,18 @@ export default function Subscriptions() {
         <button className="btn" onClick={() => refetch()} style={{ background: 'var(--bg-elevated)', color: 'var(--text)' }}>
           <RefreshCw size={16} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
           Refresh
+        </button>
+        <button className="btn" onClick={async () => {
+          setMsg('Sending reports to all active subscribers...');
+          try {
+            const res = await fetch(`${API_BASE}/send-reports-all`, { method: 'POST' });
+            const data = await res.json();
+            setMsg(`Sent ${data.sent}/${data.total} reports via WhatsApp`);
+          } catch (e) { setMsg(`Error: ${e.message}`); }
+          setTimeout(() => setMsg(''), 5000);
+        }} style={{ background: 'rgba(37,211,102,0.15)', color: '#25D366' }}>
+          <Send size={16} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
+          Send Reports to All
         </button>
       </div>
 
@@ -205,10 +217,19 @@ function SubCard({ sub, onDeactivate }) {
         <span>Payments: <strong style={{ color: 'var(--text)' }}>{(sub.payments || []).length}</strong></span>
       </div>
       {sub.status === 'active' && onDeactivate && (
-        <button onClick={onDeactivate} className="btn"
-          style={{ alignSelf: 'flex-end', background: 'rgba(239,68,68,0.1)', color: 'var(--danger)', fontSize: '0.75rem', padding: '0.3rem 0.75rem' }}>
-          Deactivate
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+          <button onClick={async () => {
+            try { await fetch(`/api/send-report/${sub.pin}`, { method: 'POST' }); }
+            catch {}
+          }} className="btn"
+            style={{ background: 'rgba(37,211,102,0.1)', color: '#25D366', fontSize: '0.75rem', padding: '0.3rem 0.75rem' }}>
+            Send Report
+          </button>
+          <button onClick={onDeactivate} className="btn"
+            style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--danger)', fontSize: '0.75rem', padding: '0.3rem 0.75rem' }}>
+            Deactivate
+          </button>
+        </div>
       )}
     </div>
   );

@@ -36,6 +36,7 @@ from workflow.filing_tracker import FilingTracker
 from workflow.audit_trail import AuditTrail
 from config.loader import get_settings
 from subscription.tracker import SubscriptionTracker
+from tools.whatsapp_sender import WhatsAppSender
 
 settings = get_settings()
 
@@ -72,6 +73,7 @@ tracker = FilingTracker()
 audit = AuditTrail()
 validator = InputValidator()
 subs = SubscriptionTracker()
+_wa = WhatsAppSender()
 
 # Serve React static assets
 react_static_path = ROOT / "output" / "dashboard-react"
@@ -449,6 +451,15 @@ def health_check():
     # Database (SME registry serves as the data store)
     db_ok = checks.get("sme_registry", {}).get("status") == "ok"
     checks["database"] = {"status": "connected" if db_ok else "disconnected"}
+
+    # WhatsApp Bot
+    bot_status = _wa.bot_status()
+    bot_connected = bot_status.get("connected", False)
+    checks["whatsapp_bot"] = {
+        "status": "connected" if bot_connected else "disconnected",
+        "phone": bot_status.get("phone"),
+        "name": bot_status.get("name"),
+    }
 
     # Overall
     all_ok = all(
@@ -1531,14 +1542,37 @@ def public_signup(req: SignupRequest):
 
     sub = subs.start_trial(data["pin"], data["name"])
 
+    # Send welcome message via WhatsApp bot
+    obligations = profile.get("classification", {}).get("obligations", [])
+    ob_list = ", ".join(o.replace("_", " ").title() for o in obligations)
+    welcome_msg = (
+        f"*Welcome to KRA HELMET!* \n\n"
+        f"Hi {profile['name'].split()[0]}, your business has been registered.\n\n"
+        f"*Your tax obligations:*\n{ob_list}\n\n"
+        f"You have a *7-day free trial*. "
+        f"We'll send you deadline alerts, risk reports, and filing instructions right here on WhatsApp.\n\n"
+        f"To continue after the trial, pay *KES 500/month* via M-Pesa:\n"
+        f"Send to *0114179880*\n"
+        f"Reference: *HELMET-{profile['pin']}*\n\n"
+        f"File taxes via KRA Shuru: https://wa.me/254711099999"
+    )
+    if data.get("phone"):
+        _wa.send(data["phone"], welcome_msg, profile["pin"])
+
     return {
         "status": "signed_up",
         "pin": profile["pin"],
         "name": profile["name"],
-        "obligations": profile.get("classification", {}).get("obligations", []),
+        "obligations": obligations,
         "subscription": sub,
         "payment": subs.get_payment_instructions(profile["pin"]),
     }
+
+
+@app.get("/bot/status", tags=["System"], summary="WhatsApp bot status")
+def bot_status():
+    """Check if the WhatsApp bot is connected and ready to send messages."""
+    return _wa.bot_status()
 
 
 @app.get("/plans", tags=["Subscriptions"], summary="Available plans")
@@ -1596,11 +1630,19 @@ def list_subscriptions():
 @app.post("/api/subscriptions/confirm", tags=["Subscriptions"],
           summary="Confirm M-Pesa payment")
 def confirm_payment(req: PaymentConfirmRequest):
-    """Confirm an M-Pesa payment and activate subscription."""
+    """Confirm an M-Pesa payment and activate subscription. Sends confirmation via WhatsApp."""
     ok, msg = validator.validate_pin(req.pin)
     if not ok:
         raise HTTPException(status_code=400, detail=msg)
     sub = subs.confirm_payment(msg, req.mpesa_ref, req.amount_kes, req.plan, req.phone)
+
+    # Send payment confirmation via WhatsApp
+    profile = orch.load_sme(msg)
+    if profile and profile.get("phone"):
+        from tools.wa_report_formatter import format_payment_confirmation
+        confirm_msg = format_payment_confirmation(profile, sub["plan_name"], sub["expires_at"])
+        _wa.send(profile["phone"], confirm_msg, msg)
+
     return {"status": "confirmed", "subscription": sub}
 
 
@@ -1615,6 +1657,93 @@ def deactivate_subscription(pin: str):
     if not sub:
         raise HTTPException(status_code=404, detail=f"No subscription found for {pin}")
     return {"status": "deactivated", "subscription": sub}
+
+
+# ── WhatsApp Bot Actions ──────────────────────────────────────────
+
+@app.post("/api/send-report/{pin}", tags=["Actions"],
+          summary="Send compliance report via WhatsApp")
+def send_report_whatsapp(pin: str):
+    """Run compliance check and send the full report to the SME's WhatsApp."""
+    ok, msg = validator.validate_pin(pin)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+
+    # Check subscription
+    if not subs.is_active(msg):
+        raise HTTPException(status_code=402, detail=f"Subscription inactive for {pin}. Pay to receive reports.")
+
+    profile = orch.load_sme(msg)
+    if not profile:
+        raise HTTPException(status_code=404, detail=f"SME not found: {pin}")
+    if not profile.get("phone"):
+        raise HTTPException(status_code=400, detail="No phone number on file")
+
+    # Run compliance check
+    result = orch.check_sme(msg)
+    if not result:
+        raise HTTPException(status_code=500, detail="Compliance check failed")
+
+    # Format and send
+    from tools.wa_report_formatter import format_compliance_report
+    report_msg = format_compliance_report(result)
+    send_result = _wa.send(profile["phone"], report_msg, msg)
+
+    return {
+        "status": "sent" if send_result.get("success") else "dry_run",
+        "pin": msg,
+        "phone": profile["phone"],
+        "compliance": result["compliance"]["overall"],
+        "delivery": send_result,
+    }
+
+
+@app.post("/api/send-reports-all", tags=["Actions"],
+          summary="Send reports to all active subscribers")
+def send_reports_all():
+    """Run compliance check and send WhatsApp reports to all active subscribers."""
+    active_subs = subs.list_active()
+    results = []
+
+    for sub in active_subs:
+        pin = sub["pin"]
+        try:
+            profile = orch.load_sme(pin)
+            if not profile or not profile.get("phone"):
+                results.append({"pin": pin, "status": "skipped", "reason": "no_phone"})
+                continue
+
+            check = orch.check_sme(pin)
+            if not check:
+                results.append({"pin": pin, "status": "skipped", "reason": "check_failed"})
+                continue
+
+            from tools.wa_report_formatter import format_compliance_report
+            report_msg = format_compliance_report(check)
+            send_result = _wa.send(profile["phone"], report_msg, pin)
+            results.append({
+                "pin": pin,
+                "name": profile["name"],
+                "status": "sent" if send_result.get("success") else "dry_run",
+            })
+        except Exception as e:
+            results.append({"pin": pin, "status": "error", "error": str(e)})
+
+    sent = sum(1 for r in results if r["status"] == "sent")
+    return {"total": len(active_subs), "sent": sent, "results": results}
+
+
+@app.post("/api/deliver-alerts", tags=["Actions"],
+          summary="Deliver pending alerts via WhatsApp")
+def deliver_pending_alerts():
+    """Process and deliver all pending alerts from the staging queue via WhatsApp bot."""
+    from agents.action.alert_engine import AlertEngine
+    engine = AlertEngine()
+    results = engine.process_queue()
+    return {
+        "delivered": len(results),
+        "results": results,
+    }
 
 
 # ── React Router catch-all (must be LAST) ─────────────────────────

@@ -21,6 +21,10 @@ memory/
 node_modules/
 package-lock.json
 
+# WhatsApp bot session (contains auth tokens)
+bot/.wwebjs_auth/
+bot/.wwebjs_cache/
+
 # IDE
 .vscode/
 .idea/
