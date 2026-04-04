@@ -17,6 +17,7 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 
 const app = express();
@@ -24,6 +25,7 @@ app.use(express.json());
 
 const PORT = process.env.BOT_PORT || 3001;
 const AUTH_DIR = path.join(__dirname, '.wwebjs_auth');
+const RETRY_QUEUE_PATH = path.join(__dirname, 'retry_queue.json');
 
 // ── WhatsApp Client ────────────────────────────────────────────
 
@@ -59,6 +61,13 @@ client.on('ready', () => {
   console.log(`\n✅ WhatsApp Bot connected: ${info.pushname} (${info.wid.user})`);
   console.log(`   Bot API running on http://localhost:${PORT}`);
   console.log(`   Ready to send messages.\n`);
+
+  // Process any queued messages from when bot was disconnected
+  const queue = loadRetryQueue();
+  if (queue.length > 0) {
+    console.log(`🔄 Processing ${queue.length} queued messages...`);
+    setTimeout(processRetryQueue, 5000);
+  }
 });
 
 client.on('authenticated', () => {
@@ -117,6 +126,99 @@ async function sendMessage(phone, message) {
   };
 }
 
+// ── Retry Queue ───────────────────────────────────────────────
+
+const MAX_RETRIES = 3;
+const RETRY_DELAYS = [30_000, 120_000, 300_000]; // 30s, 2min, 5min
+
+function loadRetryQueue() {
+  try {
+    if (fs.existsSync(RETRY_QUEUE_PATH)) {
+      return JSON.parse(fs.readFileSync(RETRY_QUEUE_PATH, 'utf8'));
+    }
+  } catch (err) {
+    console.error('⚠️  Failed to load retry queue:', err.message);
+  }
+  return [];
+}
+
+function saveRetryQueue(queue) {
+  try {
+    fs.writeFileSync(RETRY_QUEUE_PATH, JSON.stringify(queue, null, 2), 'utf8');
+  } catch (err) {
+    console.error('⚠️  Failed to save retry queue:', err.message);
+  }
+}
+
+function enqueueRetry(phone, message, error) {
+  const queue = loadRetryQueue();
+  // Don't queue if phone isn't on WhatsApp — retrying won't help
+  if (error && error.includes('not registered on WhatsApp')) return;
+
+  const existing = queue.find(e => e.phone === phone && e.message === message);
+  if (existing) return; // Already queued
+
+  queue.push({
+    phone,
+    message,
+    attempts: 0,
+    last_error: error,
+    created_at: new Date().toISOString(),
+    next_retry_at: new Date(Date.now() + RETRY_DELAYS[0]).toISOString(),
+  });
+  saveRetryQueue(queue);
+  console.log(`🔄 Queued retry for ${phone} (${queue.length} in queue)`);
+}
+
+async function processRetryQueue() {
+  if (!botReady) return;
+
+  const queue = loadRetryQueue();
+  if (queue.length === 0) return;
+
+  const now = Date.now();
+  let changed = false;
+  const remaining = [];
+
+  for (const entry of queue) {
+    if (new Date(entry.next_retry_at).getTime() > now) {
+      remaining.push(entry);
+      continue;
+    }
+
+    try {
+      await sendMessage(entry.phone, entry.message);
+      console.log(`✅ Retry succeeded for ${entry.phone} (attempt ${entry.attempts + 1})`);
+      changed = true;
+      // Don't push to remaining — it's done
+    } catch (err) {
+      entry.attempts += 1;
+      entry.last_error = err.message;
+      changed = true;
+
+      if (entry.attempts >= MAX_RETRIES) {
+        console.warn(`❌ Giving up on ${entry.phone} after ${MAX_RETRIES} retries: ${err.message}`);
+        // Drop from queue
+      } else {
+        const delay = RETRY_DELAYS[Math.min(entry.attempts, RETRY_DELAYS.length - 1)];
+        entry.next_retry_at = new Date(now + delay).toISOString();
+        remaining.push(entry);
+        console.log(`🔄 Retry ${entry.attempts}/${MAX_RETRIES} failed for ${entry.phone}, next in ${delay / 1000}s`);
+      }
+    }
+
+    // Rate limit between retries
+    await new Promise(r => setTimeout(r, 1500));
+  }
+
+  if (changed) {
+    saveRetryQueue(remaining);
+  }
+}
+
+// Process retry queue every 60 seconds
+setInterval(processRetryQueue, 60_000);
+
 // ── API Routes ─────────────────────────────────────────────────
 
 /**
@@ -134,7 +236,8 @@ app.post('/send', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error(`❌ Send failed: ${err.message}`);
-    res.status(500).json({ error: err.message, success: false });
+    enqueueRetry(req.body.phone, req.body.message, err.message);
+    res.status(500).json({ error: err.message, success: false, queued_for_retry: true });
   }
 });
 
@@ -156,13 +259,15 @@ app.post('/send-bulk', async (req, res) => {
       // Rate limit: 1 message per second to avoid WhatsApp ban
       await new Promise(r => setTimeout(r, 1000));
     } catch (err) {
-      results.push({ phone, success: false, error: err.message });
+      enqueueRetry(phone, message, err.message);
+      results.push({ phone, success: false, error: err.message, queued_for_retry: true });
     }
   }
 
   const sent = results.filter(r => r.success).length;
-  console.log(`📤 Bulk send: ${sent}/${messages.length} delivered`);
-  res.json({ total: messages.length, sent, failed: messages.length - sent, results });
+  const retried = results.filter(r => r.queued_for_retry).length;
+  console.log(`📤 Bulk send: ${sent}/${messages.length} delivered, ${retried} queued for retry`);
+  res.json({ total: messages.length, sent, failed: messages.length - sent, retried, results });
 });
 
 /**
@@ -179,12 +284,39 @@ app.get('/status', (req, res) => {
 });
 
 /**
+ * GET /retry-queue — View pending retry queue
+ */
+app.get('/retry-queue', (req, res) => {
+  const queue = loadRetryQueue();
+  res.json({
+    pending: queue.length,
+    entries: queue.map(e => ({
+      phone: e.phone,
+      attempts: e.attempts,
+      last_error: e.last_error,
+      next_retry_at: e.next_retry_at,
+      created_at: e.created_at,
+    })),
+  });
+});
+
+/**
+ * DELETE /retry-queue — Clear the retry queue
+ */
+app.delete('/retry-queue', (req, res) => {
+  saveRetryQueue([]);
+  res.json({ cleared: true });
+});
+
+/**
  * GET /health — Simple health check
  */
 app.get('/health', (req, res) => {
+  const queue = loadRetryQueue();
   res.json({
     status: botReady ? 'connected' : 'disconnected',
     service: 'kra-helmet-whatsapp-bot',
+    retry_queue_pending: queue.length,
     timestamp: new Date().toISOString(),
   });
 });

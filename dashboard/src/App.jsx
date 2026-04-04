@@ -29,6 +29,9 @@ function App() {
         <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>} />
         <Route path="/sme/:pin" element={<DashboardLayout><SMEDetail /></DashboardLayout>} />
         <Route path="/audit" element={<DashboardLayout><AuditLog /></DashboardLayout>} />
+
+        {/* 404 catch-all */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
@@ -104,7 +107,13 @@ function OverviewPage() {
   });
 
   if (statsLoading || smesLoading) {
-    return <div className="loading">Loading...</div>;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 2rem', gap: '1rem' }}>
+        <div style={{ width: '40px', height: '40px', border: '4px solid #e2e8f0', borderTop: '4px solid #0f3460', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <p style={{ color: '#666' }}>Loading dashboard...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </div>
+    );
   }
 
   return (
@@ -213,6 +222,19 @@ function OverviewPage() {
         </div>
       </div>
     </>
+  );
+}
+
+function NotFoundPage() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem', textAlign: 'center' }}>
+      <h1 style={{ fontSize: '4rem', margin: 0, color: '#e94560' }}>404</h1>
+      <p style={{ fontSize: '1.2rem', color: '#666', marginBottom: '1.5rem' }}>Page not found</p>
+      <div style={{ display: 'flex', gap: '1rem' }}>
+        <a href="/" style={{ padding: '0.75rem 1.5rem', background: '#0f3460', color: '#fff', borderRadius: '8px', textDecoration: 'none', fontWeight: 600 }}>Dashboard</a>
+        <a href="/signup" style={{ padding: '0.75rem 1.5rem', background: '#e94560', color: '#fff', borderRadius: '8px', textDecoration: 'none', fontWeight: 600 }}>Sign Up</a>
+      </div>
+    </div>
   );
 }
 

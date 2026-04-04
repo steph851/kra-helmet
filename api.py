@@ -1889,6 +1889,212 @@ def deliver_pending_alerts():
     }
 
 
+# ── Data Rights (Kenya Data Protection Act / GDPR) ────────────────
+
+@app.delete("/api/smes/{pin}", tags=["SMEs"],
+            summary="Delete all SME data",
+            dependencies=[Depends(verify_api_key)])
+def delete_sme_data(pin: str):
+    """Permanently delete all data for an SME (Kenya Data Protection Act compliance).
+    Removes: profile, obligations, filings, subscription, audit entries, staging files.
+    """
+    ok, msg = validator.validate_pin(pin)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+
+    deleted = []
+    # Profile
+    profile_path = ROOT / "data" / "confirmed" / "sme_profiles" / f"sme_{msg}.json"
+    if profile_path.exists():
+        profile_path.unlink()
+        deleted.append("profile")
+    # Obligations
+    ob_path = ROOT / "data" / "processed" / "obligations" / f"{msg}.json"
+    if ob_path.exists():
+        ob_path.unlink()
+        deleted.append("obligations")
+    # Staging files
+    for f in (ROOT / "staging" / "review").glob(f"*{msg}*"):
+        f.unlink()
+        deleted.append(f"staging/{f.name}")
+    # Subscription
+    sub = subs.get(msg)
+    if sub:
+        subs.deactivate(msg)
+        deleted.append("subscription")
+    # Filings
+    filing_path = ROOT / "data" / "filings" / f"{msg}.json"
+    if filing_path.exists():
+        filing_path.unlink()
+        deleted.append("filings")
+    # Remove from SME registry
+    sme_registry = ROOT / "config" / "smes.json"
+    if sme_registry.exists():
+        try:
+            reg = json.loads(sme_registry.read_text(encoding="utf-8"))
+            original = len(reg.get("smes", []))
+            reg["smes"] = [s for s in reg.get("smes", []) if s.get("pin") != msg]
+            if len(reg["smes"]) < original:
+                sme_registry.write_text(json.dumps(reg, indent=2, ensure_ascii=False), encoding="utf-8")
+                deleted.append("registry")
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    audit.record("DATA_DELETE", "api", {"pin": msg, "deleted": deleted})
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail=f"No data found for {pin}")
+    return {"status": "deleted", "pin": msg, "deleted_items": deleted}
+
+
+@app.get("/api/smes/{pin}/export", tags=["SMEs"],
+         summary="Export all SME data",
+         dependencies=[Depends(verify_api_key)])
+def export_sme_data(pin: str):
+    """Export all data for an SME in machine-readable JSON (GDPR data portability)."""
+    ok, msg = validator.validate_pin(pin)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+
+    export = {"pin": msg, "exported_at": datetime.now().isoformat()}
+
+    profile = orch.load_sme(msg)
+    if not profile:
+        raise HTTPException(status_code=404, detail=f"SME not found: {pin}")
+    export["profile"] = profile
+
+    ob_path = ROOT / "data" / "processed" / "obligations" / f"{msg}.json"
+    if ob_path.exists():
+        export["obligations"] = json.loads(ob_path.read_text(encoding="utf-8"))
+
+    filing_path = ROOT / "data" / "filings" / f"{msg}.json"
+    if filing_path.exists():
+        export["filings"] = json.loads(filing_path.read_text(encoding="utf-8"))
+
+    sub = subs.get(msg)
+    if sub:
+        export["subscription"] = sub
+
+    audit.record("DATA_EXPORT", "api", {"pin": msg})
+    return export
+
+
+# ── Legal Pages ────────────────────────────────────────────────────
+
+@app.get("/privacy", tags=["System"], summary="Privacy policy",
+         response_class=HTMLResponse, include_in_schema=False)
+def privacy_policy():
+    return HTMLResponse("""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Privacy Policy — KRA Deadline Tracker</title>
+<style>body{font-family:Inter,system-ui,sans-serif;max-width:700px;margin:40px auto;padding:0 20px;line-height:1.7;color:#1a1a2e}
+h1{color:#16213e}h2{color:#0f3460;margin-top:2em}a{color:#e94560}</style></head><body>
+<h1>Privacy Policy</h1>
+<p><strong>Last updated:</strong> April 2026</p>
+<p>KRA Deadline Tracker & Compliance Tool ("we", "us") respects your privacy and complies with the Kenya Data Protection Act, 2019.</p>
+
+<h2>1. Data We Collect</h2>
+<ul>
+<li><strong>KRA PIN</strong> — to identify your tax obligations</li>
+<li><strong>Business name & type</strong> — to classify your obligations</li>
+<li><strong>Phone number</strong> — to deliver WhatsApp alerts (encrypted at rest)</li>
+<li><strong>M-Pesa transaction details</strong> — for subscription payments</li>
+<li><strong>Email</strong> (optional) — for account recovery</li>
+</ul>
+
+<h2>2. How We Use Your Data</h2>
+<ul>
+<li>Map and track your KRA tax obligations and deadlines</li>
+<li>Send deadline alerts and compliance reports via WhatsApp</li>
+<li>Process M-Pesa subscription payments</li>
+<li>Improve our tax compliance intelligence</li>
+</ul>
+
+<h2>3. Data Security</h2>
+<ul>
+<li>Phone numbers are <strong>encrypted at rest</strong> using industry-standard encryption (Fernet/AES)</li>
+<li>All data transmitted over <strong>HTTPS</strong></li>
+<li>API access protected by authentication keys</li>
+<li>Rate limiting on all public endpoints</li>
+</ul>
+
+<h2>4. Your Rights (Kenya Data Protection Act)</h2>
+<p>You have the right to:</p>
+<ul>
+<li><strong>Access</strong> your data — <code>GET /api/smes/{pin}/export</code></li>
+<li><strong>Delete</strong> your data — <code>DELETE /api/smes/{pin}</code></li>
+<li><strong>Correct</strong> inaccurate data — contact us</li>
+<li><strong>Object</strong> to processing — unsubscribe via WhatsApp (reply STOP)</li>
+</ul>
+
+<h2>5. Data Retention</h2>
+<p>We retain your data while your subscription is active. After expiry, data is retained for <strong>90 days</strong> then permanently deleted upon request.</p>
+
+<h2>6. Third Parties</h2>
+<p>We do not sell your data. We share data only with:</p>
+<ul>
+<li><strong>Safaricom M-Pesa</strong> — for payment processing</li>
+<li><strong>WhatsApp</strong> — for delivering compliance alerts</li>
+</ul>
+
+<h2>7. Contact</h2>
+<p>Data Controller: KRA Deadline Tracker<br>
+Email: support@kradeadlinetracker.co.ke<br>
+Phone: 0114179880</p>
+</body></html>""")
+
+
+@app.get("/terms", tags=["System"], summary="Terms of service",
+         response_class=HTMLResponse, include_in_schema=False)
+def terms_of_service():
+    return HTMLResponse("""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Terms of Service — KRA Deadline Tracker</title>
+<style>body{font-family:Inter,system-ui,sans-serif;max-width:700px;margin:40px auto;padding:0 20px;line-height:1.7;color:#1a1a2e}
+h1{color:#16213e}h2{color:#0f3460;margin-top:2em}a{color:#e94560}</style></head><body>
+<h1>Terms of Service</h1>
+<p><strong>Last updated:</strong> April 2026</p>
+
+<h2>1. Service Description</h2>
+<p>KRA Deadline Tracker & Compliance Tool provides automated tax obligation tracking, deadline alerts, and compliance reporting for Kenyan SMEs. This service is for <strong>informational purposes only</strong>.</p>
+
+<h2>2. Disclaimer</h2>
+<p><strong>This service does NOT constitute legal, tax, or financial advice.</strong> Tax laws change frequently. Always verify with the Kenya Revenue Authority (KRA) or a registered tax advisor before making any filing or payment decisions. We are not liable for any penalties, losses, or decisions made based on this information.</p>
+
+<h2>3. Subscription & Payments</h2>
+<ul>
+<li>Free trial: 7 days, no payment required</li>
+<li>Monthly: KES 500 | Quarterly: KES 1,200 | Annual: KES 4,000</li>
+<li>Payment via M-Pesa to 0114179880</li>
+<li>Subscriptions auto-expire; no auto-renewal charges</li>
+<li>No refunds after subscription activation</li>
+</ul>
+
+<h2>4. Acceptable Use</h2>
+<p>You agree not to:</p>
+<ul>
+<li>Provide false KRA PINs or business information</li>
+<li>Use the service for tax evasion or fraud</li>
+<li>Abuse the API with excessive requests</li>
+<li>Resell or redistribute compliance reports</li>
+</ul>
+
+<h2>5. Service Availability</h2>
+<p>We aim for 99% uptime but do not guarantee uninterrupted service. KRA tax rates and deadlines may change without notice.</p>
+
+<h2>6. Termination</h2>
+<p>You may cancel at any time by replying STOP on WhatsApp or requesting data deletion. We may terminate accounts that violate these terms.</p>
+
+<h2>7. Governing Law</h2>
+<p>These terms are governed by the laws of Kenya. Disputes shall be resolved in Nairobi courts.</p>
+
+<h2>8. Contact</h2>
+<p>KRA Deadline Tracker<br>
+Email: support@kradeadlinetracker.co.ke<br>
+Phone: 0114179880</p>
+</body></html>""")
+
+
 # ── React Router catch-all (must be LAST) ─────────────────────────
 
 @app.get("/{path:path}", include_in_schema=False)
