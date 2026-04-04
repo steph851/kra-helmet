@@ -671,8 +671,11 @@ async def start_pulse():
     """Start The Pulse scheduler when the API starts (if enabled)."""
     global _pulse
     if settings.get("scheduler", {}).get("start_with_api", True):
-        _pulse = Heartbeat()
-        _pulse.start(daemon=True)
+        try:
+            _pulse = Heartbeat()
+            _pulse.start(daemon=True)
+        except Exception as e:
+            print(f"[Pulse] Failed to start scheduler: {e} — API continues without it")
 
     # Keep-alive self-ping for free tier hosting (Render, Koyeb)
     # Prevents the service from sleeping after 15 min of inactivity

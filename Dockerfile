@@ -29,7 +29,7 @@ COPY . .
 # Copy built dashboard from stage 1
 COPY --from=frontend /app/output/dashboard-react ./output/dashboard-react
 
-# Create data dirs
+# Create data dirs + fix permissions (all as root, before switching user)
 RUN mkdir -p data/confirmed/sme_profiles \
              data/processed/obligations \
              data/filings \
@@ -41,17 +41,12 @@ RUN mkdir -p data/confirmed/sme_profiles \
              logs \
              memory/decisions \
              config && \
-    chmod -R 755 data staging output logs memory config
-
-# Non-root user
-RUN useradd -m -u 1000 kradtc && \
-    chown -R kradtc:kradtc /app
-USER kradtc
+    chmod -R 777 data staging output logs memory config
 
 # Port (overridden by platform via $PORT)
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
-CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000} --timeout-keep-alive 120"]
