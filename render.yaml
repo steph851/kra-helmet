@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: kra-deadline-tracker
+    runtime: python
+    region: frankfurt  # closest free-tier region to Kenya
+    plan: free
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: HELMET_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: NODE_VERSION
+        value: "20"

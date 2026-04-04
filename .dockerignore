@@ -1,8 +1,15 @@
 .git
 .venv
+venv
 __pycache__
 .pytest_cache
 .env
+.env.*
 logs/
 memory/
 *.pyc
+node_modules/
+bot/.wwebjs_auth/
+bot/.wwebjs_cache/
+dashboard/node_modules/
+output/dashboard-react/

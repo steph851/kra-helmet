@@ -1,0 +1,26 @@
+# Koyeb deployment — free tier, always-on (no sleep!)
+# Deploy via: koyeb app create kra-deadline-tracker --docker .
+name: kra-deadline-tracker
+type: web
+docker:
+  dockerfile: Dockerfile
+instance_type: free
+regions:
+  - fra  # Frankfurt — closest to Kenya
+ports:
+  - port: 8000
+    protocol: http
+env:
+  - key: ANTHROPIC_API_KEY
+    secret: anthropic-api-key
+  - key: HELMET_API_KEY
+    secret: helmet-api-key
+  - key: PORT
+    value: "8000"
+health_checks:
+  - path: /health
+    port: 8000
+    protocol: http
+    interval: 30
+    timeout: 5
+    retries: 3

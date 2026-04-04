@@ -1,14 +1,14 @@
 {
   "pages": {
     "kra_notices": {
-      "hash": "d8a129be1917a0eb72ab86f8333d1e8afdee710b98767339d679cacae8573ceb",
-      "last_checked": "2026-04-03T18:01:31.553250+03:00",
-      "last_changed": "2026-04-03T18:01:31.553275+03:00"
+      "hash": "318c30f67a9672667191a207f1970047db07079fc6eea2f6b8082bcb97d25f80",
+      "last_checked": "2026-04-04T18:01:50.651429+03:00",
+      "last_changed": "2026-04-04T18:01:50.651461+03:00"
     },
     "kra_rates": {
-      "hash": "c58651fd4676bc662239410b68aa01de27d127b2726d74541e39ee36d9e6976c",
-      "last_checked": "2026-04-04T00:10:01.861428+03:00",
-      "last_changed": "2026-04-04T00:10:01.861449+03:00"
+      "hash": "906ee09654830c3a451a03d32c9b580bca1d52542eecb2fd08bf4f9adcc111e6",
+      "last_checked": "2026-04-04T18:02:39.475215+03:00",
+      "last_changed": "2026-04-04T18:02:39.475283+03:00"
     }
   },
   "alerts": [
@@ -127,7 +127,32 @@
         "rate",
         "turnover"
       ]
+    },
+    {
+      "source": "kra_notices",
+      "detected_at": "2026-04-04T18:01:50.582189+03:00",
+      "keywords": [
+        "tax rate",
+        "deadline",
+        "filing",
+        "extension",
+        "turnover tax",
+        "VAT",
+        "PAYE",
+        "withholding",
+        "etims",
+        "income tax",
+        "finance act"
+      ]
+    },
+    {
+      "source": "kra_rates",
+      "detected_at": "2026-04-04T18:02:39.462197+03:00",
+      "keywords": [
+        "rate",
+        "turnover"
+      ]
     }
   ],
-  "last_scan": "2026-04-04T12:02:32.370136+03:00"
+  "last_scan": "2026-04-04T18:02:39.552142+03:00"
 }

@@ -12,14 +12,26 @@ from fastapi import APIRouter, Request, HTTPException
 
 EAT = timezone(timedelta(hours=3))
 
+# Plan mapping for subscription amounts
+PLAN_AMOUNTS = {
+    500: "monthly",
+    1200: "quarterly",
+    4000: "annual",
+}
+
 
 class MpesaWebhookHandler:
     """Handles M-Pesa webhook callbacks."""
 
-    def __init__(self):
+    def __init__(self, subscription_tracker=None):
         self._logs_dir = Path(__file__).parent.parent.parent / "logs"
         self._logs_dir.mkdir(exist_ok=True)
         self._callbacks_path = self._logs_dir / "mpesa_callbacks.jsonl"
+        self._subs = subscription_tracker  # Optional: for auto-confirming subscriptions
+
+    def set_subscription_tracker(self, tracker):
+        """Set the subscription tracker for auto-confirming payments."""
+        self._subs = tracker
 
     def create_router(self) -> APIRouter:
         """Create FastAPI router for M-Pesa webhooks."""
@@ -35,10 +47,40 @@ class MpesaWebhookHandler:
 
         @router.post("/c2b-confirmation")
         async def c2b_confirmation(request: Request):
-            """C2B payment confirmation."""
+            """C2B payment confirmation - auto-confirm subscriptions."""
             body = await request.json()
             result = self._process_c2b(body)
             self._log_callback("c2b_confirmation", body, result)
+
+            # Auto-confirm subscription if reference matches KRADTC-*
+            if self._subs and result.get("bill_ref"):
+                ref = result["bill_ref"]
+                if ref.startswith("KRADTC-"):
+                    pin = ref.replace("KRADTC-", "")
+                    amount = result.get("amount", 0)
+                    phone = result.get("phone", "")
+                    mpesa_ref = result.get("transaction_id", "")
+
+                    # Determine plan based on amount
+                    plan = self._amount_to_plan(amount)
+                    if plan:
+                        try:
+                            sub = self._subs.record_payment(
+                                pin, amount, plan, mpesa_ref, phone
+                            )
+                            # Send WhatsApp confirmation
+                            from tools.whatsapp_sender import WhatsAppSender
+                            wa = WhatsAppSender()
+                            wa.send(
+                                phone,
+                                f"✅ Payment confirmed! Your subscription is now active until {sub.get('expires_at', 'N/A')}. Reply 'STOP' to unsubscribe.",
+                                pin
+                            )
+                            result["subscription_confirmed"] = True
+                            result["subscription"] = sub
+                        except Exception as e:
+                            result["subscription_error"] = str(e)
+
             return {"ResultCode": 0, "ResultDesc": "Accepted"}
 
         @router.post("/b2c-result")
@@ -58,6 +100,10 @@ class MpesaWebhookHandler:
             return {"ResultCode": 0, "ResultDesc": "Accepted"}
 
         return router
+
+    def _amount_to_plan(self, amount_kes: float) -> str | None:
+        """Map payment amount to subscription plan."""
+        return PLAN_AMOUNTS.get(int(amount_kes))
 
     def _process_stk_result(self, body: dict) -> dict:
         """Process STK push result."""

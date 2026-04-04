@@ -5,6 +5,7 @@ Usage: uvicorn api:app --reload --port 8000
 import sys
 import os
 import json
+import asyncio
 from pathlib import Path
 from datetime import datetime
 
@@ -37,6 +38,7 @@ from workflow.audit_trail import AuditTrail
 from config.loader import get_settings
 from subscription.tracker import SubscriptionTracker
 from tools.whatsapp_sender import WhatsAppSender
+from integrations.mpesa.webhooks import MpesaWebhookHandler
 
 settings = get_settings()
 
@@ -672,6 +674,20 @@ async def start_pulse():
         _pulse = Heartbeat()
         _pulse.start(daemon=True)
 
+    # Keep-alive self-ping for free tier hosting (Render, Koyeb)
+    # Prevents the service from sleeping after 15 min of inactivity
+    render_url = os.getenv("RENDER_EXTERNAL_URL")
+    if render_url:
+        async def _keep_alive():
+            import urllib.request
+            while True:
+                await asyncio.sleep(600)  # every 10 min
+                try:
+                    urllib.request.urlopen(f"{render_url}/health", timeout=10)
+                except Exception:
+                    pass
+        asyncio.create_task(_keep_alive())
+
 
 @app.on_event("shutdown")
 async def stop_pulse():
@@ -683,6 +699,10 @@ async def stop_pulse():
 # Mount webhook router
 _webhook_router = create_webhook_router(_pulse_queue)
 app.include_router(_webhook_router)
+
+# Mount M-Pesa webhook router (auto-confirm subscriptions)
+_mpesa_webhook = MpesaWebhookHandler(subs)
+app.include_router(_mpesa_webhook.create_router())
 
 
 @app.get("/pulse", tags=["Pulse"], summary="Scheduler status", dependencies=[Depends(verify_api_key)])

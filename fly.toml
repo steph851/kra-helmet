@@ -1,0 +1,29 @@
+# Fly.io deployment — free tier includes 3 shared VMs
+# Deploy via: fly launch --now
+app = "kra-deadline-tracker"
+primary_region = "jnb"  # Johannesburg — closest Fly region to Kenya
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "10s"
+  method = "GET"
+  path = "/health"
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1
