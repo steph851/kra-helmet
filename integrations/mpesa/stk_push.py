@@ -3,12 +3,11 @@ STK PUSH — M-Pesa Lipa Na M-Pesa Online integration.
 BOUNDARY: Initiates STK push requests. Never stores card data.
 Uses Safaricom Daraja API for payment initiation.
 """
-import json
 import base64
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 from integrations.base import HardenedIntegration, IntegrationConfig, with_retry
+from integrations.mpesa.config import MpesaConfig
 
 EAT = timezone(timedelta(hours=3))
 
@@ -16,7 +15,7 @@ EAT = timezone(timedelta(hours=3))
 class STKPush(HardenedIntegration):
     """M-Pesa STK Push (Lipa Na M-Pesa Online)."""
 
-    def __init__(self, config=None):
+    def __init__(self, config: MpesaConfig | None = None):
         mpesa_config = IntegrationConfig(
             timeout=30,
             max_retries=3,
@@ -26,13 +25,13 @@ class STKPush(HardenedIntegration):
             rate_limit_period=60,
         )
         super().__init__(mpesa_config)
-        self.consumer_key = config.consumer_key if config else None
-        self.consumer_secret = config.consumer_secret if config else None
-        self.passkey = config.passkey if config else None
-        self.shortcode = config.shortcode if config else None
-        self.callback_url = config.callback_url if config else None
+        self.mpesa = config or MpesaConfig()
         self._access_token: str | None = None
         self._token_expiry: datetime | None = None
+
+    @property
+    def is_configured(self) -> bool:
+        return self.mpesa.is_configured
 
     @with_retry(max_retries=3, delay=2.0)
     def _get_access_token(self) -> str:
@@ -40,10 +39,10 @@ class STKPush(HardenedIntegration):
         if self._access_token and self._token_expiry and datetime.now(EAT) < self._token_expiry:
             return self._access_token
 
-        url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        url = f"{self.mpesa.base_url}/oauth/v1/generate?grant_type=client_credentials"
         response = self.get(
             url,
-            auth=(self.consumer_key, self.consumer_secret),
+            auth=(self.mpesa.consumer_key, self.mpesa.consumer_secret),
         )
         data = response.json()
 
@@ -55,8 +54,18 @@ class STKPush(HardenedIntegration):
     def _generate_password(self) -> str:
         """Generate STK push password."""
         timestamp = datetime.now(EAT).strftime("%Y%m%d%H%M%S")
-        password_str = f"{self.shortcode}{self.passkey}{timestamp}"
+        password_str = f"{self.mpesa.shortcode}{self.mpesa.passkey}{timestamp}"
         return base64.b64encode(password_str.encode()).decode()
+
+    @staticmethod
+    def _normalize_phone(phone: str) -> str:
+        """Normalize Kenya phone to 254XXXXXXXXX format."""
+        phone = phone.strip().replace(" ", "").replace("-", "")
+        if phone.startswith("0"):
+            phone = "254" + phone[1:]
+        elif phone.startswith("+"):
+            phone = phone[1:]
+        return phone
 
     @with_retry(max_retries=3, delay=2.0)
     def initiate(
@@ -79,7 +88,7 @@ class STKPush(HardenedIntegration):
         Returns:
             Dict with MerchantRequestID, CheckoutRequestID, ResponseCode, etc.
         """
-        if not self.consumer_key:
+        if not self.is_configured:
             return {
                 "status": "dry_run",
                 "message": "M-Pesa not configured — set MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET, MPESA_PASSKEY, MPESA_SHORTCODE",
@@ -88,27 +97,21 @@ class STKPush(HardenedIntegration):
                 "account_reference": account_reference,
             }
 
-        # Normalize phone
-        phone = phone.strip().replace(" ", "").replace("-", "")
-        if phone.startswith("0"):
-            phone = "254" + phone[1:]
-        elif phone.startswith("+"):
-            phone = phone[1:]
-
+        phone = self._normalize_phone(phone)
         token = self._get_access_token()
         password = self._generate_password()
         timestamp = datetime.now(EAT).strftime("%Y%m%d%H%M%S")
 
         payload = {
-            "BusinessShortCode": self.shortcode,
+            "BusinessShortCode": self.mpesa.shortcode,
             "Password": password,
             "Timestamp": timestamp,
             "TransactionType": "CustomerPayBillOnline",
             "Amount": int(amount),
             "PartyA": phone,
-            "PartyB": self.shortcode,
+            "PartyB": self.mpesa.shortcode,
             "PhoneNumber": phone,
-            "CallBackURL": callback_url or self.callback_url,
+            "CallBackURL": callback_url or self.mpesa.callback_url,
             "AccountReference": account_reference[:12],
             "TransactionDesc": transaction_desc[:13],
         }
@@ -118,7 +121,7 @@ class STKPush(HardenedIntegration):
             "Content-Type": "application/json",
         }
 
-        url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+        url = f"{self.mpesa.base_url}/mpesa/stkpush/v1/processrequest"
         response = self.post(url, json=payload, headers=headers)
 
         result = response.json()
@@ -126,6 +129,7 @@ class STKPush(HardenedIntegration):
         result["phone"] = phone
         result["amount"] = amount
         result["account_reference"] = account_reference
+        result["environment"] = self.mpesa.environment
         result["initiated_at"] = datetime.now(EAT).isoformat()
 
         return result
@@ -133,7 +137,7 @@ class STKPush(HardenedIntegration):
     @with_retry(max_retries=3, delay=2.0)
     def query_status(self, checkout_request_id: str) -> dict:
         """Query STK push transaction status."""
-        if not self.consumer_key:
+        if not self.is_configured:
             return {"status": "dry_run", "checkout_request_id": checkout_request_id}
 
         token = self._get_access_token()
@@ -141,7 +145,7 @@ class STKPush(HardenedIntegration):
         timestamp = datetime.now(EAT).strftime("%Y%m%d%H%M%S")
 
         payload = {
-            "BusinessShortCode": self.shortcode,
+            "BusinessShortCode": self.mpesa.shortcode,
             "Password": password,
             "Timestamp": timestamp,
             "CheckoutRequestID": checkout_request_id,
@@ -152,19 +156,46 @@ class STKPush(HardenedIntegration):
             "Content-Type": "application/json",
         }
 
-        url = "https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query"
+        url = f"{self.mpesa.base_url}/mpesa/stkpushquery/v1/query"
         response = self.post(url, json=payload, headers=headers)
 
         return response.json()
 
-    def generate_payment_url(self, phone: str, amount: float, reference: str) -> str:
-        """Generate a payment URL for the SME to click."""
-        # This creates a deep link that opens M-Pesa directly
-        # Format: https://mpesa.safaricom.co.ke/?phone=254XXXXXXXXX&amount=XXX&ref=XXX
-        phone = phone.strip().replace(" ", "").replace("-", "")
-        if phone.startswith("0"):
-            phone = "254" + phone[1:]
-        elif phone.startswith("+"):
-            phone = phone[1:]
+    def register_c2b_urls(self, validation_url: str = "", confirmation_url: str = "") -> dict:
+        """Register C2B validation and confirmation URLs with Safaricom.
+        Required before Safaricom will send C2B webhooks to your server.
 
-        return f"https://mpesa.safaricom.co.ke/pay?phone={phone}&amount={int(amount)}&ref={reference}"
+        Args:
+            validation_url: URL Safaricom calls to validate a transaction (optional)
+            confirmation_url: URL Safaricom calls to confirm a transaction
+
+        Returns:
+            Safaricom API response dict
+        """
+        if not self.is_configured:
+            return {
+                "status": "dry_run",
+                "message": "M-Pesa not configured — cannot register C2B URLs",
+            }
+
+        token = self._get_access_token()
+
+        payload = {
+            "ShortCode": self.mpesa.shortcode,
+            "ResponseType": "Completed",  # or "Cancelled"
+            "ConfirmationURL": confirmation_url or self.mpesa.callback_url,
+            "ValidationURL": validation_url or self.mpesa.callback_url,
+        }
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+
+        url = f"{self.mpesa.base_url}/mpesa/c2b/v1/registerurl"
+        response = self.post(url, json=payload, headers=headers)
+
+        result = response.json()
+        result["environment"] = self.mpesa.environment
+        result["registered_at"] = datetime.now(EAT).isoformat()
+        return result

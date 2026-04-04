@@ -1733,6 +1733,75 @@ def deactivate_subscription(pin: str):
     return {"status": "deactivated", "subscription": sub}
 
 
+# ── M-Pesa STK Push (pay via API) ─────────────────────────────────
+
+from integrations.mpesa import STKPush, MpesaConfig
+_mpesa_config = MpesaConfig()
+_stk = STKPush(_mpesa_config)
+
+
+@app.post("/api/pay-stk/{pin}", tags=["Subscriptions"],
+          summary="Initiate M-Pesa STK Push payment")
+@limiter.limit("3/minute")
+def initiate_stk_push(request: Request, pin: str, plan: str = "monthly"):
+    """Trigger M-Pesa payment prompt on the customer's phone.
+    The customer enters their M-Pesa PIN to complete payment.
+    Result is delivered via webhook to /webhooks/mpesa/stk-result.
+    """
+    ok, msg = validator.validate_pin(pin)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+
+    profile = orch.load_sme(msg)
+    if not profile:
+        raise HTTPException(status_code=404, detail=f"SME not found: {pin}")
+    if not profile.get("phone"):
+        raise HTTPException(status_code=400, detail="No phone number on file for this SME")
+
+    plan_info = subs.get_plans().get(plan)
+    if not plan_info:
+        raise HTTPException(status_code=400, detail=f"Invalid plan: {plan}. Use: monthly, quarterly, annual")
+
+    account_ref = f"KRADTC-{msg}"
+    result = _stk.initiate(
+        phone=profile["phone"],
+        amount=plan_info["price_kes"],
+        account_reference=account_ref,
+        transaction_desc=f"KRA {plan_info['name']}",
+    )
+    return result
+
+
+@app.post("/api/mpesa/register-c2b", tags=["Subscriptions"],
+          summary="Register C2B URLs with Safaricom",
+          dependencies=[Depends(verify_api_key)])
+def register_c2b_urls():
+    """Register C2B validation and confirmation URLs with Safaricom.
+    Required once before Safaricom will send C2B payment webhooks.
+    Uses MPESA_CALLBACK_URL env var or constructs from RENDER_EXTERNAL_URL.
+    """
+    render_url = os.getenv("RENDER_EXTERNAL_URL", "")
+    base = render_url or "http://localhost:8000"
+    confirmation_url = f"{base}/webhooks/mpesa/c2b-confirmation"
+    validation_url = f"{base}/webhooks/mpesa/c2b-validation"
+
+    result = _stk.register_c2b_urls(
+        validation_url=validation_url,
+        confirmation_url=confirmation_url,
+    )
+    result["confirmation_url"] = confirmation_url
+    result["validation_url"] = validation_url
+    return result
+
+
+@app.post("/api/mpesa/stk-query/{checkout_id}", tags=["Subscriptions"],
+          summary="Query STK Push status",
+          dependencies=[Depends(verify_api_key)])
+def query_stk_status(checkout_id: str):
+    """Query the status of an STK Push transaction."""
+    return _stk.query_status(checkout_id)
+
+
 # ── WhatsApp Bot Actions ──────────────────────────────────────────
 
 @app.post("/api/send-report/{pin}", tags=["Actions"],

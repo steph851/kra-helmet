@@ -1,11 +1,12 @@
 """
 SUBSCRIPTION TRACKER — manages SME subscription state and M-Pesa payments.
-Persists to data/subscriptions.json.
+Persists to data/subscriptions.json. Phone numbers encrypted at rest.
 """
 import json
 import threading
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from subscription.crypto import encrypt_phone, decrypt_phone
 
 EAT = timezone(timedelta(hours=3))
 ROOT = Path(__file__).parent.parent
@@ -35,9 +36,17 @@ class SubscriptionTracker:
     # ── Public API ──────────────────────────────────────────────────
 
     def get(self, pin: str) -> dict | None:
-        """Get subscription for a PIN."""
+        """Get subscription for a PIN. Phone numbers are decrypted on read."""
         with self._lock:
-            return self._subs.get(pin)
+            sub = self._subs.get(pin)
+            if not sub:
+                return None
+            # Decrypt phones for API responses
+            result = dict(sub)
+            for p in result.get("payments", []):
+                if p.get("phone"):
+                    p["phone"] = decrypt_phone(p["phone"])
+            return result
 
     def is_active(self, pin: str) -> bool:
         """Check if a PIN has an active (non-expired) subscription."""
@@ -90,7 +99,7 @@ class SubscriptionTracker:
         payment = {
             "amount_kes": amount_kes,
             "mpesa_ref": mpesa_ref,
-            "phone": phone,
+            "phone": encrypt_phone(phone),
             "plan": plan,
             "recorded_at": now.isoformat(),
         }

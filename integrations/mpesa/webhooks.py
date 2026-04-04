@@ -99,8 +99,23 @@ class MpesaWebhookHandler:
 
     # ── Buffer: save raw webhook to disk before anything else ──
 
+    MAX_BUFFER_BYTES = 50_000_000  # 50MB — rotate before disk fills
+
     def _buffer_webhook(self, callback_type: str, raw_body: dict) -> str:
-        """Save raw webhook to buffer file. Returns entry ID."""
+        """Save raw webhook to buffer file. Returns entry ID.
+        Rotates buffer when it exceeds MAX_BUFFER_BYTES to prevent DoS.
+        """
+        # Rotate oversized buffer
+        if self._buffer_path.exists():
+            try:
+                if self._buffer_path.stat().st_size > self.MAX_BUFFER_BYTES:
+                    rotated = self._buffer_path.with_name(
+                        f"mpesa_buffer_{datetime.now(EAT).strftime('%Y%m%d_%H%M%S')}.jsonl"
+                    )
+                    self._buffer_path.rename(rotated)
+            except OSError:
+                pass
+
         entry_id = f"{callback_type}_{datetime.now(EAT).strftime('%Y%m%d_%H%M%S_%f')}"
         entry = {
             "id": entry_id,
