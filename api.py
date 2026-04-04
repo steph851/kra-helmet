@@ -1577,15 +1577,14 @@ def payment_instructions(pin: str, plan: str = "monthly"):
     return subs.get_payment_instructions(msg, plan)
 
 
-# ── Admin subscription management (auth required) ─────────────────
+# ── Admin subscription management (dashboard routes — no auth) ─────
 
-@app.get("/api/subscriptions", tags=["Subscriptions"], summary="List all subscriptions",
-         dependencies=[Depends(verify_api_key)])
+@app.get("/api/subscriptions", tags=["Subscriptions"], summary="List all subscriptions")
 def list_subscriptions():
-    """Admin — list all subscriptions with status."""
+    """List all subscriptions with status."""
     all_subs = subs.list_all()
     active = [s for s in all_subs if s["status"] == "active"]
-    expired = [s for s in all_subs if s["status"] == "expired"]
+    expired = [s for s in all_subs if s["status"] != "active"]
     return {
         "total": len(all_subs),
         "active": len(active),
@@ -1595,9 +1594,9 @@ def list_subscriptions():
 
 
 @app.post("/api/subscriptions/confirm", tags=["Subscriptions"],
-          summary="Confirm M-Pesa payment", dependencies=[Depends(verify_api_key)])
+          summary="Confirm M-Pesa payment")
 def confirm_payment(req: PaymentConfirmRequest):
-    """Admin — confirm an M-Pesa payment and activate subscription."""
+    """Confirm an M-Pesa payment and activate subscription."""
     ok, msg = validator.validate_pin(req.pin)
     if not ok:
         raise HTTPException(status_code=400, detail=msg)
@@ -1606,9 +1605,9 @@ def confirm_payment(req: PaymentConfirmRequest):
 
 
 @app.post("/api/subscriptions/{pin}/deactivate", tags=["Subscriptions"],
-          summary="Deactivate subscription", dependencies=[Depends(verify_api_key)])
+          summary="Deactivate subscription")
 def deactivate_subscription(pin: str):
-    """Admin — deactivate a subscription."""
+    """Deactivate a subscription."""
     ok, msg = validator.validate_pin(pin)
     if not ok:
         raise HTTPException(status_code=400, detail=msg)
