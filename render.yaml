@@ -12,10 +12,10 @@ services:
         sync: false
       - key: DATABASE_URL
         sync: false
-      - key: PYTHONUNBUFFERED
-        value: "1"
       - key: SENTRY_DSN
         sync: false
+      - key: PYTHONUNBUFFERED
+        value: "1"
       - key: HELMET_WA_PROVIDER
         value: "dry_run"
       - key: WHATSAPP_TOKEN
