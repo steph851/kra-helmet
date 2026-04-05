@@ -138,23 +138,15 @@ async def serve_react_assets(path: str):
 API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
 API_KEY = os.getenv("HELMET_API_KEY", "")
 
-# Warn once at startup if no API key is configured
-if not API_KEY and settings["api"].get("require_auth", True):
-    import logging as _logging
-    _logging.getLogger("kra_helmet.api").warning(
-        "HELMET_API_KEY not set — all endpoints are unauthenticated. "
-        "Set HELMET_API_KEY in .env to enable authentication."
-    )
-
 
 async def verify_api_key(api_key: str = Security(API_KEY_HEADER)):
-    """Verify API key if auth is required."""
-    if not settings["api"].get("require_auth", True):
-        return True
+    """Verify API key - required for all protected endpoints."""
     if not API_KEY:
-        return True  # no key configured = auth disabled (warned at startup)
+        import logging
+        logging.getLogger("kra_helmet.api").error("HELMET_API_KEY not configured - auth disabled!")
+        raise HTTPException(status_code=500, detail="Server misconfigured: missing HELMET_API_KEY")
     if api_key != API_KEY:
-        raise HTTPException(status_code=401, detail="Invalid or missing API key. Set X-API-Key header.")
+        raise HTTPException(status_code=401, detail="Invalid API key. Use X-API-Key header.")
     return True
 
 
