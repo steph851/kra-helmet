@@ -34,18 +34,21 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
+# Lazy imports to avoid startup hang
+from config.loader import get_settings
+settings = get_settings()
+
+# These imports will be lazy-initialized when first used
 from agents.orchestrator import Orchestrator
 from agents.dashboard import DashboardGenerator
 from agents.report_generator import ReportGenerator
 from agents.validation.input_validator import InputValidator
 from workflow.filing_tracker import FilingTracker
+# AuditTrail imports from database - now lazy
 from workflow.audit_trail import AuditTrail
-from config.loader import get_settings
 from subscription.tracker import SubscriptionTracker
 from tools.whatsapp_sender import WhatsAppSender
 from integrations.mpesa.webhooks import MpesaWebhookHandler
-
-settings = get_settings()
 
 app = FastAPI(
     title="KRA Deadline Tracker API",
