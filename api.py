@@ -521,6 +521,53 @@ def health_check():
     }
 
 
+# ── Analytics & Feedback (public) ───────────────────────────────────────────────────────────
+
+_analytics = {
+    "page_views": 0,
+    "onboarding_starts": 0,
+    "onboarding_completes": 0,
+    "subscription_starts": 0,
+    "alerts_sent": 0,
+}
+
+
+def track_event(event: str, count: int = 1):
+    """Track an analytics event."""
+    if event in _analytics:
+        _analytics[event] += count
+
+
+@app.get("/analytics", tags=["System"], summary="Anonymous usage analytics")
+def get_analytics():
+    """Public analytics - counts of usage events (no personal data)."""
+    return {"status": "ok", "timestamp": datetime.now().isoformat(), "data": dict(_analytics)}
+
+
+class FeedbackInput(BaseModel):
+    type: str  # bug | feature | compliment | complaint
+    message: str
+    email: str = ""
+    pin: str = ""
+
+
+@app.post("/feedback", tags=["System"], summary="Submit user feedback")
+def submit_feedback(feedback: FeedbackInput):
+    """Submit feedback - bug report, feature request, or compliment."""
+    feedback_file = ROOT / "logs" / "user_feedback.jsonl"
+    feedback_file.parent.mkdir(exist_ok=True)
+    entry = {
+        "timestamp": datetime.now().isoformat(),
+        "type": feedback.type,
+        "message": feedback.message,
+        "email": feedback.email,
+        "pin": feedback.pin,
+    }
+    with open(feedback_file, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    return {"status": "received", "message": "Thank you for your feedback!"}
+
+
 @app.get("/smes", tags=["SMEs"], summary="List all SMEs", dependencies=[Depends(verify_api_key)])
 def list_smes():
     """List all onboarded SMEs with basic profile info."""
@@ -555,6 +602,9 @@ def onboard_sme(req: OnboardRequest):
     profile = orch.onboard(interactive=False, data=data)
     if not profile:
         raise HTTPException(status_code=500, detail="Onboarding failed — check server logs")
+
+    # Track analytics
+    track_event("onboarding_completes", 1)
 
     return {
         "status": "onboarded",
