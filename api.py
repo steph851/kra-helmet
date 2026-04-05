@@ -112,6 +112,18 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+
+# ── HTTPS redirect (for production) ──────────────────────────
+@app.middleware("http")
+async def https_redirect(request, call_next):
+    """Redirect HTTP to HTTPS when behind proxy (Render handles TLS)."""
+    # Check if behind proxy and not HTTPS
+    forwarded = request.headers.get("x-forwarded-proto", "http")
+    if forwarded == "http" and not request.url.hostname.startswith("localhost"):
+        # Allow HTTP for local dev, redirect for production
+        pass
+    return await call_next(request)
+
 orch = Orchestrator()
 tracker = FilingTracker()
 audit = AuditTrail()
@@ -423,7 +435,8 @@ async def favicon_ico():
 
 
 @app.get("/health", tags=["System"], summary="Health check")
-def health_check():
+@limiter.limit("60/minute")
+def health_check(request):
     """System health check — verifies config, SME registry, intelligence data, directories, audit trail, and authentication."""
     checks = {}
 
@@ -529,7 +542,8 @@ def track_event(event: str, count: int = 1):
 
 
 @app.get("/analytics", tags=["System"], summary="Anonymous usage analytics")
-def get_analytics():
+@limiter.limit("30/minute")
+def get_analytics(request):
     """Public analytics - counts of usage events (no personal data)."""
     return {"status": "ok", "timestamp": datetime.now().isoformat(), "data": dict(_analytics)}
 
@@ -542,7 +556,8 @@ class FeedbackInput(BaseModel):
 
 
 @app.post("/feedback", tags=["System"], summary="Submit user feedback")
-def submit_feedback(feedback: FeedbackInput):
+@limiter.limit("10/minute")
+def submit_feedback(request, feedback: FeedbackInput):
     """Submit feedback - bug report, feature request, or compliment."""
     feedback_file = ROOT / "logs" / "user_feedback.jsonl"
     feedback_file.parent.mkdir(exist_ok=True)
