@@ -9,8 +9,8 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
-import anthropic
-from anthropic import Anthropic
+# Lazy import - only needed when calling Claude API
+Anthropic = None
 
 from .logging import StructuredLogger, generate_request_id, set_request_id, get_request_id
 
@@ -51,7 +51,10 @@ class BaseAgent:
     @property
     def client(self):
         """Lazy-initialize Anthropic client on first use."""
+        global Anthropic
         if self._client is None and self._api_key and self._api_key != "your-key-here":
+            if Anthropic is None:
+                from anthropic import Anthropic
             self._client = Anthropic(
                 api_key=self._api_key,
                 timeout=120.0,
@@ -244,18 +247,20 @@ class BaseAgent:
                     messages=[{"role": "user", "content": user}],
                 )
                 return resp.content[0].text
-            except anthropic.RateLimitError:
-                wait = waits[min(attempt, len(waits) - 1)]
-                self.log(f"Rate limit — waiting {wait}s (attempt {attempt+1}/{retries})", "WARN", request_id=rid)
-                if attempt == retries - 1:
-                    raise
-                time.sleep(wait)
-            except anthropic.APIError as e:
-                self.log(f"API error: {e}", "ERROR", request_id=rid)
-                self._log_error(e, "call_claude", request_id=rid)
-                if attempt == retries - 1:
-                    raise AgentError(f"Claude API failed after {retries} attempts: {e}", agent=self.name)
-                time.sleep(waits[min(attempt, len(waits) - 1)])
+            except Exception as e:
+                err_name = type(e).__name__
+                if "RateLimit" in err_name:
+                    wait = waits[min(attempt, len(waits) - 1)]
+                    self.log(f"Rate limit — waiting {wait}s (attempt {attempt+1}/{retries})", "WARN", request_id=rid)
+                    if attempt == retries - 1:
+                        raise
+                    time.sleep(wait)
+                else:
+                    self.log(f"API error: {e}", "ERROR", request_id=rid)
+                    self._log_error(e, "call_claude", request_id=rid)
+                    if attempt == retries - 1:
+                        raise AgentError(f"Claude API failed after {retries} attempts: {e}", agent=self.name)
+                    time.sleep(waits[min(attempt, len(waits) - 1)])
         return ""
 
     def call_claude_json(self, system: str, user: str, max_tokens: int = 4096, request_id: str = None) -> dict:

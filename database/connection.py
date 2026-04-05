@@ -82,7 +82,7 @@ def get_engine():
     return _engine
 
 
-def get_session() -> Session:
+def get_session():
     """Get a database session. Raises RuntimeError if DB not available."""
     if _engine is None:
         _init_engine()
