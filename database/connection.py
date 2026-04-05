@@ -1,13 +1,8 @@
 """
 DATABASE CONNECTION — PostgreSQL connection management for KRA Deadline Tracker.
-Supports Neon (free PostgreSQL) with SSL. Falls back gracefully when no DB configured.
+Supports Neon (free PostgreSQL) with SSL. Falls back gracefully when no DB/dependencies.
 """
 import os
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import QueuePool, NullPool
-from .models import Base
-
 
 # Database URL from environment variable
 DATABASE_URL = os.getenv("DATABASE_URL", "")
@@ -38,15 +33,24 @@ def _init_engine():
         return
 
     try:
+        from sqlalchemy import create_engine, text
+        from sqlalchemy.orm import sessionmaker, Session
+        from sqlalchemy.pool import QueuePool
+    except ImportError:
+        _db_available = False
+        return
+
+    try:
+        from .models import Base
         url = _fix_neon_url(DATABASE_URL)
         _engine = create_engine(
             url,
             poolclass=QueuePool,
-            pool_size=3,          # Conservative for free tier
+            pool_size=3,
             max_overflow=5,
             pool_timeout=30,
-            pool_recycle=300,     # Recycle every 5 min (Neon may close idle)
-            pool_pre_ping=True,   # Test connections before use
+            pool_recycle=300,
+            pool_pre_ping=True,
             echo=False,
         )
         _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
@@ -58,7 +62,7 @@ def _init_engine():
         _db_available = True
         print(f"[DB] PostgreSQL connected")
     except Exception as e:
-        print(f"[DB] PostgreSQL unavailable, using JSON fallback: {e}")
+        print(f"[DB] PostgreSQL unavailable: {e}")
         _engine = None
         _SessionLocal = None
         _db_available = False
@@ -92,7 +96,11 @@ def init_database():
     if _engine is None:
         _init_engine()
     if _engine and _db_available:
-        Base.metadata.create_all(bind=_engine)
-        print("[DB] Tables created/verified")
+        try:
+            from .models import Base
+            Base.metadata.create_all(bind=_engine)
+            print("[DB] Tables created/verified")
+        except Exception as e:
+            print(f"[DB] Table creation warning: {e}")
     else:
         print("[DB] Skipping table creation — no database configured")

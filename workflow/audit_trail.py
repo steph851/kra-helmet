@@ -104,7 +104,7 @@ class AuditTrail:
                 except json.JSONDecodeError:
                     continue
 
-        return entries[-limit:]  # most recent
+        return entries[-limit:]
 
     def print_history(self, sme_pin: str | None = None, limit: int = 20):
         """Print formatted audit history."""
