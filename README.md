@@ -315,7 +315,7 @@ All settings in `config/settings.json`. Override with environment variables:
 python -m pytest tests/ -v
 ```
 
-376 tests across 12 test files:
+408 tests across 12 test files:
 - **test_input_validator.py** -- PIN, phone, email, period, amount, profile, filing validation
 - **test_intelligence.py** -- Obligation mapping, deadlines, risk scoring, compliance, penalties
 - **test_communication.py** -- Urgency framing, message generation, SMS/WhatsApp/email formatting
