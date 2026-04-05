@@ -40,7 +40,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import Response
 from fastapi.staticfiles import StaticFiles
 import os
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, Field
 import re
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -382,15 +382,24 @@ class PaymentConfirmRequest(BaseModel):
 @app.get("/", tags=["System"], summary="Web dashboard")
 def root():
     """Serve the React web dashboard at the root URL."""
-    # Try built React dashboard first, fallback to dev
     react_dashboard = ROOT / "output" / "dashboard-react" / "index.html"
     if react_dashboard.exists():
         return FileResponse(react_dashboard, media_type="text/html")
-    
-    # Fallback to dev dashboard
     dev_dashboard = ROOT / "dashboard" / "index.html"
     if dev_dashboard.exists():
         return FileResponse(dev_dashboard, media_type="text/html")
+
+
+@app.get("/onboard", tags=["System"], summary="Web onboarding form")
+def web_onboarding():
+    """Serve the self-service onboarding form."""
+    onboard_html = ROOT / "web-onboarding" / "index.html"
+    if onboard_html.exists():
+        return FileResponse(onboard_html, media_type="text/html")
+    return HTMLResponse("""<html><body>
+        <h1>KRA Deadline Tracker</h1>
+        <p>Onboarding form not found. Contact support.</p>
+    </body></html>""")
     
     # Last resort: JSON info
     return {
@@ -1703,6 +1712,38 @@ def public_signup(request: Request, req: SignupRequest):
         "obligations": obligations,
         "subscription": sub,
         "payment": subs.get_payment_instructions(profile["pin"]),
+    }
+
+
+# ── WhatsApp Onboarding Webhook ────────────────────────────────────────
+
+class WhatsAppIncoming(BaseModel):
+    sender: str
+    text: str
+
+
+@app.post("/webhook/whatsapp", tags=["Webhooks"], summary="WhatsApp incoming messages")
+def whatsapp_webhook(msg: WhatsAppIncoming):
+    """Handle incoming WhatsApp messages - send onboarding link."""
+    phone = msg.sender
+    
+    # Send onboarding link
+    app_url = os.getenv("APP_URL", "https://kra-deadline-tracker.onrender.com")
+    onboarding_link = f"{app_url}/onboard"
+    
+    reply = (
+        f"👋 *Welcome to KRA Deadline Tracker!*\n\n"
+        f"I'll help you stay compliant with KRA tax deadlines.\n\n"
+        f"To get started, click below:\n{onboarding_link}\n\n"
+        f"It takes 2 minutes to set up your business profile."
+    )
+    
+    try:
+        _wa.send(phone, reply)
+    except Exception:
+        pass
+    
+    return {"status": "sent"}
     }
 
 
