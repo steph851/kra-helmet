@@ -15,6 +15,9 @@ sys.path.insert(0, str(ROOT))
 # Set dummy API key so base agent doesn't crash (but won't call Claude)
 os.environ.setdefault("ANTHROPIC_API_KEY", "")
 
+# Disable PostgreSQL for tests (use JSON fallback)
+os.environ.pop("DATABASE_URL", None)
+
 
 @pytest.fixture
 def sample_profile():

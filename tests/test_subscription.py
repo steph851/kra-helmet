@@ -56,7 +56,7 @@ class TestTrialSubscription:
         sub = tracker.start_trial("A123456789B")
         # Manually set expiry to the past
         past = (datetime.now(EAT) - timedelta(days=1)).isoformat()
-        tracker._subs["A123456789B"]["expires_at"] = past
+        tracker._json_subs["A123456789B"]["expires_at"] = past
         tracker._save()
         assert tracker.is_active("A123456789B") is False
 
@@ -111,7 +111,7 @@ class TestListAndManagement:
         tracker.start_trial("A123456789B")
         tracker.start_trial("B123456789C")
         # Expire one
-        tracker._subs["B123456789C"]["expires_at"] = (
+        tracker._json_subs["B123456789C"]["expires_at"] = (
             datetime.now(EAT) - timedelta(days=1)
         ).isoformat()
         tracker._save()

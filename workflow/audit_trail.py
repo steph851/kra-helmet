@@ -1,5 +1,6 @@
 """
 AUDIT TRAIL — immutable log of every decision. Legally defensible.
+Uses PostgreSQL (Neon) when available, falls back to JSONL.
 """
 import json
 import threading
@@ -15,6 +16,17 @@ class AuditTrail:
     def __init__(self):
         self.log_path = ROOT / "logs" / "audit_trail.jsonl"
         self.log_path.parent.mkdir(exist_ok=True)
+        
+        # Check database availability
+        self._db_available = False
+        self._session = None
+        try:
+            from database.connection import db_available, get_session
+            self._db_available = db_available()
+            if self._db_available:
+                self._session = get_session()
+        except Exception:
+            pass
 
     def record(self, event_type: str, agent: str, details: dict, sme_pin: str | None = None):
         """Record an immutable audit entry (thread-safe)."""
@@ -25,12 +37,57 @@ class AuditTrail:
             "sme_pin": sme_pin,
             "details": details,
         }
+        
+        # Try PostgreSQL first
+        if self._db_available and self._session:
+            try:
+                from database.models import AuditTrailEntry
+                db_entry = AuditTrailEntry(
+                    event_type=event_type,
+                    agent=agent,
+                    sme_pin=sme_pin,
+                    details=details,
+                    timestamp=datetime.now(),
+                )
+                self._session.add(db_entry)
+                self._session.commit()
+                return
+            except Exception:
+                pass  # Fall back to JSONL
+        
+        # Fall back to JSONL
         with self._lock:
             with open(self.log_path, "a", encoding="utf-8") as f:
                 f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
     def get_history(self, sme_pin: str | None = None, limit: int = 50) -> list[dict]:
         """Retrieve audit history, optionally filtered by SME PIN."""
+        # Try PostgreSQL first
+        if self._db_available and self._session:
+            try:
+                from database.models import AuditTrailEntry
+                from sqlalchemy import desc
+                query = self._session.query(AuditTrailEntry).order_by(
+                    desc(AuditTrailEntry.timestamp)
+                ).limit(limit)
+                if sme_pin:
+                    query = query.filter(AuditTrailEntry.sme_pin == sme_pin)
+                entries = query.all()
+                if entries:
+                    return [
+                        {
+                            "timestamp": e.timestamp.isoformat(),
+                            "event_type": e.event_type,
+                            "agent": e.agent,
+                            "sme_pin": e.sme_pin,
+                            "details": e.details,
+                        }
+                        for e in entries
+                    ]
+            except Exception:
+                pass  # Fall back to JSONL
+        
+        # Fall back to JSONL
         if not self.log_path.exists():
             return []
 

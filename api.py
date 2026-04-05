@@ -422,12 +422,6 @@ async def favicon_ico():
     if icon_path.exists():
         return FileResponse(icon_path, media_type="image/x-icon")
     return Response(status_code=204)
-    """Serve favicon (prevents browser 404 noise)."""
-    icon_path = ROOT / "dashboard" / "favicon.ico"
-    if icon_path.exists():
-        return FileResponse(icon_path, media_type="image/x-icon")
-    # Return a 204 No Content to silence browser requests
-    return Response(status_code=204)
 
 
 @app.get("/health", tags=["System"], summary="Health check")
@@ -486,9 +480,13 @@ def health_check():
         monitoring_active = False
     checks["monitoring"] = {"status": "active" if monitoring_active else "inactive"}
 
-    # Database (SME registry serves as the data store)
-    db_ok = checks.get("sme_registry", {}).get("status") == "ok"
-    checks["database"] = {"status": "connected" if db_ok else "disconnected"}
+    # Database (PostgreSQL via Neon or JSON fallback)
+    try:
+        from database.connection import db_available
+        db_connected = db_available()
+    except Exception as e:
+        db_connected = False
+    checks["database"] = {"status": "connected" if db_connected else "json_fallback"}
 
     # WhatsApp Bot
     bot_status = _wa.bot_status()
@@ -508,7 +506,7 @@ def health_check():
     return {
         "status": "healthy" if all_ok else "degraded",
         "timestamp": datetime.now().isoformat(),
-        "database": "connected" if db_ok else "disconnected",
+        "database": "connected" if db_connected else "json_fallback",
         "scheduler": "running" if scheduler_running else "stopped",
         "monitoring": "active" if monitoring_active else "inactive",
         "checks": checks,
@@ -700,6 +698,16 @@ from scheduler.event_listener import create_webhook_router
 
 _pulse_queue = PriorityQueue()
 _pulse: Heartbeat | None = None
+
+
+@app.on_event("startup")
+async def init_db():
+    """Initialize database on startup (Neon PostgreSQL or JSON fallback)."""
+    from database.connection import init_database, db_available
+    try:
+        init_database()
+    except Exception as e:
+        print(f"[DB] Initialization warning: {e}")
 
 
 @app.on_event("startup")

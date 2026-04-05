@@ -34,12 +34,10 @@ class BaseAgent:
         from config.loader import get_settings
         self._settings = get_settings()
 
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        self.client = Anthropic(
-            api_key=api_key,
-            timeout=120.0,  # 2-minute timeout per request
-        ) if api_key and api_key != "your-key-here" else None
+        self._api_key = os.getenv("ANTHROPIC_API_KEY")
+        self._client = None
         self.model = self._settings.get("claude", {}).get("model", "claude-sonnet-4-6")
+
         self.data_dir   = ROOT / "data"
         self.config_dir = ROOT / "config"
         self.intel_dir  = ROOT / "intelligence"
@@ -49,6 +47,16 @@ class BaseAgent:
         
         # Initialize structured logger
         self.logger = StructuredLogger(self.name, self.logs_dir)
+
+    @property
+    def client(self):
+        """Lazy-initialize Anthropic client on first use."""
+        if self._client is None and self._api_key and self._api_key != "your-key-here":
+            self._client = Anthropic(
+                api_key=self._api_key,
+                timeout=120.0,
+            )
+        return self._client
 
     # ── Logging ──────────────────────────────────────────────────────
 

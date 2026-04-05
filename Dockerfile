@@ -1,14 +1,16 @@
 # KRA Deadline Tracker & Compliance Tool
 # Simple single-stage build — dashboard is pre-built and committed to repo
 
-FROM python:3.13-slim
+FROM python:3.14-slim
 
 WORKDIR /app
 
-# System deps (curl for health check)
+# System deps (curl for health check, libpq for psycopg2)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl && \
-    rm -rf /var/lib/apt/lists/*
+    curl \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
 # Python deps (cached layer)
 COPY requirements.txt .

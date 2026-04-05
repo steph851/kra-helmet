@@ -109,6 +109,55 @@ class MonitoringState(Base):
     last_updated = Column(DateTime(timezone=True), default=_now_eat, onupdate=_now_eat)
 
 
+class Subscription(Base):
+    """SME subscription state."""
+    __tablename__ = "subscriptions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    pin = Column(String(20), unique=True, nullable=False, index=True)
+    name = Column(String(200), default="")
+    plan = Column(String(20), nullable=False, default="trial")
+    plan_name = Column(String(50), default="")
+    status = Column(String(20), nullable=False, default="active", index=True)
+    amount_paid_kes = Column(Float, default=0)
+    started_at = Column(DateTime(timezone=True), default=_now_eat)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_now_eat)
+
+    # Relationships
+    payments = relationship("Payment", back_populates="subscription", cascade="all, delete-orphan",
+                            order_by="Payment.recorded_at")
+
+
+class Payment(Base):
+    """M-Pesa payment records (append-only ledger)."""
+    __tablename__ = "payments"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    pin = Column(String(20), nullable=False, index=True)
+    subscription_id = Column(Integer, ForeignKey("subscriptions.id"), nullable=False)
+    amount_kes = Column(Float, nullable=False)
+    mpesa_ref = Column(String(100), default="", index=True)
+    phone = Column(String(200), default="")  # encrypted
+    plan = Column(String(20), nullable=False)
+    recorded_at = Column(DateTime(timezone=True), default=_now_eat)
+
+    # Relationships
+    subscription = relationship("Subscription", back_populates="payments")
+
+
+class AuditTrailEntry(Base):
+    """Immutable audit trail entries."""
+    __tablename__ = "audit_trail"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    event_type = Column(String(50), nullable=False, index=True)
+    agent = Column(String(100))
+    sme_pin = Column(String(20), index=True)
+    details = Column(JSON)
+    timestamp = Column(DateTime(timezone=True), default=_now_eat, index=True)
+
+
 class DecisionMemory(Base):
     """Decision memory for learning system."""
     __tablename__ = "decision_memory"

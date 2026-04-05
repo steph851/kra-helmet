@@ -1,6 +1,7 @@
 """
 SUBSCRIPTION TRACKER — manages SME subscription state and M-Pesa payments.
-Persists to data/subscriptions.json. Phone numbers encrypted at rest.
+Uses PostgreSQL (Neon) when DATABASE_URL is set, falls back to JSON files.
+Phone numbers encrypted at rest.
 """
 import json
 import threading
@@ -22,26 +23,38 @@ PLANS = {
 }
 
 # M-Pesa payment details
-MPESA_PAYBILL = "0114179880"  # Stephen's M-Pesa number (Buy Goods / Till)
+MPESA_PAYBILL = "0114179880"
 MPESA_ACCOUNT_PREFIX = "KRADTC"
 
 
+def _use_db():
+    """Check if we should use PostgreSQL."""
+    try:
+        from database.connection import db_available
+        return db_available()
+    except Exception:
+        return False
+
+
 class SubscriptionTracker:
-    """Thread-safe subscription state manager."""
+    """Subscription state manager. DB-first, JSON fallback."""
 
     def __init__(self):
         self._lock = threading.Lock()
-        self._subs: dict = self._load()
+        self._json_subs: dict = {}
+        if not _use_db():
+            self._json_subs = self._load_json()
 
     # ── Public API ──────────────────────────────────────────────────
 
     def get(self, pin: str) -> dict | None:
         """Get subscription for a PIN. Phone numbers are decrypted on read."""
+        if _use_db():
+            return self._db_get(pin)
         with self._lock:
-            sub = self._subs.get(pin)
+            sub = self._json_subs.get(pin)
             if not sub:
                 return None
-            # Decrypt phones for API responses
             result = dict(sub)
             for p in result.get("payments", []):
                 if p.get("phone"):
@@ -54,10 +67,11 @@ class SubscriptionTracker:
         if not sub:
             return False
         if sub["status"] == "active":
-            expires = datetime.fromisoformat(sub["expires_at"])
+            expires = datetime.fromisoformat(sub["expires_at"]) if isinstance(sub["expires_at"], str) else sub["expires_at"]
+            if not expires.tzinfo:
+                expires = expires.replace(tzinfo=EAT)
             if datetime.now(EAT) < expires:
                 return True
-            # Auto-expire
             self._update_status(pin, "expired")
             return False
         return False
@@ -66,6 +80,11 @@ class SubscriptionTracker:
         """Start a free trial for a new SME."""
         plan = PLANS["trial"]
         now = datetime.now(EAT)
+        expires = now + timedelta(days=plan["duration_days"])
+
+        if _use_db():
+            return self._db_start_trial(pin, name, now, expires)
+
         sub = {
             "pin": pin,
             "name": name,
@@ -74,13 +93,13 @@ class SubscriptionTracker:
             "status": "active",
             "amount_paid_kes": 0,
             "started_at": now.isoformat(),
-            "expires_at": (now + timedelta(days=plan["duration_days"])).isoformat(),
+            "expires_at": expires.isoformat(),
             "payments": [],
             "created_at": now.isoformat(),
         }
         with self._lock:
-            self._subs[pin] = sub
-            self._save()
+            self._json_subs[pin] = sub
+            self._save_json()
         return sub
 
     def record_payment(
@@ -92,6 +111,9 @@ class SubscriptionTracker:
         """
         if plan not in PLANS:
             raise ValueError(f"Invalid plan: {plan}. Valid: {list(PLANS.keys())}")
+
+        if _use_db():
+            return self._db_record_payment(pin, amount_kes, plan, mpesa_ref, phone)
 
         plan_info = PLANS[plan]
         now = datetime.now(EAT)
@@ -105,12 +127,12 @@ class SubscriptionTracker:
         }
 
         with self._lock:
-            sub = self._subs.get(pin)
+            sub = self._json_subs.get(pin)
 
-            # Duplicate payment guard — Safaricom may retry webhooks
+            # Duplicate payment guard
             if sub and mpesa_ref:
                 if any(p.get("mpesa_ref") == mpesa_ref for p in sub.get("payments", [])):
-                    return sub  # Already recorded — idempotent
+                    return sub
 
             if not sub:
                 sub = {
@@ -126,7 +148,6 @@ class SubscriptionTracker:
                     "created_at": now.isoformat(),
                 }
 
-            # Extend from current expiry or from now (whichever is later)
             current_expiry = datetime.fromisoformat(sub["expires_at"])
             base = max(now, current_expiry)
             new_expiry = base + timedelta(days=plan_info["duration_days"])
@@ -138,11 +159,10 @@ class SubscriptionTracker:
             sub["expires_at"] = new_expiry.isoformat()
             sub["payments"].append(payment)
 
-            self._subs[pin] = sub
-            self._save()
+            self._json_subs[pin] = sub
+            self._save_json()
 
-        # Append to payments ledger
-        self._log_payment(pin, payment)
+        self._log_payment_json(pin, payment)
         return sub
 
     def confirm_payment(self, pin: str, mpesa_ref: str, amount_kes: float,
@@ -154,11 +174,24 @@ class SubscriptionTracker:
         """Admin deactivates a subscription."""
         return self._update_status(pin, "cancelled")
 
+    def delete(self, pin: str) -> bool:
+        """Delete a subscription entirely (for data deletion requests)."""
+        if _use_db():
+            return self._db_delete(pin)
+        with self._lock:
+            if pin in self._json_subs:
+                del self._json_subs[pin]
+                self._save_json()
+                return True
+            return False
+
     def list_all(self) -> list[dict]:
         """List all subscriptions."""
+        if _use_db():
+            return self._db_list_all()
+
         with self._lock:
-            subs = list(self._subs.values())
-        # Update expired ones
+            subs = list(self._json_subs.values())
         now = datetime.now(EAT)
         for s in subs:
             if s["status"] == "active":
@@ -219,18 +252,193 @@ class SubscriptionTracker:
         """Return available plans (excluding trial)."""
         return {k: v for k, v in PLANS.items() if k != "trial"}
 
-    # ── Internal ────────────────────────────────────────────────────
+    # ── Database Operations ─────────────────────────────────────────
+
+    def _db_get(self, pin: str) -> dict | None:
+        from database.connection import get_session
+        from database.models import Subscription, Payment
+        session = get_session()
+        try:
+            sub = session.query(Subscription).filter(Subscription.pin == pin).first()
+            if not sub:
+                return None
+            payments = [
+                {
+                    "amount_kes": p.amount_kes,
+                    "mpesa_ref": p.mpesa_ref,
+                    "phone": decrypt_phone(p.phone) if p.phone else "",
+                    "plan": p.plan,
+                    "recorded_at": p.recorded_at.isoformat() if p.recorded_at else "",
+                }
+                for p in sub.payments
+            ]
+            return {
+                "pin": sub.pin,
+                "name": sub.name or "",
+                "plan": sub.plan,
+                "plan_name": sub.plan_name or "",
+                "status": sub.status,
+                "amount_paid_kes": sub.amount_paid_kes or 0,
+                "started_at": sub.started_at.isoformat() if sub.started_at else "",
+                "expires_at": sub.expires_at.isoformat() if sub.expires_at else "",
+                "payments": payments,
+                "created_at": sub.created_at.isoformat() if sub.created_at else "",
+            }
+        finally:
+            session.close()
+
+    def _db_start_trial(self, pin: str, name: str, now, expires) -> dict:
+        from database.connection import get_session
+        from database.models import Subscription
+        session = get_session()
+        try:
+            existing = session.query(Subscription).filter(Subscription.pin == pin).first()
+            if existing:
+                # Return existing sub
+                result = self._db_get(pin)
+                return result
+
+            sub = Subscription(
+                pin=pin, name=name, plan="trial", plan_name="Free Trial",
+                status="active", amount_paid_kes=0,
+                started_at=now, expires_at=expires, created_at=now,
+            )
+            session.add(sub)
+            session.commit()
+            return {
+                "pin": pin, "name": name, "plan": "trial", "plan_name": "Free Trial",
+                "status": "active", "amount_paid_kes": 0,
+                "started_at": now.isoformat(), "expires_at": expires.isoformat(),
+                "payments": [], "created_at": now.isoformat(),
+            }
+        finally:
+            session.close()
+
+    def _db_record_payment(self, pin: str, amount_kes: float, plan: str,
+                           mpesa_ref: str, phone: str) -> dict:
+        from database.connection import get_session
+        from database.models import Subscription, Payment
+        plan_info = PLANS[plan]
+        now = datetime.now(EAT)
+        session = get_session()
+        try:
+            sub = session.query(Subscription).filter(Subscription.pin == pin).first()
+
+            # Duplicate guard
+            if sub and mpesa_ref:
+                dup = session.query(Payment).filter(
+                    Payment.pin == pin, Payment.mpesa_ref == mpesa_ref
+                ).first()
+                if dup:
+                    result = self._db_get(pin)
+                    return result
+
+            if not sub:
+                sub = Subscription(
+                    pin=pin, name="", plan=plan, plan_name=plan_info["name"],
+                    status="active", amount_paid_kes=0,
+                    started_at=now, expires_at=now, created_at=now,
+                )
+                session.add(sub)
+                session.flush()
+
+            # Extend from current expiry or now
+            current_expiry = sub.expires_at
+            if not current_expiry.tzinfo:
+                current_expiry = current_expiry.replace(tzinfo=EAT)
+            base = max(now, current_expiry)
+            new_expiry = base + timedelta(days=plan_info["duration_days"])
+
+            sub.plan = plan
+            sub.plan_name = plan_info["name"]
+            sub.status = "active"
+            sub.amount_paid_kes = (sub.amount_paid_kes or 0) + amount_kes
+            sub.expires_at = new_expiry
+
+            payment = Payment(
+                pin=pin, subscription_id=sub.id,
+                amount_kes=amount_kes, mpesa_ref=mpesa_ref,
+                phone=encrypt_phone(phone), plan=plan, recorded_at=now,
+            )
+            session.add(payment)
+            session.commit()
+
+            return self._db_get(pin)
+        finally:
+            session.close()
+
+    def _db_delete(self, pin: str) -> bool:
+        from database.connection import get_session
+        from database.models import Subscription
+        session = get_session()
+        try:
+            sub = session.query(Subscription).filter(Subscription.pin == pin).first()
+            if not sub:
+                return False
+            session.delete(sub)
+            session.commit()
+            return True
+        finally:
+            session.close()
+
+    def _db_list_all(self) -> list[dict]:
+        from database.connection import get_session
+        from database.models import Subscription
+        session = get_session()
+        try:
+            now = datetime.now(EAT)
+            subs = session.query(Subscription).all()
+            results = []
+            for sub in subs:
+                if sub.status == "active" and sub.expires_at:
+                    exp = sub.expires_at
+                    if not exp.tzinfo:
+                        exp = exp.replace(tzinfo=EAT)
+                    if now >= exp:
+                        sub.status = "expired"
+                        session.commit()
+                results.append({
+                    "pin": sub.pin,
+                    "name": sub.name or "",
+                    "plan": sub.plan,
+                    "plan_name": sub.plan_name or "",
+                    "status": sub.status,
+                    "amount_paid_kes": sub.amount_paid_kes or 0,
+                    "started_at": sub.started_at.isoformat() if sub.started_at else "",
+                    "expires_at": sub.expires_at.isoformat() if sub.expires_at else "",
+                    "payments": [],
+                    "created_at": sub.created_at.isoformat() if sub.created_at else "",
+                })
+            return results
+        finally:
+            session.close()
 
     def _update_status(self, pin: str, status: str) -> dict | None:
+        if _use_db():
+            from database.connection import get_session
+            from database.models import Subscription
+            session = get_session()
+            try:
+                sub = session.query(Subscription).filter(Subscription.pin == pin).first()
+                if not sub:
+                    return None
+                sub.status = status
+                session.commit()
+                return self._db_get(pin)
+            finally:
+                session.close()
+
         with self._lock:
-            sub = self._subs.get(pin)
+            sub = self._json_subs.get(pin)
             if not sub:
                 return None
             sub["status"] = status
-            self._save()
+            self._save_json()
             return sub
 
-    def _load(self) -> dict:
+    # ── JSON Fallback ───────────────────────────────────────────────
+
+    def _load_json(self) -> dict:
         if SUBS_FILE.exists():
             try:
                 data = json.loads(SUBS_FILE.read_text(encoding="utf-8"))
@@ -239,13 +447,16 @@ class SubscriptionTracker:
                 return {}
         return {}
 
-    def _save(self):
+    def _save_json(self):
         SUBS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        data = {"subscriptions": list(self._subs.values())}
+        data = {"subscriptions": list(self._json_subs.values())}
         SUBS_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False),
                              encoding="utf-8")
 
-    def _log_payment(self, pin: str, payment: dict):
+    # Alias for tests
+    _save = _save_json
+
+    def _log_payment_json(self, pin: str, payment: dict):
         PAYMENTS_FILE.parent.mkdir(parents=True, exist_ok=True)
         entry = {"pin": pin, **payment}
         with open(PAYMENTS_FILE, "a", encoding="utf-8") as f:
