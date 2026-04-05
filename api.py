@@ -1725,7 +1725,6 @@ def whatsapp_webhook(msg: WhatsAppIncoming):
         pass
     
     return {"status": "sent"}
-    }
 
 
 @app.get("/bot/status", tags=["System"], summary="WhatsApp bot status")
