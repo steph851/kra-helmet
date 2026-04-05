@@ -400,19 +400,6 @@ def web_onboarding():
         <h1>KRA Deadline Tracker</h1>
         <p>Onboarding form not found. Contact support.</p>
     </body></html>""")
-        "auth_required": settings["api"].get("require_auth", True) and bool(API_KEY),
-        "endpoints": {
-            "health": "/health",
-            "smes": "/smes",
-            "check": "/check/{pin}",
-            "onboard": "POST /onboard",
-            "filing": "POST /file/{pin}",
-            "dashboard": "/dashboard",
-            "report": "/report/{pin}",
-            "audit": "/audit",
-            "guides": "/guides",
-        }
-    }
 
 
 @app.get("/favicon.svg", include_in_schema=False)
