@@ -1,21 +1,22 @@
 # KRA Deadline Tracker & Compliance Tool
-# Simple single-stage build — dashboard is pre-built and committed to repo
-# Uses JSON file storage. Uncomment PostgreSQL deps in requirements.txt to enable Neon DB.
+# Supports Neon PostgreSQL for persistent storage
 
 FROM python:3.14-slim
 
 WORKDIR /app
 
-# System deps (curl for health check)
+# System deps (curl + build tools for psycopg2-binary)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    gcc \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Python deps
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy entire project (includes pre-built dashboard in output/dashboard-react/)
+# Copy entire project
 COPY . .
 
 # Ensure data directories exist

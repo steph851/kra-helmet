@@ -10,3 +10,7 @@ services:
         sync: false
       - key: HELMET_API_KEY
         sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: PYTHONUNBUFFERED
+        value: "1"
