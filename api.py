@@ -400,12 +400,6 @@ def web_onboarding():
         <h1>KRA Deadline Tracker</h1>
         <p>Onboarding form not found. Contact support.</p>
     </body></html>""")
-    
-    # Last resort: JSON info
-    return {
-        "service": settings["system"]["name"],
-        "version": settings["system"]["version"],
-        "status": "running",
         "auth_required": settings["api"].get("require_auth", True) and bool(API_KEY),
         "endpoints": {
             "health": "/health",
