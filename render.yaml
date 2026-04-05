@@ -16,3 +16,9 @@ services:
         value: "1"
       - key: SENTRY_DSN
         sync: false
+      - key: HELMET_WA_PROVIDER
+        value: "dry_run"
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_ID
+        sync: false

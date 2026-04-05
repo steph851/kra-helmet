@@ -20,20 +20,29 @@ class WhatsAppSender:
 
     def __init__(self):
         self.bot_url = os.getenv("HELMET_BOT_URL", "http://localhost:3001")
-        self.provider = os.getenv("HELMET_WA_PROVIDER", "bot")  # bot | dry_run
+        self.provider = os.getenv("HELMET_WA_PROVIDER", "dry_run")  # bot | meta | dry_run
+        self.whatsapp_token = os.getenv("WHATSAPP_TOKEN")  # Meta Cloud API token
+        self.whatsapp_phone_id = os.getenv("WHATSAPP_PHONE_ID")  # Meta Cloud API phone ID
         self._log_dir = ROOT / "logs"
         self._log_dir.mkdir(exist_ok=True)
 
     def send(self, phone: str, message: str, pin: str = "") -> dict:
-        """Send a WhatsApp message. Tries bot first, falls back to dry-run."""
+        """Send a WhatsApp message. Tries bot/meta, falls back to dry-run."""
         phone = self._normalize_phone(phone)
 
-        # Try the local bot first
-        if self.provider != "dry_run":
+        # Try local bot
+        if self.provider == "bot":
             result = self._send_via_bot(phone, message, pin)
             if result.get("success"):
                 return result
-            log.warning(f"Bot send failed for {pin}: {result.get('error', '?')} — falling back to dry-run")
+            log.warning(f"Bot failed for {pin}: {result.get('error')} — trying meta")
+
+        # Try Meta WhatsApp Cloud API (free tier)
+        if self.provider in ("bot", "meta") and self.whatsapp_token:
+            result = self._send_via_meta(phone, message, pin)
+            if result.get("success"):
+                return result
+            log.warning(f"Meta send failed: {result.get('error')} — falling back to dry-run")
 
         return self._dry_run(phone, message, pin)
 
@@ -109,6 +118,37 @@ class WhatsAppSender:
                 return json.loads(resp.read())
         except Exception:
             return {"connected": False, "error": "Bot not reachable"}
+
+    def _send_via_meta(self, phone: str, message: str, pin: str) -> dict:
+        """Send via Meta WhatsApp Cloud API (free tier)."""
+        if not self.whatsapp_token or not self.whatsapp_phone_id:
+            return {"success": False, "error": "Missing WHATSAPP_TOKEN or WHATSAPP_PHONE_ID"}
+
+        url = f"https://graph.facebook.com/v21.0/{self.whatsapp_phone_id}/messages"
+        headers = {
+            "Authorization": f"Bearer {self.whatsapp_token}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": phone,
+            "type": "text",
+            "text": {"body": message},
+        }
+
+        try:
+            import urllib.request
+            req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers=headers, method="POST")
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                result = json.loads(resp.read())
+
+            result["provider"] = "meta"
+            result["pin"] = pin
+            self._log_message(phone, message, pin, result)
+            log.info(f"WhatsApp sent via Meta to {phone} for {pin}")
+            return {"success": True, "provider": "meta", "message_id": result.get("messages", [{}])[0].get("id")}
+        except Exception as e:
+            return {"success": False, "error": str(e), "provider": "meta"}
 
     def _dry_run(self, phone: str, message: str, pin: str) -> dict:
         """Log the message instead of sending it."""
